@@ -1,0 +1,120 @@
+#! /usr/bin/env python3
+
+"""
+Cli entrypoint for noopsctl
+"""
+
+# Copyright 2021 Croix Bleue du Québec
+
+# This file is part of python-noops.
+
+# python-noops is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# python-noops is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public License
+# along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
+
+import logging
+import argparse
+from noops.noops import NoOps
+
+def output(args: argparse.Namespace, core: NoOps):
+    core.output(asjson=args.j, indent=args.i)
+
+def pipeline_deploy(args: argparse.Namespace, core: NoOps):
+    scope = None
+    if args.default:
+        scope = "default"
+
+    core.pipeline_deploy(scope, args.cargs)
+
+def pipeline_image(args: argparse.Namespace, core: NoOps):
+    scope = None
+    if args.ci:
+        scope = "ci"
+    elif args.pr:
+        scope = "pr"
+    elif args.cd:
+        scope = "cd"
+
+    core.pipeline_image(scope, args.cargs)
+
+def local_build(args: argparse.Namespace, core: NoOps):
+    core.local_build(args.cargs)
+
+def local_run(args: argparse.Namespace, core: NoOps):
+    core.local_run(args.cargs)
+
+# Args
+
+parser = argparse.ArgumentParser(
+    description="NoOps command line utility",
+    formatter_class=argparse.RawDescriptionHelpFormatter)
+parser.add_argument("-p", "--product", help="product directory", metavar="file", required=True)
+parser.add_argument("-c", "--chart-name", help="override chart name autodetection [helm]", metavar="name")
+parser.add_argument("-d", "--dry-run", help="dry run", action="store_true", default=0)
+parser.add_argument("-s", "--show", help="show noops final configuration", action="store_true", default=0)
+parser.add_argument("-r", "--rm-cache", help="remove the workdir cache", action="store_true", default=0)
+parser.add_argument("-v", help="warning (-v), info (-vv), debug (-vvv), error only if unset", action="count", default=0)
+
+subparsers = parser.add_subparsers(title="main commands", required=True)
+pipeline_parser = subparsers.add_parser("pipeline", description="Pipeline control")
+output_parser = subparsers.add_parser("output", description="Display few informations")
+local_parser = subparsers.add_parser("local", description="Local build, run, ...")
+
+pipeline_subparsers = pipeline_parser.add_subparsers(title="subcommands", required=True)
+image_parser = pipeline_subparsers.add_parser("image")
+image_parser.add_argument("--ci", help="ci scope", action="store_true", default=1)
+image_parser.add_argument("--cd", help="deployment scope", action="store_true", default=0)
+image_parser.add_argument("--pr", help="pullrequest scope", action="store_true", default=0)
+image_parser.add_argument("cargs", help="custom arguments for pipeline.image.* (use -- before arguments list)", nargs="*")
+image_parser.set_defaults(func=pipeline_image)
+
+deploy_parser = pipeline_subparsers.add_parser("deploy")
+deploy_parser.add_argument("--default", help="default scope", action="store_true", default=1)
+deploy_parser.add_argument("cargs", help="custom arguments for pipeline.deploy.* (use -- before arguments list)", nargs="*")
+deploy_parser.set_defaults(func=pipeline_deploy)
+
+output_parser.add_argument("-j", help="json format", action="store_true", default=0)
+output_parser.add_argument("-i", help="indentation (space number)", metavar="indent", default=2, type=int)
+output_parser.set_defaults(func=output)
+
+local_subparsers = local_parser.add_subparsers(title="subcommands", required=True)
+local_build_parser = local_subparsers.add_parser("build")
+local_build_parser.add_argument("cargs", help="custom arguments for local.build (use -- before arguments list)", nargs="*")
+local_build_parser.set_defaults(func=local_build)
+
+local_run_parser = local_subparsers.add_parser("run")
+local_run_parser.add_argument("cargs", help="custom arguments for local.run (use -- before arguments list)", nargs="*")
+local_run_parser.set_defaults(func=local_run)
+
+try:
+    args = parser.parse_args()
+except TypeError:
+    parser.print_help()
+    exit(0)
+
+# logging
+if args.v == 0:
+    level=logging.ERROR
+elif args.v == 1:
+    level=logging.WARN
+elif args.v == 2:
+    level=logging.INFO
+else:
+    level=logging.DEBUG
+
+logging.basicConfig(level=level)
+
+#"/home/micky/projects/scaffolds/hello-scaffold-service/"
+core = NoOps(args.product, args.chart_name, args.dry_run, args.show, args.rm_cache)
+
+# Call args function (func)
+args.func(args, core)

@@ -29,9 +29,7 @@ def output(args: argparse.Namespace, core: NoOps):
     core.output(asjson=args.j, indent=args.i)
 
 def pipeline_deploy(args: argparse.Namespace, core: NoOps):
-    scope = None
-    if args.default:
-        scope = "default"
+    scope = "default"
 
     core.pipeline_deploy(scope, args.cargs)
 

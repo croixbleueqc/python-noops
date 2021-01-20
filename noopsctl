@@ -36,10 +36,9 @@ def pipeline_deploy(args: argparse.Namespace, core: NoOps):
     core.pipeline_deploy(scope, args.cargs)
 
 def pipeline_image(args: argparse.Namespace, core: NoOps):
-    scope = None
-    if args.ci:
-        scope = "ci"
-    elif args.pr:
+    scope = "ci"
+
+    if args.pr:
         scope = "pr"
     elif args.cd:
         scope = "cd"

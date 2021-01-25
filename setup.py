@@ -15,7 +15,7 @@ setup(
     author_email="devops@qc.croixbleue.ca",
     license="LGPL-3.0-or-later",
     description="NoOps command line utility",
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
     url="https://github.com/croixbleueqc/python-noops",
     keywords=["noops", "devops", "git"],
     classifiers=[

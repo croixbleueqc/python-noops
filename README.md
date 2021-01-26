@@ -120,6 +120,8 @@ The DevOps repository defines **how to do** Docker image, packaging for deployme
 
 This is the purpose of this repository. python-noops provides `noopsctl` used by the product pipeline. It is doing the glue between a product repository and a DevOps repository.
 
+![workflow](https://raw.githubusercontent.com/croixbleueqc/python-noops/main/docs/noopsctl-workflow.png)
+
 The main workflow is:
 
 1. load `noops.yaml` from *product*
@@ -138,6 +140,7 @@ The execution workflow is:
 2. convert some `noops.yaml parameters` (eg: Service Catalog, Helm parameters, etc) to enhance some components used by the DevOps repository **(optional)**
 3. read the script path to use (eg: `pipeline.image.ci` for `noopsctl -p . pipeline image --ci`)
 4. execute the script
+
 
 #### What noopsctl does
 

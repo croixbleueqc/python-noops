@@ -1,0 +1,21 @@
+%% Typical Workflow
+sequenceDiagram
+    participant P as Product
+    participant N as noopsctl
+    participant D as DevOps
+    Note over N,P: noopsctl calls from product context
+    N->>P: load noops.yaml
+    N->>D: git clone
+    activate D
+    D-->>N: cloned into noops_workdir
+    deactivate D
+    N->>D: load noops.yaml
+    N-->>N: merge both noops.yaml
+    opt Prepare helm values, service catalog objects, ...
+        N-->>N: noops.yaml to values-*.yaml, svcat.yaml, ...
+    end
+    alt scripts in DevOps
+        N->>D: Execute external binary
+    else scripts in Product (override)
+        N->>P: Execute external binary
+    end

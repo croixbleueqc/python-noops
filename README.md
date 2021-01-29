@@ -24,8 +24,8 @@ The devops part can be a remote resource with its own `noops.yaml` file.
             * [noops.yaml and custom parameters](#noopsyaml-and-custom-parameters)
          * [noops.yaml](#noopsyaml)
             * [Reserved keys](#reserved-keys)
+            * [features](#features)
             * [package](#package)
-               * [skip-service-catalog](#skip-service-catalog)
                * [docker](#docker)
                * [helm](#helm)
             * [service-catalog](#service-catalog)
@@ -180,7 +180,7 @@ The next example defines some reserved keys and custom keys.
 
 reserved keys are:
 
-- package.skip-service-catalog
+- features
 - package.docker.dockerfile
 - package.helm.{chart,preprocessor,parameters}
 - pipeline.image.{ci,pr,cd}
@@ -195,9 +195,10 @@ custom keys are everything else
 metadata:
   version: 1
 
-package:
-  skip-service-catalog: false
+features:
+  service-catalog: true
 
+package:
   docker:
     dockerfile: docker/Dockerfile
 
@@ -240,11 +241,18 @@ bootstrap:
     default: scaffold-instanciation.sh
 ```
 
+#### features
+
+Controls which features are enabled or disabled.
+
+Default settings are:
+
+```yaml
+features:
+  service-catalog: true
+```
+
 #### package
-
-##### skip-service-catalog
-
-Disable the service-catalog feature if set to `true`.
 
 ##### docker
 

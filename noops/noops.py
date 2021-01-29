@@ -213,10 +213,10 @@ class NoOps(object):
         - Helm values
         """
         # Service Catalog
-        if not self.noops_config["package"].get("skip-service-catalog", False):
+        if self.noops_config.get("features", {}).get("service-catalog", True):
             self.svcat.create_kinds_and_values()
         else:
-            logging.warn("skip service catalog as requested")
+            logging.info("Service Catalog feature disabled")
 
         # Helm values-*.yaml
         self.helm.create_values()

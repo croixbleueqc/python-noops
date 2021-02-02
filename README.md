@@ -29,6 +29,7 @@ The devops part can be a remote resource with its own `noops.yaml` file.
                * [docker](#docker)
                * [helm](#helm)
             * [service-catalog](#service-catalog)
+            * [white-label](#white-label)
             * [pipeline and local](#pipeline-and-local)
       * [Installation](#installation)
       * [Usage](#usage)
@@ -188,6 +189,7 @@ reserved keys are:
 - local.build
 - local.run
 - service-catalog
+- white-label
 
 custom keys are everything else
 
@@ -236,6 +238,10 @@ service-catalog:
   binding:
     parameters: {}
 
+white-label:
+- rebrand: brand1
+  marketer: Marketer 1 Inc
+
 bootstrap:
   scaffold:
     default: scaffold-instanciation.sh
@@ -250,6 +256,7 @@ Default settings are:
 ```yaml
 features:
   service-catalog: true
+  white-label: false
 ```
 
 #### package
@@ -305,6 +312,34 @@ service-catalog:
 By default, `noopsctl` will create compatible objects with [Kubernetes Service Catalog](https://svc-cat.io/) in the `{pakage.helm.chart}/templates/svcat.yaml` and binding secrets available in `./noops_workdir/helm/values-svcat.yaml`.
 
 This implementation is compatible with [Open Service Broker API](https://www.openservicebrokerapi.org/).
+
+#### white-label
+
+White-label can be used during `noopsctl pipeline deploy`.
+
+A deployment will be triggered **per brand** and so the deployment script will be called multiple times (**but** on time per brand).
+
+Additional environment variables will be exported to the deployment script:
+
+```bash
+NOOPS_WHITE_LABEL=y
+NOOPS_WHITE_LABEL_REBRAND=<the brand>
+NOOPS_WHITE_LABEL_MARKETER=<the company or organization behind the brand>
+```
+
+Configuration example for `noops.yaml`:
+
+```yaml
+features:
+  white-label: true
+
+white-label:
+- rebrand: brand1
+  marketer: Marketer 1 Inc
+- rebrand: brand2
+  marketer: Marketer 2 Inc
+# ...
+```
 
 #### pipeline and local
 

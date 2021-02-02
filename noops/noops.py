@@ -205,6 +205,12 @@ class NoOps(object):
         else:
             print(yaml.dump(self.noops_config, indent=indent))
 
+    def is_feature_enabled(self, feature: str) -> bool:
+        try:
+            return self.noops_config["features"][feature]
+        except KeyError:
+            return helper.DEFAULT_FEATURES[feature]
+
     def prepare(self):
         """
         Generates everything that is needed by the product and set with the noops.yaml
@@ -213,7 +219,7 @@ class NoOps(object):
         - Helm values
         """
         # Service Catalog
-        if self.noops_config.get("features", {}).get("service-catalog", True):
+        if self.is_feature_enabled("service-catalog"):
             self.svcat.create_kinds_and_values()
         else:
             logging.info("Service Catalog feature disabled")
@@ -270,12 +276,41 @@ class NoOps(object):
         
         scope: default
         """
-        self.prepare()
-        self.exec_common_flow(
-            self.noops_config["pipeline"]["deploy"],
-            scope,
-            custom_args
-        )
+
+        if self.is_feature_enabled("white-label"):
+            # White-label deployment
+
+            logging.info("White-label deployment requested")
+
+            extra_envs = self.noops_envs()
+            extra_envs["NOOPS_WHITE_LABEL"]="y"
+
+            for branding in self.noops_config["white-label"]:
+                extra_envs["NOOPS_WHITE_LABEL_REBRAND"]=branding["rebrand"]
+                extra_envs["NOOPS_WHITE_LABEL_MARKETER"]=branding["marketer"]
+
+                logging.info("rebrand {} for {}".format(
+                    branding["rebrand"],
+                    branding["marketer"]
+                ))
+
+                self.prepare()
+                self.execute(
+                    self.noops_config["pipeline"]["deploy"][scope],
+                    custom_args,
+                    extra_envs=extra_envs
+                )
+        else:
+            # Regular deployment
+
+            logging.info("Regular deployment requested")
+
+            self.prepare()
+            self.exec_common_flow(
+                self.noops_config["pipeline"]["deploy"],
+                scope,
+                custom_args
+            )
 
     def pipeline_image(self, scope, custom_args):
         """

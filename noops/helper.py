@@ -31,6 +31,11 @@ DEFAULT_INDENT=2
 DEFAULT_NOOPS_FILE="noops.yaml"
 DEFAULT_WORKDIR="noops_workdir"
 
+DEFAULT_FEATURES={
+    "service-catalog": True,
+    "white-label": False
+}
+
 def read_yaml(file: str) -> dict:
     """
     Read a yaml file

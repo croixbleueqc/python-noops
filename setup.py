@@ -8,7 +8,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     install_requires=['pyyaml'],
 
-    scripts=['noopsctl'],
+    scripts=['noopsctl', 'noopsctl.bat'],
 
     # Metadata
     author="Croix Bleue du Quebec",

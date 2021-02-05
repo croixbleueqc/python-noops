@@ -35,6 +35,7 @@ import json
 import subprocess
 import tempfile
 import shutil
+import stat
 
 class NoOps(object):
     def __init__(self, product_path: str, chart_name: str, dryrun: bool, show_noops_config: bool, rm_cache: bool):
@@ -88,7 +89,9 @@ class NoOps(object):
                 "pipeline.image.pr",
                 "pipeline.deploy.default",
                 "local.build.posix",
-                "local.run.posix"
+                "local.build.nt",
+                "local.run.posix",
+                "local.run.nt",
             ]
 
             for selector in selectors:
@@ -152,7 +155,15 @@ class NoOps(object):
                     forcerun=True)
 
                 # remove .git folder
-                shutil.rmtree(os.path.join(clone_path, ".git"))
+                shutil_kwargs={}
+                if os.name == "nt":
+                    def remove_readonly(fn, path, excinfo):
+                        # Some files in .git folder are flagged read only on Windows
+                        os.chmod(path, stat.S_IWRITE)
+                        fn(path)
+                    shutil_kwargs["onerror"]=remove_readonly
+
+                shutil.rmtree(os.path.join(clone_path, ".git"), **shutil_kwargs)
 
                 # move in the product folder
                 shutil.move(

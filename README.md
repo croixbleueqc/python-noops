@@ -22,6 +22,7 @@ The devops part can be a remote resource with its own `noops.yaml` file.
             * [What noopsctl does](#what-noopsctl-does)
             * [What noopsctl does NOT do](#what-noopsctl-does-not-do)
             * [noops.yaml and custom parameters](#noopsyaml-and-custom-parameters)
+         * [DevOps: Dedicated to one product ONLY](#devops-dedicated-to-one-product-only)
          * [noops.yaml](#noopsyaml)
             * [Reserved keys](#reserved-keys)
             * [features](#features)
@@ -172,6 +173,25 @@ Custom keys can be handled by custom scripts to run a CI, CD, local build/run et
 # Example to read the Dockerfile path
 DOCKERFILE=$(cat $NOOPS_GENERATED_JSON | jq -r .package.docker.dockerfile)
 ```
+
+### DevOps: Dedicated to one product ONLY
+
+In some specific cases, you may want to have a dedicated devops structure for one product only. Despite it is always possible to have a dedicated DevOps repository with 1:1 relationship, it can be useful to have everything in the product repository.
+
+To do so you can use this `noops.yaml` minimal configuration:
+
+```yaml
+metadata:
+  version: 1
+
+devops:
+  local:
+    path: noops    # the DevOps part (eg: noops folder) in the product repository
+```
+
+The workflow described previously is still the same but instead of doing a `git clone`, `noopsctl` will copy the DevOps part (eg: noops folder) in the *noops_workdir*.
+
+The content of the DevOps folder is **exactly** the same locally than in a dedicated DevOps repository.
 
 ### noops.yaml
 

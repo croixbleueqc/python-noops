@@ -43,6 +43,16 @@ def pipeline_image(args: argparse.Namespace, core: NoOps):
 
     core.pipeline_image(scope, args.cargs)
 
+def pipeline_lib(args: argparse.Namespace, core: NoOps):
+    scope = "ci"
+
+    if args.pr:
+        scope = "pr"
+    elif args.cd:
+        scope = "cd"
+
+    core.pipeline_lib(scope, args.cargs)
+
 def local_build(args: argparse.Namespace, core: NoOps):
     core.local_build(args.cargs)
 
@@ -73,6 +83,13 @@ image_parser.add_argument("--cd", help="deployment scope", action="store_true", 
 image_parser.add_argument("--pr", help="pullrequest scope", action="store_true", default=0)
 image_parser.add_argument("cargs", help="custom arguments for pipeline.image.* (use -- before arguments list)", nargs="*")
 image_parser.set_defaults(func=pipeline_image)
+
+lib_parser = pipeline_subparsers.add_parser("lib")
+lib_parser.add_argument("--ci", help="ci scope", action="store_true", default=1)
+lib_parser.add_argument("--cd", help="deployment scope", action="store_true", default=0)
+lib_parser.add_argument("--pr", help="pullrequest scope", action="store_true", default=0)
+lib_parser.add_argument("cargs", help="custom arguments for pipeline.lib.* (use -- before arguments list)", nargs="*")
+lib_parser.set_defaults(func=pipeline_lib)
 
 deploy_parser = pipeline_subparsers.add_parser("deploy")
 deploy_parser.add_argument("--default", help="default scope", action="store_true", default=1)

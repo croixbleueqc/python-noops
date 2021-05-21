@@ -87,6 +87,9 @@ class NoOps(object):
                 "pipeline.image.ci",
                 "pipeline.image.cd",
                 "pipeline.image.pr",
+                "pipeline.lib.ci",
+                "pipeline.lib.cd",
+                "pipeline.lib.pr",
                 "pipeline.deploy.default",
                 "local.build.posix",
                 "local.build.nt",
@@ -331,6 +334,18 @@ class NoOps(object):
         """
         self.exec_common_flow(
             self.noops_config["pipeline"]["image"],
+            scope,
+            custom_args
+        )
+    
+    def pipeline_lib(self, scope, custom_args):
+        """
+        Build a lib from a pipeline
+        
+        scope: ci, cd, pr
+        """
+        self.exec_common_flow(
+            self.noops_config["pipeline"]["lib"],
             scope,
             custom_args
         )

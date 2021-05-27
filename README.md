@@ -14,9 +14,9 @@ The devops part can be a remote resource with its own `noops.yaml` file.
    * [NoOps Command line utility](#noops-command-line-utility)
       * [NoOps](#noops)
          * [Product: Application code](#product-application-code)
-            * [repository example](#repository-example)
+            * [Repository example](#repository-example)
             * [noops.yaml example](#noopsyaml-example)
-            * [pipeline example](#pipeline-example)
+            * [Pipeline example](#pipeline-example)
          * [DevOps: Shared across products](#devops-shared-across-products)
          * [python-noops: connect Product and DevOps](#python-noops-connect-product-and-devops)
             * [What noopsctl does](#what-noopsctl-does)
@@ -25,13 +25,13 @@ The devops part can be a remote resource with its own `noops.yaml` file.
          * [DevOps: Dedicated to one product ONLY](#devops-dedicated-to-one-product-only)
          * [noops.yaml](#noopsyaml)
             * [Reserved keys](#reserved-keys)
-            * [features](#features)
-            * [package](#package)
-               * [docker](#docker)
-               * [helm](#helm)
-            * [service-catalog](#service-catalog)
-            * [white-label](#white-label)
-            * [pipeline and local](#pipeline-and-local)
+            * [Features](#features)
+            * [Package](#package)
+               * [Docker](#docker)
+               * [Helm](#helm)
+            * [Service-catalog](#service-catalog)
+            * [White-label](#white-label)
+            * [Pipeline and local](#pipeline-and-local)
       * [Installation](#installation)
       * [Usage](#usage)
          * [Main help](#main-help)
@@ -61,7 +61,7 @@ To be compliant with NoOps a product needs to define a `noops.yaml` file.
 
 Everything else like DevOps stuff, Pipelines scripts etc are not part of the product repository. Of course to trigger some actions, a pipeline file needs to be set. The main difference with a common DevOps approach is that this file will be really small and will not define how to do a CI or a CD for the product.
 
-#### repository example
+#### Repository example
 
 A bitbucket pipeline is used for this example
 
@@ -88,7 +88,7 @@ devops:
     branch: main
 ```
 
-#### pipeline example
+#### Pipeline example
 
 We are using a bitbucket pipeline and we are just triggering a CI for all branches to simplify this example.
 
@@ -133,7 +133,6 @@ The main workflow is:
 5. merge both `noops.yaml` together. Product noops.yaml will **override** DevOps noops.yaml.
 6. Store the merged result to the *noops_workdir*
 7. execute the request based on parameters provided on the command line
-
 
 
 The execution workflow is:
@@ -199,19 +198,20 @@ The content of the DevOps folder is **exactly** the same locally than in a dedic
 
 The next example defines some reserved keys and custom keys.
 
-reserved keys are:
+Reserved keys are:
 
 - features
 - package.docker.dockerfile
 - package.helm.{chart,preprocessor,parameters}
 - pipeline.image.{ci,pr,cd}
+- pipeline.lib.{ci,pr,cd}
 - pipeline.deploy.default
 - local.build
 - local.run
 - service-catalog
 - white-label
 
-custom keys are everything else
+Custom keys are everything else.
 
 ```yaml
 metadata:
@@ -239,6 +239,10 @@ pipeline:
     ci: ./scripts/image-ci.sh
     pr: ./scripts/image-pr.sh
     cd: ./scripts/image-cd.sh
+  lib:
+    ci: ./scripts/lib-ci.sh
+    pr: ./scripts/lib-pr.sh
+    cd: ./scripts/lib-cd.sh
 
   deploy:
     default: ./scripts/deploy.sh
@@ -267,7 +271,7 @@ bootstrap:
     default: scaffold-instanciation.sh
 ```
 
-#### features
+#### Features
 
 Controls which features are enabled or disabled.
 
@@ -279,9 +283,9 @@ features:
   white-label: false
 ```
 
-#### package
+#### Package
 
-##### docker
+##### Docker
 
 ```yaml
 package:
@@ -291,7 +295,7 @@ package:
 
 `package.docker.dockerfile` can be overridden and a *custom* Dockerfile can be used directly in the product repository.
 
-##### helm
+##### Helm
 
 ```yaml
 package:
@@ -316,7 +320,7 @@ Everything else in parameters will use a deep merge strategy.
 
 `package.helm.preprocessor` provides the path where some helm files needs pre-processing (*eg: to replace some variables from a vault in yaml files*). This is not mandatory to use it as this is your deploy script which will do this task.
 
-#### service-catalog
+#### Service-catalog
 
 ```yaml
 service-catalog:
@@ -333,7 +337,7 @@ By default, `noopsctl` will create compatible objects with [Kubernetes Service C
 
 This implementation is compatible with [Open Service Broker API](https://www.openservicebrokerapi.org/).
 
-#### white-label
+#### White-label
 
 White-label can be used during `noopsctl pipeline deploy`.
 
@@ -361,7 +365,7 @@ white-label:
 # ...
 ```
 
-#### pipeline and local
+#### Pipeline and local
 
 ```yaml
 pipeline:
@@ -398,6 +402,10 @@ To do so, `noopsctl` is using this mapping:
 **About posix and nt:**
 
 If the pipeline is running in a controlled context, this is not necessary the case in a local (eg: developers computer) context. The operating system is important and so `noopsctl` will run the script or binary corresponding to the local operating system category (**posix** or **nt**).
+
+**About image vs lib:**
+
+The usage of `pipeline image` vs `pipeline lib` is simply to better convey the meaning of what needs to be accomplished. The `image.ci` script can do anything, and so can the `lib.ci` script as well. However, having keywords dedicated for image VS lib helps anyone looking at the CI file (such as bitbucket-pipelines.yaml) better understand what's going on.
 
 ## Installation
 
@@ -436,7 +444,7 @@ main commands:
 noopsctl -vv -p . pipeline image --ci
 ```
 
-### Continuous Integration for a Pull Request
+### Pull Request Continuous Integration
 
 ```bash
 noopsctl -vv -p . pipeline image --pr
@@ -447,6 +455,23 @@ noopsctl -vv -p . pipeline image --pr
 ```bash
 noopsctl -vv -p . pipeline image --cd
 noopsctl -vv -p . pipeline deploy
+```
+### Continuous Integration for librairies
+
+```bash
+noopsctl -vv -p . pipeline lib --ci
+```
+
+### Pull Request Continuous Integration for librairies
+
+```bash
+noopsctl -vv -p . pipeline lib --pr
+```
+
+### Continuous Deployment for libraries
+
+```bash
+noopsctl -vv -p . pipeline lib --cd
 ```
 
 ### Build the product locally

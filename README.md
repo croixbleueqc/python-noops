@@ -202,6 +202,7 @@ Reserved keys are:
 
 - features
 - package.docker.dockerfile
+- package.lib.dockerfile
 - package.helm.{chart,preprocessor,parameters}
 - pipeline.image.{ci,pr,cd}
 - pipeline.lib.{ci,pr,cd}

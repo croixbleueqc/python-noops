@@ -82,6 +82,7 @@ class NoOps(object):
             # NoOps final configuration
             selectors=[
                 "package.docker.dockerfile",
+                "package.lib.dockerfile",
                 "package.helm.chart",
                 "package.helm.preprocessor",
                 "pipeline.image.ci",

@@ -1,0 +1,17 @@
+- name: c1
+  labels:
+    service/status: active
+    service/latency: low
+    master: True
+- name: c2
+  labels:
+    service/status: active
+    service/latency: low
+- name: c3
+  labels:
+    service/status: active
+    service/latency: high
+- name: c4
+  labels:
+    service/status: standby
+    service/latency: low

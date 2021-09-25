@@ -1,0 +1,53 @@
+apiVersion: noops.local/v1alpha1
+kind: target
+metadata:
+  name: demo
+spec:
+  active:
+    clusterAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        clusterSelectorTerms:
+        - matchExpressions: # service active with low latency
+          - key: service/status
+            operator: In
+            values:
+            - active
+          - key: service/latency
+            operator: In
+            values:
+            - low
+        - matchExpressions: # service active whatever the latency
+          - key: service/status
+            operator: In
+            values:
+            - active
+    clustersCount: 1
+
+  standby:
+    clusterAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        clusterSelectorTerms:
+        - matchExpressions: # service standby with low latency
+          - key: service/status
+            operator: In
+            values:
+            - standby
+          - key: service/latency
+            operator: In
+            values:
+            - low
+        - matchExpressions: # service standby whatever the latency
+          - key: service/status
+            operator: In
+            values:
+            - standby
+        - matchExpressions: # any other service
+          - key: service/status
+            operator: Exists
+    clustersCount: 1
+
+  service-only:
+    clusterAffinity: null
+    clustersCount: Remaining
+
+  localLoadBalancer: true # Stick the request in the cluster if possible

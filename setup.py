@@ -6,7 +6,16 @@ setup(
     version='1.1.0',
     python_requires='>=3.8',
     packages=find_packages(exclude=['tests']),
-    install_requires=['pyyaml'],
+    install_requires=[
+        'pyyaml',
+        'pydantic'
+    ],
+    extra_require={
+        'dev': [
+            'pylint',
+            'coverage'
+        ]
+    },
 
     scripts=['noopsctl', 'noopsctl.bat'],
 

@@ -1,0 +1,16 @@
+- matchExpressions:
+  - key: service/status
+    operator: In
+    values:
+    - active
+- matchExpressions:
+  - key: service/status
+    operator: NotIn
+    values:
+    - active
+- matchExpressions:
+  - key: service/status
+    operator: Exists
+- matchExpressions:
+  - key: service/status
+    operator: DoesNotExist

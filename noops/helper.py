@@ -36,7 +36,7 @@ DEFAULT_FEATURES={
     "white-label": False
 }
 
-def read_yaml(file: str) -> dict:
+def read_yaml(file: str) -> dict: # pragma: no cover
     """
     Read a yaml file
     """
@@ -45,21 +45,21 @@ def read_yaml(file: str) -> dict:
 
     return noops
 
-def write_yaml(file: str, content: dict, indent=DEFAULT_INDENT):
+def write_yaml(file: str, content: dict, indent=DEFAULT_INDENT): # pragma: no cover
     """
     Write as a yaml file
     """
     with open(file, "w") as f:
         yaml.dump(content, stream=f, indent=indent)
 
-def write_json(file: str, content: dict, indent=DEFAULT_INDENT):
+def write_json(file: str, content: dict, indent=DEFAULT_INDENT): # pragma: no cover
     """
     Write as a json file
     """
     with open(file, "w") as f:
         json.dump(content, fp=f, indent=indent)
 
-def write_raw(file: str, content: str):
+def write_raw(file: str, content: str): # pragma: no cover
     """
     Write as a text file
     """

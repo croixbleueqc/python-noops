@@ -1,0 +1,25 @@
+apiVersion: noops.local/v1alpha1
+kind: Version
+metadata:
+  name: demo
+spec:
+  helm:
+    repo:
+      name: default
+      url: http://localhost/
+    install:
+      chart: default/demo
+      flags: null
+
+  one: # Only one version at a time
+    version: 1.0.0
+
+  multi: # Multiple versions + Canary or Blue/Green support + Dedicated endpoints support
+  - version: 1.0.0
+    weight: 10
+    ingress: true # default to false but create a dedicated ingress if set to true
+  - version: 2.0.0
+    weight: 90
+  - version: 3.0.0
+    chart: 10.0.0 # optional
+    revision: 1

@@ -29,11 +29,14 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import subprocess
 import logging
-import yaml
 import os
+import yaml
 from . import helper
 
-class ServiceCatalog(object):
+class ServiceCatalog(): # pylint: disable=too-few-public-methods
+    """
+    Manages Service Catalog for Helm
+    """
     SERVICE_CATALOG="service-catalog"
 
     def __init__(self, core):
@@ -123,7 +126,7 @@ class ServiceCatalog(object):
 
         svcat_objs = []
         for svcat in self.core.noops_config.get(ServiceCatalog.SERVICE_CATALOG, []):
-            logging.info(f" ... {svcat['name']}")
+            logging.info(" ... %s", svcat['name'])
 
             use_external = False
             if self._processing is not None:
@@ -131,7 +134,7 @@ class ServiceCatalog(object):
                 if external_converter.exists():
                     use_external = True
 
-            name="{}-binding".format(svcat["name"])
+            name="{}-binding".format(svcat["name"]) # pylint: disable=consider-using-f-string
 
             if use_external:
                 objs = self._external_converter(name, svcat, external_converter)
@@ -156,7 +159,11 @@ class ServiceCatalog(object):
                 print(svcat_kinds)
             else:
                 helper.write_raw(
-                    os.path.join(self.core.noops_config["package"]["helm"]["chart"], "templates", "svcat.yaml"),
+                    os.path.join(
+                        self.core.noops_config["package"]["helm"]["chart"],
+                        "templates",
+                        "svcat.yaml"
+                    ),
                     svcat_kinds
                 )
 

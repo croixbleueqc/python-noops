@@ -24,12 +24,15 @@ Handles helm section of noops.yaml
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-import yaml
 import os
 import re
+import yaml
 from . import helper
 
-class Helm(object):
+class Helm():
+    """
+    Manages Helm Chart
+    """
     re_noops_chart = re.compile("{{noops:chart:(.*):(.*)}}")
 
     def __init__(self, core, chart_name: str):
@@ -44,7 +47,7 @@ class Helm(object):
         else:
             self.chart = chart_name
 
-        logging.info(f"using chart name '{self.chart}'")
+        logging.info("using chart name '%s'", self.chart)
 
     def include(self, macro, nindent=None, root="."):
         """Include chart directive
@@ -65,8 +68,8 @@ class Helm(object):
 
         template = source.replace("'{{", "{{").replace("}}'", "}}")
 
-        for m in Helm.re_noops_chart.finditer(source):
-            template = template.replace(m[0], self.include(m[2]), 1)
+        for match in Helm.re_noops_chart.finditer(source):
+            template = template.replace(match[0], self.include(match[2]), 1)
 
         return template
 
@@ -79,7 +82,7 @@ class Helm(object):
         parameters: dict = self.core.noops_config["package"]["helm"]["parameters"]
         for profile, config in parameters.items():
             values_name = f"values-{profile}.yaml"
-            logging.info(f"Creating {values_name}")
+            logging.info("Creating %s", values_name)
 
             if self.core.dryrun:
                 print(yaml.dump(config, indent=helper.DEFAULT_INDENT))

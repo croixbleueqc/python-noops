@@ -23,17 +23,21 @@ Cli entrypoint for noopsctl
 
 import logging
 import argparse
+import sys
 from noops.noops import NoOps
 
 def output(args: argparse.Namespace, core: NoOps):
+    """cli: output"""
     core.output(asjson=args.j, indent=args.i)
 
 def pipeline_deploy(args: argparse.Namespace, core: NoOps):
+    """cli: pipeline deploy"""
     scope = "default"
 
     core.pipeline_deploy(scope, args.cargs)
 
 def pipeline_image(args: argparse.Namespace, core: NoOps):
+    """cli: pipeline image"""
     scope = "ci"
 
     if args.pr:
@@ -44,6 +48,7 @@ def pipeline_image(args: argparse.Namespace, core: NoOps):
     core.pipeline_image(scope, args.cargs)
 
 def pipeline_lib(args: argparse.Namespace, core: NoOps):
+    """cli: pipeline lib"""
     scope = "ci"
 
     if args.pr:
@@ -54,9 +59,11 @@ def pipeline_lib(args: argparse.Namespace, core: NoOps):
     core.pipeline_lib(scope, args.cargs)
 
 def local_build(args: argparse.Namespace, core: NoOps):
+    """cli: local build"""
     core.local_build(args.cargs)
 
 def local_run(args: argparse.Namespace, core: NoOps):
+    """cli: local run"""
     core.local_run(args.cargs)
 
 # Args
@@ -65,11 +72,15 @@ parser = argparse.ArgumentParser(
     description="NoOps command line utility",
     formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("-p", "--product", help="product directory", metavar="file", required=True)
-parser.add_argument("-c", "--chart-name", help="override chart name autodetection [helm]", metavar="name")
+parser.add_argument("-c", "--chart-name",
+    help="override chart name autodetection [helm]", metavar="name")
 parser.add_argument("-d", "--dry-run", help="dry run", action="store_true", default=0)
-parser.add_argument("-s", "--show", help="show noops final configuration", action="store_true", default=0)
-parser.add_argument("-r", "--rm-cache", help="remove the workdir cache", action="store_true", default=0)
-parser.add_argument("-v", help="warning (-v), info (-vv), debug (-vvv), error only if unset", action="count", default=0)
+parser.add_argument("-s", "--show",
+    help="show noops final configuration", action="store_true", default=0)
+parser.add_argument("-r", "--rm-cache",
+    help="remove the workdir cache", action="store_true", default=0)
+parser.add_argument("-v",
+    help="warning (-v), info (-vv), debug (-vvv), error only if unset", action="count", default=0)
 
 subparsers = parser.add_subparsers(title="main commands", required=True)
 pipeline_parser = subparsers.add_parser("pipeline", description="Pipeline control")
@@ -81,54 +92,60 @@ image_parser = pipeline_subparsers.add_parser("image")
 image_parser.add_argument("--ci", help="ci scope", action="store_true", default=1)
 image_parser.add_argument("--cd", help="deployment scope", action="store_true", default=0)
 image_parser.add_argument("--pr", help="pullrequest scope", action="store_true", default=0)
-image_parser.add_argument("cargs", help="custom arguments for pipeline.image.* (use -- before arguments list)", nargs="*")
+image_parser.add_argument("cargs",
+    help="custom arguments for pipeline.image.* (use -- before arguments list)", nargs="*")
 image_parser.set_defaults(func=pipeline_image)
 
 lib_parser = pipeline_subparsers.add_parser("lib")
 lib_parser.add_argument("--ci", help="ci scope", action="store_true", default=1)
 lib_parser.add_argument("--cd", help="deployment scope", action="store_true", default=0)
 lib_parser.add_argument("--pr", help="pullrequest scope", action="store_true", default=0)
-lib_parser.add_argument("cargs", help="custom arguments for pipeline.lib.* (use -- before arguments list)", nargs="*")
+lib_parser.add_argument("cargs",
+    help="custom arguments for pipeline.lib.* (use -- before arguments list)", nargs="*")
 lib_parser.set_defaults(func=pipeline_lib)
 
 deploy_parser = pipeline_subparsers.add_parser("deploy")
 deploy_parser.add_argument("--default", help="default scope", action="store_true", default=1)
-deploy_parser.add_argument("cargs", help="custom arguments for pipeline.deploy.* (use -- before arguments list)", nargs="*")
+deploy_parser.add_argument("cargs",
+    help="custom arguments for pipeline.deploy.* (use -- before arguments list)", nargs="*")
 deploy_parser.set_defaults(func=pipeline_deploy)
 
 output_parser.add_argument("-j", help="json format", action="store_true", default=0)
-output_parser.add_argument("-i", help="indentation (space number)", metavar="indent", default=2, type=int)
+output_parser.add_argument("-i",
+    help="indentation (space number)", metavar="indent", default=2, type=int)
 output_parser.set_defaults(func=output)
 
 local_subparsers = local_parser.add_subparsers(title="subcommands", required=True)
 local_build_parser = local_subparsers.add_parser("build")
-local_build_parser.add_argument("cargs", help="custom arguments for local.build (use -- before arguments list)", nargs="*")
+local_build_parser.add_argument("cargs",
+    help="custom arguments for local.build (use -- before arguments list)", nargs="*")
 local_build_parser.set_defaults(func=local_build)
 
 local_run_parser = local_subparsers.add_parser("run")
-local_run_parser.add_argument("cargs", help="custom arguments for local.run (use -- before arguments list)", nargs="*")
+local_run_parser.add_argument("cargs",
+    help="custom arguments for local.run (use -- before arguments list)", nargs="*")
 local_run_parser.set_defaults(func=local_run)
 
 try:
-    args = parser.parse_args()
+    _args = parser.parse_args()
 except TypeError:
     parser.print_help()
-    exit(0)
+    sys.exit(0)
 
 # logging
-if args.v == 0:
-    level=logging.ERROR
-elif args.v == 1:
-    level=logging.WARN
-elif args.v == 2:
-    level=logging.INFO
+if _args.v == 0:
+    LEVEL=logging.ERROR
+elif _args.v == 1:
+    LEVEL=logging.WARN
+elif _args.v == 2:
+    LEVEL=logging.INFO
 else:
-    level=logging.DEBUG
+    LEVEL=logging.DEBUG
 
-logging.basicConfig(level=level)
+logging.basicConfig(level=LEVEL)
 
-#"/home/micky/projects/scaffolds/hello-scaffold-service/"
-core = NoOps(args.product, args.chart_name, args.dry_run, args.show, args.rm_cache)
+# Core
+_core = NoOps(_args.product, _args.chart_name, _args.dry_run, _args.show, _args.rm_cache)
 
 # Call args function (func)
-args.func(args, core)
+_args.func(_args, _core)

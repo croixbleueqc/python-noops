@@ -25,20 +25,26 @@ Core component
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from . import helper
-from .helm import Helm
-from .svcat import ServiceCatalog
 import logging
 import os
-import yaml
 import json
 import subprocess
 import tempfile
 import shutil
 import stat
+import yaml
+from . import helper
+from .helm import Helm
+from .svcat import ServiceCatalog
 
-class NoOps(object):
-    def __init__(self, product_path: str, chart_name: str, dryrun: bool, show_noops_config: bool, rm_cache: bool):
+class NoOps():
+    """
+    NoOps Core
+    """
+    def __init__(
+        self, product_path: str, chart_name: str, dryrun: bool,
+        show_noops_config: bool, rm_cache: bool):
+
         logging.info("NoOps: Init...")
 
         self.dryrun = dryrun
@@ -65,7 +71,7 @@ class NoOps(object):
             noops_product = helper.read_yaml(
                 os.path.join(product_path, helper.DEFAULT_NOOPS_FILE)
                 )
-            logging.debug("Product config: {}".format(noops_product))
+            logging.debug("Product config: %s", noops_product)
 
             # Load devops noops.yaml
             self._prepare_devops(noops_product.get("devops", {}))
@@ -73,11 +79,11 @@ class NoOps(object):
             noops_devops = helper.read_yaml(
                 os.path.join(self.workdir, helper.DEFAULT_NOOPS_FILE)
                 )
-            logging.debug("DevOps config: {}".format(noops_devops))
+            logging.debug("DevOps config: %s", noops_devops)
 
             # NoOps Merged configuration
             self.noops_config = helper.merge(noops_devops, noops_product)
-            logging.debug("Merged config: {}".format(self.noops_config))
+            logging.debug("Merged config: %s", self.noops_config)
 
             # NoOps final configuration
             selectors=[
@@ -99,7 +105,7 @@ class NoOps(object):
             ]
 
             for selector in selectors:
-                self._file_selector(selector, noops_product, noops_devops)    
+                self._file_selector(selector, noops_product, noops_devops)
 
             self.noops_config["package"]["helm"]["values"] = os.path.join(self.workdir, "helm")
 
@@ -111,7 +117,7 @@ class NoOps(object):
             # load noops-generated.yaml from cache
             self.noops_config = helper.read_yaml(self.noops_generated_yaml)
 
-        logging.debug("Final config: {}".format(self.noops_config))
+        logging.debug("Final config: %s", self.noops_config)
 
         if show_noops_config:
             self.output()
@@ -130,7 +136,8 @@ class NoOps(object):
 
     def _prepare_devops(self, devops_config: dict):
         """
-        Prepare the workdir folder by copying a devops structure from a local tree or from a git repository.
+        Prepare the workdir folder by copying a devops structure
+        from a local tree or from a git repository.
         """
         local_config = devops_config.get("local")
         git_config = devops_config.get("git")
@@ -152,7 +159,7 @@ class NoOps(object):
                     [
                         "clone",
                         "--depth=1",
-                        "--branch={}".format(git_config["branch"]),
+                        "--branch={}".format(git_config["branch"]), # pylint: disable=consider-using-f-string
                         git_config["clone"],
                         clone_path
                     ],
@@ -161,10 +168,10 @@ class NoOps(object):
                 # remove .git folder
                 shutil_kwargs={}
                 if os.name == "nt":
-                    def remove_readonly(fn, path, excinfo):
+                    def remove_readonly(callback, path, excinfo): # pylint: disable=unused-argument
                         # Some files in .git folder are flagged read only on Windows
                         os.chmod(path, stat.S_IWRITE)
-                        fn(path)
+                        callback(path)
                     shutil_kwargs["onerror"]=remove_readonly
 
                 shutil.rmtree(os.path.join(clone_path, ".git"), **shutil_kwargs)
@@ -184,7 +191,8 @@ class NoOps(object):
         """
         Determines the file to use (remote vs local)
 
-        The main target is to use a devops file (remote) but this one can be overriden with another version located with the product (local)
+        The main target is to use a devops file (remote)
+        This one can be overriden with another version located with the product (local)
         """
         keys = selector.split(".")
 
@@ -195,7 +203,7 @@ class NoOps(object):
         for key in keys[:-1]:
             product_iter = product_iter.get(key, {})
             devops_iter = devops_iter.get(key, {})
-            
+
             if config_iter.get(key) is None:
                 config_iter[key]={}
             config_iter = config_iter[key]
@@ -207,7 +215,7 @@ class NoOps(object):
             if devops_file is not None:
                 config_iter[keys[-1]] = os.path.join(self.workdir, devops_file)
             else:
-                logging.debug(f"selector {selector} is not set")
+                logging.debug("selector %s is not set", selector)
         else:
             config_iter[keys[-1]] = os.path.join(self.product_path, product_file)
 
@@ -221,6 +229,9 @@ class NoOps(object):
             print(yaml.dump(self.noops_config, indent=indent))
 
     def is_feature_enabled(self, feature: str) -> bool:
+        """
+        Check if a specific feature is enabled
+        """
         try:
             return self.noops_config["features"][feature]
         except KeyError:
@@ -251,18 +262,18 @@ class NoOps(object):
             "NOOPS_GENERATED_YAML": self.noops_generated_yaml
         }
 
-    def execute(self, cmd, args, extra_envs={}, forcerun=False):
+    def execute(self, cmd, args, extra_envs=None, forcerun=False):
         """
         Execute a command.
 
         The command needs to have execution permission for the running user.
         """
+        if extra_envs is None:
+            extra_envs = {}
+
         custom_envs = {**os.environ, **extra_envs}
 
-        logging.debug("execute: {} {}".format(
-            cmd,
-            " ".join(args)
-        ))
+        logging.debug("execute: %s %s", cmd, " ".join(args))
 
         if forcerun or not self.dryrun:
             subprocess.run(
@@ -288,7 +299,7 @@ class NoOps(object):
     def pipeline_deploy(self, scope, custom_args):
         """
         Deploy from a pipeline
-        
+
         scope: default
         """
 
@@ -304,10 +315,10 @@ class NoOps(object):
                 extra_envs["NOOPS_WHITE_LABEL_REBRAND"]=branding["rebrand"]
                 extra_envs["NOOPS_WHITE_LABEL_MARKETER"]=branding["marketer"]
 
-                logging.info("rebrand {} for {}".format(
+                logging.info("rebrand %s for %s",
                     branding["rebrand"],
                     branding["marketer"]
-                ))
+                )
 
                 self.prepare()
                 self.execute(
@@ -330,7 +341,7 @@ class NoOps(object):
     def pipeline_image(self, scope, custom_args):
         """
         Build an image from a pipeline
-        
+
         scope: ci, cd, pr
         """
         self.exec_common_flow(
@@ -338,11 +349,11 @@ class NoOps(object):
             scope,
             custom_args
         )
-    
+
     def pipeline_lib(self, scope, custom_args):
         """
         Build a lib from a pipeline
-        
+
         scope: ci, cd, pr
         """
         self.exec_common_flow(

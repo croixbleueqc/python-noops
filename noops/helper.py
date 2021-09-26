@@ -21,11 +21,10 @@ Defines some standard functions or default variables
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-import yaml
 import json
-import os
 from functools import reduce
 from copy import deepcopy
+import yaml
 
 DEFAULT_INDENT=2
 DEFAULT_NOOPS_FILE="noops.yaml"
@@ -36,35 +35,35 @@ DEFAULT_FEATURES={
     "white-label": False
 }
 
-def read_yaml(file: str) -> dict: # pragma: no cover
+def read_yaml(file_path: str) -> dict: # pragma: no cover
     """
     Read a yaml file
     """
-    with open(file, "r") as f:
-        noops = yaml.load(f, Loader=yaml.SafeLoader)
+    with open(file_path, "r", encoding="UTF-8") as file:
+        noops = yaml.load(file, Loader=yaml.SafeLoader)
 
     return noops
 
-def write_yaml(file: str, content: dict, indent=DEFAULT_INDENT): # pragma: no cover
+def write_yaml(file_path: str, content: dict, indent=DEFAULT_INDENT): # pragma: no cover
     """
     Write as a yaml file
     """
-    with open(file, "w") as f:
-        yaml.dump(content, stream=f, indent=indent)
+    with open(file_path, "w", encoding="UTF-8") as file:
+        yaml.dump(content, stream=file, indent=indent)
 
-def write_json(file: str, content: dict, indent=DEFAULT_INDENT): # pragma: no cover
+def write_json(file_path: str, content: dict, indent=DEFAULT_INDENT): # pragma: no cover
     """
     Write as a json file
     """
-    with open(file, "w") as f:
-        json.dump(content, fp=f, indent=indent)
+    with open(file_path, "w", encoding="UTF-8") as file:
+        json.dump(content, fp=file, indent=indent)
 
-def write_raw(file: str, content: str): # pragma: no cover
+def write_raw(file_path: str, content: str): # pragma: no cover
     """
     Write as a text file
     """
-    with open(file, "w") as f:
-        f.write(content)
+    with open(file_path, "w", encoding="UTF-8") as file:
+        file.write(content)
 
 def deep_merge(dict_base: dict, dict_custom: dict) -> dict:
     """
@@ -76,8 +75,8 @@ def deep_merge(dict_base: dict, dict_custom: dict) -> dict:
     for key, value in dict_custom.items():
         if isinstance(value, dict):
             node = result.setdefault(key, {})
-            mergedNode = deep_merge(node, value)
-            result[key] = mergedNode
+            merged_node = deep_merge(node, value)
+            result[key] = merged_node
         else:
             result[key] = value
 

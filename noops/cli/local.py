@@ -1,7 +1,6 @@
-#! /usr/bin/env python3
-
 """
-Cli entrypoint for noopsctl
+noopsctl local build
+noopsctl local run
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -21,6 +20,27 @@ Cli entrypoint for noopsctl
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from noops.cli.main import cli
+import click
+from . import cli, create_noops_instance
 
-cli() # pylint: disable=no-value-for-parameter
+@cli.group()
+def local():
+    """build and run locally"""
+
+@local.command()
+@click.pass_obj
+@click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
+def build(shared, cargs):
+    """build your product"""
+
+    core = create_noops_instance(shared)
+    core.local_build(list(cargs))
+
+@local.command()
+@click.pass_obj
+@click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
+def run(shared, cargs):
+    """run your product"""
+
+    core = create_noops_instance(shared)
+    core.local_run(list(cargs))

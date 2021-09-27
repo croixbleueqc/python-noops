@@ -1,7 +1,5 @@
-#! /usr/bin/env python3
-
 """
-Cli entrypoint for noopsctl
+noopsctl output
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -21,6 +19,16 @@ Cli entrypoint for noopsctl
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from noops.cli.main import cli
+import click
+from noops.helper import DEFAULT_INDENT
+from . import cli, create_noops_instance
 
-cli() # pylint: disable=no-value-for-parameter
+@cli.command()
+@click.pass_obj
+@click.option('-j', '--json', help='json format', default=False, is_flag=True)
+@click.option('-i', '--indent', help='space indentation',
+    default=DEFAULT_INDENT, show_default=True, type=click.IntRange(2, 8), metavar='SPACES')
+def output(shared, json, indent):
+    """display few informations"""
+    core = create_noops_instance(shared)
+    core.output(asjson=json, indent=indent)

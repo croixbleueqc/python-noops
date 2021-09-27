@@ -1,5 +1,12 @@
+"""
+Setup
+"""
+
 #!/usr/bin/env python3
 from setuptools import setup, find_packages
+
+with open('README.md', encoding='UTF-8') as file:
+    LONG_DESCRIPTION = file.read()
 
 setup(
     name='noops',
@@ -8,7 +15,8 @@ setup(
     packages=find_packages(exclude=['tests']),
     install_requires=[
         'pyyaml',
-        'pydantic'
+        'pydantic',
+        'click'
     ],
     extra_require={
         'dev': [
@@ -24,7 +32,7 @@ setup(
     author_email="devops@qc.croixbleue.ca",
     license="LGPL-3.0-or-later",
     description="NoOps command line utility",
-    long_description=open('README.md').read(),
+    long_description=LONG_DESCRIPTION,
     url="https://github.com/croixbleueqc/python-noops",
     keywords=["noops", "devops", "git"],
     classifiers=[

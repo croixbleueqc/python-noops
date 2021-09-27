@@ -51,6 +51,12 @@ def write_yaml(file_path: str, content: dict, indent=DEFAULT_INDENT): # pragma: 
     with open(file_path, "w", encoding="UTF-8") as file:
         yaml.dump(content, stream=file, indent=indent)
 
+def json2yaml(content: str, indent=DEFAULT_INDENT) -> str: # pragma: no cover
+    """
+    Return as a yaml
+    """
+    return yaml.dump(json.loads(content), indent=indent)
+
 def write_json(file_path: str, content: dict, indent=DEFAULT_INDENT): # pragma: no cover
     """
     Write as a json file

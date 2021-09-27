@@ -46,7 +46,7 @@ def cli(ctx, verbose, **kwargs):
 
     logging.basicConfig(level=level)
 
-    if ctx.invoked_subcommand != "version" and \
+    if ctx.invoked_subcommand not in ("version", "targets") and \
         kwargs['product'] is None:
         raise click.BadOptionUsage("product","Missing option '-p' / '--product'.")
 

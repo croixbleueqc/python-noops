@@ -23,4 +23,5 @@ import noops.cli.version    # pylint: disable=unused-import
 import noops.cli.output     # pylint: disable=unused-import
 import noops.cli.pipeline   # pylint: disable=unused-import
 import noops.cli.local      # pylint: disable=unused-import
+import noops.cli.targets    # pylint: disable=unused-import
 from . import cli           # pylint: disable=unused-import

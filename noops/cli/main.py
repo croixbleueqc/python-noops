@@ -1,7 +1,5 @@
-#! /usr/bin/env python3
-
 """
-Cli entrypoint for noopsctl
+noopsctl (cli composition)
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -21,6 +19,8 @@ Cli entrypoint for noopsctl
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from noops.cli.main import cli
-
-cli() # pylint: disable=no-value-for-parameter
+import noops.cli.version    # pylint: disable=unused-import
+import noops.cli.output     # pylint: disable=unused-import
+import noops.cli.pipeline   # pylint: disable=unused-import
+import noops.cli.local      # pylint: disable=unused-import
+from . import cli           # pylint: disable=unused-import

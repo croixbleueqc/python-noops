@@ -1,7 +1,5 @@
-#! /usr/bin/env python3
-
 """
-Cli entrypoint for noopsctl
+noopsctl version
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -21,6 +19,14 @@ Cli entrypoint for noopsctl
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from noops.cli.main import cli
+import importlib.metadata
+import click
+from . import cli
 
-cli() # pylint: disable=no-value-for-parameter
+@cli.command()
+def version():
+    """print the client version information"""
+    try:
+        click.echo(f"version: {importlib.metadata.version('noops')}")
+    except importlib.metadata.PackageNotFoundError:
+        click.echo("version: unknown")

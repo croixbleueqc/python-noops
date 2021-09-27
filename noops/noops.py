@@ -51,6 +51,9 @@ class NoOps():
         self.workdir = os.path.join(product_path, helper.DEFAULT_WORKDIR)
         self.product_path = product_path
 
+        # working directory
+        os.chdir(self.product_path)
+
         self.noops_generated_json = os.path.join(self.workdir, "noops-generated.json")
         self.noops_generated_yaml = os.path.join(self.workdir, "noops-generated.yaml")
 

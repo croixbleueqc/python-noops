@@ -21,7 +21,7 @@ noopsctl (cli entrypoint)
 
 import logging
 import click
-from noops.noops import NoOps
+from ..noops import NoOps
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.pass_context

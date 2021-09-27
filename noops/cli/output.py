@@ -20,7 +20,7 @@ noopsctl output
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
 import click
-from noops.helper import DEFAULT_INDENT
+from ..helper import DEFAULT_INDENT
 from . import cli, create_noops_instance
 
 @cli.command()

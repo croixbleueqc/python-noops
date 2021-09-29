@@ -1,5 +1,5 @@
 """
-noopsctl (cli composition)
+Serve packages (Development ONLY)
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -19,10 +19,24 @@ noopsctl (cli composition)
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-import noops.cli.version    # pylint: disable=unused-import
-import noops.cli.output     # pylint: disable=unused-import
-import noops.cli.pipeline   # pylint: disable=unused-import
-import noops.cli.local      # pylint: disable=unused-import
-import noops.cli.targets    # pylint: disable=unused-import
-import noops.cli.package    # pylint: disable=unused-import
-from . import cli           # pylint: disable=unused-import
+import functools
+import os
+import logging
+from http.server import socketserver, SimpleHTTPRequestHandler
+
+def serve_forever(directory: str, bind: str, port: int):
+    """Start a web server"""
+    server_address = (
+        bind or "0.0.0.0",
+        port or 8080
+    )
+
+    if directory is None:
+        directory = os.getcwd()
+
+    handler = functools.partial(SimpleHTTPRequestHandler, directory=directory)
+
+    logging.warning("Serve is not recommended for production.")
+    with socketserver.TCPServer(server_address, handler) as httpd:
+        print(f"Connect on http://{server_address[0]}:{server_address[1]}.")
+        httpd.serve_forever()

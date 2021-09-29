@@ -34,7 +34,7 @@ import shutil
 import stat
 import yaml
 from . import helper
-from .helm import Helm
+from .package.helm import Helm
 from .svcat import ServiceCatalog
 
 class NoOps():

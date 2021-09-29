@@ -110,7 +110,9 @@ class NoOps():
             for selector in selectors:
                 self._file_selector(selector, noops_product, noops_devops)
 
-            self.noops_config["package"]["helm"]["values"] = os.path.join(self.workdir, "helm")
+            self.noops_config["package"]["helm"]["values"] = os.path.join(
+                self.noops_config["package"]["helm"]["chart"], "noops"
+            )
 
             helper.write_json(self.noops_generated_json, self.noops_config)
             helper.write_yaml(self.noops_generated_yaml, self.noops_config)
@@ -131,8 +133,9 @@ class NoOps():
         # Svcat
         self.svcat = ServiceCatalog(self)
 
-        # Done
+        # Final steps / Done
         if not dryrun:
+            os.makedirs(self.noops_config["package"]["helm"]["values"], exist_ok=True)
             logging.info("NoOps: Ready !")
         else:
             logging.info("NoOps: Dry-run mode ready !")

@@ -156,17 +156,15 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
             svcat_kinds += "---\n"
 
         if svcat_kinds != "":
-            if self.core.is_dry_run():
-                print(svcat_kinds)
-            else:
-                helper.write_raw(
-                    os.path.join(
-                        self.helm.config["chart"],
-                        "templates",
-                        "svcat.yaml"
-                    ),
-                    svcat_kinds
-                )
+            helper.write_raw(
+                os.path.join(
+                    self.helm.config["chart"],
+                    "templates",
+                    "svcat.yaml"
+                ),
+                svcat_kinds,
+                dry_run=self.core.is_dry_run()
+            )
 
         logging.info("Creating service catalog values")
 
@@ -176,13 +174,11 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
             }
         }
 
-        if self.core.is_dry_run():
-            print(yaml.dump(svcat_values, indent=helper.DEFAULT_INDENT))
-        else:
-            self.helm.create_values_directory()
+        self.helm.create_values_directory()
 
-            helper.write_yaml(
-                self.helm.get_values_path("values-svcat.yaml"),
-                svcat_values,
-                indent=helper.DEFAULT_INDENT
-            )
+        helper.write_yaml(
+            self.helm.get_values_path("values-svcat.yaml"),
+            svcat_values,
+            indent=helper.DEFAULT_INDENT,
+            dry_run=self.core.is_dry_run()
+        )

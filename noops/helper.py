@@ -45,10 +45,15 @@ def read_yaml(file_path: str) -> dict: # pragma: no cover
 
     return noops
 
-def write_yaml(file_path: str, content: dict, indent=DEFAULT_INDENT): # pragma: no cover
+def write_yaml(file_path: str, content: dict, indent=DEFAULT_INDENT,
+    dry_run: bool = False):
     """
     Write as a yaml file
     """
+    if dry_run:
+        print(yaml.dump(content, indent=indent))
+        return
+
     with open(file_path, "w", encoding="UTF-8") as file:
         yaml.dump(content, stream=file, indent=indent)
 
@@ -58,17 +63,26 @@ def json2yaml(content: str, indent=DEFAULT_INDENT) -> str: # pragma: no cover
     """
     return yaml.dump(json.loads(content), indent=indent)
 
-def write_json(file_path: str, content: dict, indent=DEFAULT_INDENT): # pragma: no cover
+def write_json(file_path: str, content: dict, indent=DEFAULT_INDENT,
+    dry_run: bool = False):
     """
     Write as a json file
     """
+    if dry_run:
+        print(json.dumps(content, indent=indent))
+        return
+
     with open(file_path, "w", encoding="UTF-8") as file:
         json.dump(content, fp=file, indent=indent)
 
-def write_raw(file_path: str, content: str): # pragma: no cover
+def write_raw(file_path: str, content: str, dry_run: bool = False):
     """
     Write as a text file
     """
+    if dry_run:
+        print(content)
+        return
+
     with open(file_path, "w", encoding="UTF-8") as file:
         file.write(content)
 

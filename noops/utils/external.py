@@ -49,3 +49,21 @@ def execute(cmd: str, args: List[str],
         env=custom_envs,
         cwd=product_path or os.getcwd()
     )
+
+def get_stdout_from_shell(cmd: str) -> str:
+    """
+    Execute a command from a shell and return the captured output
+    """
+    return subprocess.run(
+        cmd,
+        shell=True, check=True, capture_output=True
+    ).stdout.decode().strip()
+
+def execute_from_shell(cmd: str):
+    """
+    Execute a command from a shell
+    """
+    subprocess.run(
+        cmd,
+        shell=True, check=True
+    )

@@ -25,11 +25,10 @@ Handles helm section of noops.yaml
 
 import logging
 import os
-import subprocess
 import shutil
 import re
-import yaml
 from .. import helper
+from ..utils.external import execute, get_stdout_from_shell, execute_from_shell
 
 class Helm():
     """
@@ -119,14 +118,12 @@ class Helm():
             values_name = f"{prefix}-{profile}.yaml"
             logging.info("Creating %s", values_name)
 
-            if self.core.is_dry_run():
-                print(yaml.dump(config, indent=helper.DEFAULT_INDENT))
-            else:
-                helper.write_yaml(
-                    self.get_values_path(values_name),
-                    config,
-                    indent=helper.DEFAULT_INDENT
-                )
+            helper.write_yaml(
+                self.get_values_path(values_name),
+                config,
+                indent=helper.DEFAULT_INDENT,
+                dry_run=self.core.is_dry_run()
+            )
 
     def get_values_path(self, values_filename: str = None) -> str:
         """
@@ -134,11 +131,11 @@ class Helm():
         """
         if values_filename is None:
             return self.config["values"]
-        else:
-            return os.path.join(
-                self.config["values"],
-                values_filename
-            )
+
+        return os.path.join(
+            self.config["values"],
+            values_filename
+        )
 
     def create_package(self, app_version: str, revision: str, # pylint: disable=too-many-arguments
         description: str, name: str, values: str):
@@ -149,16 +146,12 @@ class Helm():
         # Compute missing parameters values
         if app_version is None:
             app_version = "sha-" + \
-                subprocess.run(
-                    "git rev-parse --short=7 HEAD",
-                    shell=True, check=True, capture_output=True
-                ).stdout.decode().strip()
+                get_stdout_from_shell("git rev-parse --short=7 HEAD")
 
         if description is None:
-            description = subprocess.run(
-                'git log --pretty=format:"%s" --no-decorate -n 1 HEAD',
-                shell=True, check=True, capture_output=True
-            ).stdout.decode().strip()
+            description = get_stdout_from_shell(
+                'git log --pretty=format:"%s" --no-decorate -n 1 HEAD'
+            )
 
         if name is None:
             name = os.path.split(os.getcwd())[1]
@@ -199,23 +192,22 @@ class Helm():
         chart_values = helper.deep_merge(chart_values, override_values)
 
         # Store
-        if self.core.is_dry_run():
-            logging.info("Generated Chart.yaml")
-            print(yaml.dump(chart, indent=helper.DEFAULT_INDENT))
-            logging.info("Generated Values.yaml")
-            print(yaml.dump(chart_values, indent=helper.DEFAULT_INDENT))
-        else:
-            helper.write_yaml(chart_file, chart)
-            helper.write_yaml(chart_values_file, chart_values)
+        logging.info("Generated Chart.yaml")
+        helper.write_yaml(chart_file, chart, dry_run=self.core.is_dry_run())
 
-            subprocess.run(
-                "helm package {} -d {}".format( # pylint: disable=consider-using-f-string
-                    self.config["chart"],
-                    self.core.workdir
-                ),
-                shell=True,
-                check=True
-            )
+        logging.info("Generated Values.yaml")
+        helper.write_yaml(chart_values_file, chart_values, dry_run=self.core.is_dry_run())
+
+        execute(
+            "helm",
+            [
+                "package",
+                self.config["chart"],
+                "-d",
+                self.core.workdir
+            ],
+            dry_run=self.core.is_dry_run()
+        )
 
     def push(self, directory, url):
         """
@@ -236,8 +228,4 @@ class Helm():
             directory
         )
 
-        subprocess.run(
-            f"helm repo index {directory} --url {url}",
-            shell=True,
-            check=True
-        )
+        execute_from_shell(f"helm repo index {directory} --url {url}")

@@ -76,6 +76,15 @@ class Helm():
 
         return template
 
+    def create_values_directory(self):
+        """
+        mkdir the values directory if it doesn't exist
+        """
+        if self.core.is_dry_run():
+            return
+
+        os.makedirs(self.get_values_path(), exist_ok=True)
+
     def create_values(self):
         """
         Create values files based on:
@@ -83,6 +92,8 @@ class Helm():
         - package.helm.targets-parameters
         """
         logging.info("Creating values files")
+
+        self.create_values_directory()
 
         self._create_values(
             self.config["parameters"],
@@ -112,13 +123,22 @@ class Helm():
                 print(yaml.dump(config, indent=helper.DEFAULT_INDENT))
             else:
                 helper.write_yaml(
-                    os.path.join(
-                        self.config["values"],
-                        values_name
-                    ),
+                    self.get_values_path(values_name),
                     config,
                     indent=helper.DEFAULT_INDENT
                 )
+
+    def get_values_path(self, values_filename: str = None) -> str:
+        """
+        Directory where to store values.yaml files
+        """
+        if values_filename is None:
+            return self.config["values"]
+        else:
+            return os.path.join(
+                self.config["values"],
+                values_filename
+            )
 
     def create_package(self, app_version: str, revision: str, # pylint: disable=too-many-arguments
         description: str, name: str, values: str):

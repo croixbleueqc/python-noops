@@ -93,12 +93,6 @@ class NoOps():
                 "package.lib.dockerfile",
                 "package.helm.chart",
                 "package.helm.preprocessor",
-                "pipeline.image.ci",
-                "pipeline.image.cd",
-                "pipeline.image.pr",
-                "pipeline.lib.ci",
-                "pipeline.lib.cd",
-                "pipeline.lib.pr",
                 "pipeline.deploy.default",
                 "local.build.posix",
                 "local.build.nt",
@@ -108,6 +102,11 @@ class NoOps():
 
             for selector in selectors:
                 self._file_selector(product_path, selector, noops_product, noops_devops)
+
+            for target, cfg in self.noops_config["pipeline"].items():
+                for key in cfg.keys():
+                    self._file_selector(product_path, f"pipeline.{target}.{key}",
+                        noops_product, noops_devops)
 
             self.noops_config["package"]["helm"]["values"] = os.path.join(
                 self.noops_config["package"]["helm"]["chart"], "noops"
@@ -203,6 +202,8 @@ class NoOps():
         The main target is to use a devops file (remote)
         This one can be overriden with another version located with the product (local)
         """
+        logging.debug(f"file selector for: {selector}")
+
         keys = selector.split(".")
 
         product_iter = noops_product

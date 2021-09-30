@@ -161,7 +161,7 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
             else:
                 helper.write_raw(
                     os.path.join(
-                        self.core.noops_config["package"]["helm"]["chart"],
+                        self.helm.config["chart"],
                         "templates",
                         "svcat.yaml"
                     ),
@@ -179,8 +179,10 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
         if self.core.is_dry_run():
             print(yaml.dump(svcat_values, indent=helper.DEFAULT_INDENT))
         else:
+            self.helm.create_values_directory()
+
             helper.write_yaml(
-                os.path.join(self.core.workdir, "helm", "values-svcat.yaml"),
+                self.helm.get_values_path("values-svcat.yaml"),
                 svcat_values,
                 indent=helper.DEFAULT_INDENT
             )

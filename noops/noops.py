@@ -46,94 +46,105 @@ class NoOps():
 
         logging.info("NoOps: Init...")
 
+        # Use absolute path
+        product_path = os.path.abspath(product_path)
+
         # change working directory to the product path
         os.chdir(product_path)
 
         self.dry_run = dry_run
         self.workdir = os.path.join(product_path, helper.DEFAULT_WORKDIR)
-        self._paths = {}
 
-        noops_generated_json = self._get_generated_noops("json")
-        noops_generated_yaml = self._get_generated_noops("yaml")
+        if rm_cache or not self._iscache():
+            self._create_cache(product_path)
 
-        # Determine if we need to flush the cache or reuse it
-        if rm_cache or \
-            not os.path.isfile(noops_generated_json) or \
-            not os.path.isfile(noops_generated_yaml):
-
-            # flushing cache and generate final noops.yaml file
-
-            # remove possible cache
-            if os.path.exists(self.workdir):
-                shutil.rmtree(self.workdir)
-
-            logging.info("without cache")
-
-            # Load product noops.yaml
-            noops_product = helper.read_yaml(
-                os.path.join(product_path, helper.DEFAULT_NOOPS_FILE)
-                )
-            logging.debug("Product config: %s", noops_product)
-
-            # Load devops noops.yaml
-            self._prepare_devops(noops_product.get("devops", {}))
-
-            noops_devops = helper.read_yaml(
-                os.path.join(self.workdir, helper.DEFAULT_NOOPS_FILE)
-                )
-            logging.debug("DevOps config: %s", noops_devops)
-
-            # NoOps Merged configuration
-            self.noops_config = helper.merge(noops_devops, noops_product)
-            logging.debug("Merged config: %s", self.noops_config)
-
-            # NoOps final configuration
-            selectors=[
-                "package.docker.dockerfile",
-                "package.lib.dockerfile",
-                "package.helm.chart",
-                "package.helm.preprocessor",
-                "pipeline.deploy.default",
-                "local.build.posix",
-                "local.build.nt",
-                "local.run.posix",
-                "local.run.nt",
-            ]
-
-            for selector in selectors:
-                self._file_selector(product_path, selector, noops_product, noops_devops)
-
-            for target, cfg in self.noops_config["pipeline"].items():
-                for key in cfg.keys():
-                    self._file_selector(product_path, f"pipeline.{target}.{key}",
-                        noops_product, noops_devops)
-
-            self.noops_config["package"]["helm"]["values"] = os.path.join(
-                self.noops_config["package"]["helm"]["chart"], "noops"
-            )
-
-            helper.write_json(noops_generated_json, self.noops_config)
-            helper.write_yaml(noops_generated_yaml, self.noops_config)
-        else:
-            logging.info("using cache")
-
-            # load noops-generated.yaml from cache
-            self.noops_config = helper.read_yaml(noops_generated_yaml)
+        self._load_cache()
 
         logging.debug("Final config: %s", self.noops_config)
 
-        # Final steps / Done
-        if not dry_run:
-            os.makedirs(self.noops_config["package"]["helm"]["values"], exist_ok=True)
-            logging.info("NoOps: Ready !")
-        else:
-            logging.info("NoOps: Dry-run mode ready !")
+        # Done
+        logging.info("NoOps: Ready !" if not dry_run else "NoOps: Dry-run mode ready !")
 
-    def helm(self) -> Helm:
+    def _iscache(self) -> bool:
+        return os.path.isfile(self._get_generated_noops_json()) and \
+            os.path.isfile(self._get_generated_noops_yaml())
+
+    def _create_cache(self, product_path: str):
+        # remove possible cache
+        if os.path.exists(self.workdir):
+            logging.info("purging cache")
+            shutil.rmtree(self.workdir)
+
+        logging.info("creating cache")
+
+        # Load product noops.yaml
+        noops_product = helper.read_yaml(
+            os.path.join(product_path, helper.DEFAULT_NOOPS_FILE)
+            )
+        logging.debug("Product config: %s", noops_product)
+
+        # Load devops noops.yaml
+        self._prepare_devops(noops_product.get("devops", {}))
+
+        noops_devops = helper.read_yaml(
+            os.path.join(self.workdir, helper.DEFAULT_NOOPS_FILE)
+            )
+        logging.debug("DevOps config: %s", noops_devops)
+
+        # NoOps Merged configuration
+        self.noops_config = helper.merge(noops_devops, noops_product)
+        logging.debug("Merged config: %s", self.noops_config)
+
+        # NoOps final configuration
+        selectors=[
+            "package.docker.dockerfile",
+            "package.lib.dockerfile",
+            "package.helm.chart",
+            "package.helm.preprocessor",
+            "pipeline.deploy.default",
+            "local.build.posix",
+            "local.build.nt",
+            "local.run.posix",
+            "local.run.nt",
+        ]
+
+        for selector in selectors:
+            self._file_selector(product_path, selector, noops_product, noops_devops)
+
+        for target, cfg in self.noops_config["pipeline"].items():
+            for key in cfg.keys():
+                self._file_selector(product_path, f"pipeline.{target}.{key}",
+                    noops_product, noops_devops)
+
+        self.noops_config["package"]["helm"]["values"] = os.path.join(
+            self.noops_config["package"]["helm"]["chart"], "noops"
+        )
+
+        helper.write_json(
+            self._get_generated_noops_json(),
+            self.noops_config
+        )
+        helper.write_yaml(
+            self._get_generated_noops_yaml(),
+            self.noops_config
+        )
+
+    def _load_cache(self):
+        logging.info("loading cached configuration")
+
+        self.noops_config = helper.read_yaml(self._get_generated_noops_yaml())
+
+    def _get_generated_noops_json(self):
+        return os.path.join(self.workdir, f"{helper.GENERATED_NOOPS}.json")
+
+    def _get_generated_noops_yaml(self):
+        return os.path.join(self.workdir, f"{helper.GENERATED_NOOPS}.yaml")
+
+    def helm(self, chart_name: str = None) -> Helm:
         """
         New Helm instance
         """
-        return Helm(self)
+        return Helm(self, chart_name)
 
     def service_catalog(self) -> ServiceCatalog:
         """
@@ -202,7 +213,7 @@ class NoOps():
         The main target is to use a devops file (remote)
         This one can be overriden with another version located with the product (local)
         """
-        logging.debug(f"file selector for: {selector}")
+        logging.debug("file selector for: %s", selector)
 
         keys = selector.split(".")
 
@@ -275,9 +286,6 @@ class NoOps():
         Environment variables to expose when we need to execute a command
         """
         return {
-            "NOOPS_GENERATED_JSON": self._get_generated_noops("json"),
-            "NOOPS_GENERATED_YAML": self._get_generated_noops("yaml")
+            "NOOPS_GENERATED_JSON": self._get_generated_noops_json(),
+            "NOOPS_GENERATED_YAML": self._get_generated_noops_yaml()
         }
-
-    def _get_generated_noops(self, ext: str):
-        return os.path.join(self.workdir, f"{helper.GENERATED_NOOPS}.{ext}")

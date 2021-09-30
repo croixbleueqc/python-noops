@@ -5,7 +5,6 @@ Core component
 
 - noops config merger
 - Caching
-- expose cli functions
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -28,7 +27,6 @@ Core component
 import logging
 import os
 import json
-import subprocess
 import tempfile
 import shutil
 import stat
@@ -36,31 +34,32 @@ import yaml
 from . import helper
 from .package.helm import Helm
 from .svcat import ServiceCatalog
+from .utils.external import execute
 
 class NoOps():
     """
     NoOps Core
     """
+
     def __init__(
-        self, product_path: str, chart_name: str, dryrun: bool,
-        show_noops_config: bool, rm_cache: bool):
+        self, product_path: str, dry_run: bool, rm_cache: bool):
 
         logging.info("NoOps: Init...")
 
-        self.dryrun = dryrun
+        # change working directory to the product path
+        os.chdir(product_path)
+
+        self.dry_run = dry_run
         self.workdir = os.path.join(product_path, helper.DEFAULT_WORKDIR)
-        self.product_path = product_path
+        self._paths = {}
 
-        # working directory
-        os.chdir(self.product_path)
-
-        self.noops_generated_json = os.path.join(self.workdir, "noops-generated.json")
-        self.noops_generated_yaml = os.path.join(self.workdir, "noops-generated.yaml")
+        noops_generated_json = self._get_generated_noops("json")
+        noops_generated_yaml = self._get_generated_noops("yaml")
 
         # Determine if we need to flush the cache or reuse it
         if rm_cache or \
-            not os.path.isfile(self.noops_generated_json) or \
-            not os.path.isfile(self.noops_generated_yaml):
+            not os.path.isfile(noops_generated_json) or \
+            not os.path.isfile(noops_generated_yaml):
 
             # flushing cache and generate final noops.yaml file
 
@@ -108,37 +107,40 @@ class NoOps():
             ]
 
             for selector in selectors:
-                self._file_selector(selector, noops_product, noops_devops)
+                self._file_selector(product_path, selector, noops_product, noops_devops)
 
             self.noops_config["package"]["helm"]["values"] = os.path.join(
                 self.noops_config["package"]["helm"]["chart"], "noops"
             )
 
-            helper.write_json(self.noops_generated_json, self.noops_config)
-            helper.write_yaml(self.noops_generated_yaml, self.noops_config)
+            helper.write_json(noops_generated_json, self.noops_config)
+            helper.write_yaml(noops_generated_yaml, self.noops_config)
         else:
             logging.info("using cache")
 
             # load noops-generated.yaml from cache
-            self.noops_config = helper.read_yaml(self.noops_generated_yaml)
+            self.noops_config = helper.read_yaml(noops_generated_yaml)
 
         logging.debug("Final config: %s", self.noops_config)
 
-        if show_noops_config:
-            self.output()
-
-        # Helm
-        self.helm = Helm(self, chart_name)
-
-        # Svcat
-        self.svcat = ServiceCatalog(self)
-
         # Final steps / Done
-        if not dryrun:
+        if not dry_run:
             os.makedirs(self.noops_config["package"]["helm"]["values"], exist_ok=True)
             logging.info("NoOps: Ready !")
         else:
             logging.info("NoOps: Dry-run mode ready !")
+
+    def helm(self) -> Helm:
+        """
+        New Helm instance
+        """
+        return Helm(self)
+
+    def service_catalog(self) -> ServiceCatalog:
+        """
+        New Service Catalog instance
+        """
+        return ServiceCatalog(self)
 
     def _prepare_devops(self, devops_config: dict):
         """
@@ -160,7 +162,7 @@ class NoOps():
                 clone_path = os.path.join(tmpdirname, helper.DEFAULT_WORKDIR)
 
                 # clone
-                self.execute(
+                execute(
                     "git",
                     [
                         "clone",
@@ -168,8 +170,8 @@ class NoOps():
                         "--branch={}".format(git_config["branch"]), # pylint: disable=consider-using-f-string
                         git_config["clone"],
                         clone_path
-                    ],
-                    forcerun=True)
+                    ]
+                )
 
                 # remove .git folder
                 shutil_kwargs={}
@@ -193,7 +195,8 @@ class NoOps():
         logging.error("devops/local or devops/git not found !")
         raise ValueError()
 
-    def _file_selector(self, selector: str, noops_product: dict, noops_devops: dict):
+    def _file_selector(self, product_path: str, selector: str,
+        noops_product: dict, noops_devops: dict):
         """
         Determines the file to use (remote vs local)
 
@@ -223,7 +226,7 @@ class NoOps():
             else:
                 logging.debug("selector %s is not set", selector)
         else:
-            config_iter[keys[-1]] = os.path.join(self.product_path, product_file)
+            config_iter[keys[-1]] = os.path.join(product_path, product_file)
 
     def output(self, asjson=False, indent=helper.DEFAULT_INDENT):
         """
@@ -233,6 +236,12 @@ class NoOps():
             print(json.dumps(self.noops_config, indent=indent))
         else:
             print(yaml.dump(self.noops_config, indent=indent))
+
+    def is_dry_run(self) -> bool:
+        """
+        Are we in dry-run mode ?
+        """
+        return self.dry_run
 
     def is_feature_enabled(self, feature: str) -> bool:
         """
@@ -250,144 +259,24 @@ class NoOps():
         - Service Catalog
         - Helm values
         """
+
         # Service Catalog
         if self.is_feature_enabled("service-catalog"):
-            self.svcat.create_kinds_and_values()
+            self.service_catalog().create_kinds_and_values()
         else:
             logging.info("Service Catalog feature disabled")
 
         # Helm values-*.yaml
-        self.helm.create_values()
+        self.helm().create_values()
 
     def noops_envs(self):
         """
         Environment variables to expose when we need to execute a command
         """
         return {
-            "NOOPS_GENERATED_JSON": self.noops_generated_json,
-            "NOOPS_GENERATED_YAML": self.noops_generated_yaml
+            "NOOPS_GENERATED_JSON": self._get_generated_noops("json"),
+            "NOOPS_GENERATED_YAML": self._get_generated_noops("yaml")
         }
 
-    def execute(self, cmd, args, extra_envs=None, forcerun=False):
-        """
-        Execute a command.
-
-        The command needs to have execution permission for the running user.
-        """
-        if extra_envs is None:
-            extra_envs = {}
-
-        custom_envs = {**os.environ, **extra_envs}
-
-        logging.debug("execute: %s %s", cmd, " ".join(args))
-
-        if forcerun or not self.dryrun:
-            subprocess.run(
-                [cmd] + args,
-                shell=False,
-                check=True,
-                env=custom_envs,
-                cwd=self.product_path
-            )
-
-    def exec_common_flow(self, entries: dict, scope: str, args: dict):
-        """
-        Helper to execute a command with default noops environment variables and scope
-        """
-        extra_envs = self.noops_envs()
-
-        self.execute(
-            entries[scope],
-            args,
-            extra_envs
-        )
-
-    def pipeline_deploy(self, scope, custom_args):
-        """
-        Deploy from a pipeline
-
-        scope: default
-        """
-
-        if self.is_feature_enabled("white-label"):
-            # White-label deployment
-
-            logging.info("White-label deployment requested")
-
-            extra_envs = self.noops_envs()
-            extra_envs["NOOPS_WHITE_LABEL"]="y"
-
-            for branding in self.noops_config["white-label"]:
-                extra_envs["NOOPS_WHITE_LABEL_REBRAND"]=branding["rebrand"]
-                extra_envs["NOOPS_WHITE_LABEL_MARKETER"]=branding["marketer"]
-
-                logging.info("rebrand %s for %s",
-                    branding["rebrand"],
-                    branding["marketer"]
-                )
-
-                self.prepare()
-                self.execute(
-                    self.noops_config["pipeline"]["deploy"][scope],
-                    custom_args,
-                    extra_envs=extra_envs
-                )
-        else:
-            # Regular deployment
-
-            logging.info("Regular deployment requested")
-
-            self.prepare()
-            self.exec_common_flow(
-                self.noops_config["pipeline"]["deploy"],
-                scope,
-                custom_args
-            )
-
-    def pipeline_image(self, scope, custom_args):
-        """
-        Build an image from a pipeline
-
-        scope: ci, cd, pr
-        """
-        self.exec_common_flow(
-            self.noops_config["pipeline"]["image"],
-            scope,
-            custom_args
-        )
-
-    def pipeline_lib(self, scope, custom_args):
-        """
-        Build a lib from a pipeline
-
-        scope: ci, cd, pr
-        """
-        self.exec_common_flow(
-            self.noops_config["pipeline"]["lib"],
-            scope,
-            custom_args
-        )
-
-    def local_build(self, custom_args):
-        """
-        Build an image locally (should be a dev computer but not a pipeline)
-
-        scope: posix, nt
-        """
-        self.exec_common_flow(
-            self.noops_config["local"]["build"],
-            os.name,
-            custom_args
-        )
-
-    def local_run(self, custom_args):
-        """
-        Run an image locally (should be a dev computer)
-
-        scope: posix, nt
-        """
-        self.exec_common_flow(
-            self.noops_config["local"]["run"],
-            os.name,
-            custom_args
-        )
+    def _get_generated_noops(self, ext: str):
+        return os.path.join(self.workdir, f"{helper.GENERATED_NOOPS}.{ext}")

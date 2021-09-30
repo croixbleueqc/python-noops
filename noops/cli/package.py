@@ -38,13 +38,13 @@ def package():
 @click.option('-n', '--name', help='package name')
 @click.option('-f', '--values',
     help='override image/tag/... in chart values.yaml', required=True, type=click.Path())
-def create(shared, app_version, revision, description, name, values):
+def create(shared, app_version, revision, description, name, values): # pylint: disable=too-many-arguments
     """create a package"""
     values_file = os.path.abspath(values)
 
     core = create_noops_instance(shared)
     core.prepare()
-    core.helm.create_package(app_version, revision, description, name, values_file)
+    core.helm().create_package(app_version, revision, description, name, values_file)
 
 @package.command()
 @click.pass_obj
@@ -56,7 +56,7 @@ def push(shared, directory, url):
 
     directory_abs = os.path.abspath(directory)
     core = create_noops_instance(shared)
-    core.helm.push(directory_abs, url)
+    core.helm().push(directory_abs, url)
 
 @package.command()
 @click.option('-d', '--directory',

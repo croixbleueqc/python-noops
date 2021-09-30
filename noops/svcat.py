@@ -41,6 +41,7 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
 
     def __init__(self, core):
         self.core = core
+        self.helm = core.helm()
 
         processing = os.environ.get("NOOPS_SVCAT_PROCESSING")
         if processing is not None:
@@ -110,8 +111,8 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
         for obj in objs:
             obj["metadata"] = {
                 "name": name,
-                "labels": self.core.helm.include("labels", 4),
-                "annotations": self.core.helm.include("annotations", 4)
+                "labels": self.helm.include("labels", 4),
+                "annotations": self.helm.include("annotations", 4)
             }
 
     def create_kinds_and_values(self):
@@ -151,11 +152,11 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
         svcat_kinds = ""
         for obj in svcat_objs:
             # append to svcat kinds definitions
-            svcat_kinds += self.core.helm.as_chart_template(yaml.dump(obj, indent=helper.DEFAULT_INDENT))
+            svcat_kinds += self.helm.as_chart_template(yaml.dump(obj, indent=helper.DEFAULT_INDENT))
             svcat_kinds += "---\n"
 
         if svcat_kinds != "":
-            if self.core.dryrun:
+            if self.core.is_dry_run():
                 print(svcat_kinds)
             else:
                 helper.write_raw(
@@ -175,7 +176,7 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
             }
         }
 
-        if self.core.dryrun:
+        if self.core.is_dry_run():
             print(yaml.dump(svcat_values, indent=helper.DEFAULT_INDENT))
         else:
             helper.write_yaml(

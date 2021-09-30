@@ -20,8 +20,10 @@ noopsctl local run
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import click
 from . import cli, create_noops_instance
+from ..utils.external import execute
 
 @cli.group()
 def local():
@@ -31,16 +33,28 @@ def local():
 @click.pass_obj
 @click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
 def build(shared, cargs):
-    """build your product"""
+    """build your product locally"""
 
     core = create_noops_instance(shared)
-    core.local_build(list(cargs))
+
+    execute(
+        core.noops_config["local"]["build"][os.name],
+        list(cargs),
+        core.noops_envs(),
+        dry_run=core.is_dry_run()
+    )
 
 @local.command()
 @click.pass_obj
 @click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
 def run(shared, cargs):
-    """run your product"""
+    """run your product locally"""
 
     core = create_noops_instance(shared)
-    core.local_run(list(cargs))
+
+    execute(
+        core.noops_config["local"]["run"][os.name],
+        list(cargs),
+        core.noops_envs(),
+        dry_run=core.is_dry_run()
+    )

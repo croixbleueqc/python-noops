@@ -30,7 +30,6 @@ from ..noops import NoOps
 @click.option('-v', '--verbose', help='warning (-v), info (-vv), debug (-vvv)',
     count=True, show_default='error')
 @click.option('-d', '--dry-run', help='dry-run', is_flag=True)
-@click.option('-s', '--show', help='show noops final configuration', is_flag=True, default=False)
 def cli(ctx, verbose, **kwargs):
     """main cli entrypoint"""
 
@@ -57,8 +56,6 @@ def create_noops_instance(shared: dict) -> NoOps:
     """Create an instance of NoOps based on cli shared options"""
     return NoOps(
         shared["product"],
-        None, # chart_name unused
         shared["dry_run"],
-        shared["show"],
         shared["rm_cache"]
     )

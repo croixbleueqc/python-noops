@@ -23,6 +23,8 @@ noopsctl pipeline deploy
 
 import click
 from . import cli, create_noops_instance
+from ..utils.external import execute
+from ..pipeline.deploy import pipeline_deploy
 
 @cli.group()
 def pipeline():
@@ -53,7 +55,13 @@ def image(shared, ci, pr, cd, cargs): # pylint: disable=invalid-name
         scope = "ci"
 
     core = create_noops_instance(shared)
-    core.pipeline_image(scope, list(cargs))
+
+    execute(
+        core.noops_config["pipeline"]["image"][scope],
+        list(cargs),
+        core.noops_envs(),
+        dry_run=core.is_dry_run()
+    )
 
 @pipeline.command()
 @click.pass_obj
@@ -80,7 +88,13 @@ def lib(shared, ci, pr, cd, cargs): # pylint: disable=invalid-name
         scope = "ci"
 
     core = create_noops_instance(shared)
-    core.pipeline_lib(scope, list(cargs))
+
+    execute(
+        core.noops_config["pipeline"]["lib"][scope],
+        list(cargs),
+        core.noops_envs(),
+        dry_run=core.is_dry_run()
+    )
 
 @pipeline.command()
 @click.pass_obj
@@ -92,4 +106,4 @@ def deploy(shared, default, cargs): # pylint: disable=unused-argument
     scope = "default"
 
     core = create_noops_instance(shared)
-    core.pipeline_deploy(scope, list(cargs))
+    pipeline_deploy(core, scope, list(cargs))

@@ -28,7 +28,6 @@ import os
 import subprocess
 import shutil
 import re
-from typing import List
 import yaml
 from .. import helper
 
@@ -38,14 +37,15 @@ class Helm():
     """
     re_noops_chart = re.compile("{{noops:chart:(.*):(.*)}}")
 
-    def __init__(self, core, chart_name: str):
+    def __init__(self, core, chart_name: str = None):
         self.core = core
+        self.config = core.noops_config["package"]["helm"]
 
         # Chart name
         if chart_name is None:
             # Compute chart name
             self.chart = os.path.split(
-                self.core.noops_config["package"]["helm"]["chart"]
+                self.config["chart"]
                 )[1]
         else:
             self.chart = chart_name
@@ -85,12 +85,12 @@ class Helm():
         logging.info("Creating values files")
 
         self._create_values(
-            self.core.noops_config["package"]["helm"]["parameters"],
+            self.config["parameters"],
             "values"
         )
 
         for target, parameters in \
-            self.core.noops_config["package"]["helm"].get("targets-parameters", {}).items():
+            self.config.get("targets-parameters", {}).items():
             if parameters is None:
                 continue
 
@@ -108,19 +108,19 @@ class Helm():
             values_name = f"{prefix}-{profile}.yaml"
             logging.info("Creating %s", values_name)
 
-            if self.core.dryrun:
+            if self.core.is_dry_run():
                 print(yaml.dump(config, indent=helper.DEFAULT_INDENT))
             else:
                 helper.write_yaml(
                     os.path.join(
-                        self.core.noops_config["package"]["helm"]["values"],
+                        self.config["values"],
                         values_name
                     ),
                     config,
                     indent=helper.DEFAULT_INDENT
                 )
 
-    def create_package(self, app_version: str, revision: str,
+    def create_package(self, app_version: str, revision: str, # pylint: disable=too-many-arguments
         description: str, name: str, values: str):
         """
         Create a NoOps Helm Package
@@ -141,12 +141,10 @@ class Helm():
             ).stdout.decode().strip()
 
         if name is None:
-            name = os.path.split(
-                os.path.abspath(self.core.product_path)
-            )[1]
+            name = os.path.split(os.getcwd())[1]
 
         # Chart.yaml
-        chart_file = os.path.join(self.core.noops_config["package"]["helm"]["chart"], "Chart.yaml")
+        chart_file = os.path.join(self.config["chart"], "Chart.yaml")
         chart = helper.read_yaml(chart_file)
 
         # Extract main chart version (keep only what is before + char)
@@ -157,21 +155,20 @@ class Helm():
         chart["description"] = description
         chart["name"] = name
 
-        chart_keywords: List[str] = chart.get("keywords", [])
-        kw1 = f"{name}--+{app_version}"
-        kw2 = f"{name}-{version}-+{app_version}"
-        kw3 = f"{name}-{version}-{revision}+{app_version}"
+        if chart.get("keywords") is None:
+            chart["keywords"] = []
 
-        for keyword in (kw1, kw2, kw3):
-            if keyword not in chart_keywords:
-                chart_keywords.append(keyword)
-        chart["keywords"] = chart_keywords
+        for keyword in (
+            f"{name}--+{app_version}",
+            f"{name}-{version}-+{app_version}",
+            f"{name}-{version}-{revision}+{app_version}"):
+            chart["keywords"].append(keyword)
 
         logging.info('Creating NoOps Helm Package: %s-%s', name, chart["version"])
 
         # Values.yaml
         chart_values_file = os.path.join(
-            self.core.noops_config["package"]["helm"]["chart"], "values.yaml"
+            self.config["chart"], "values.yaml"
         )
         chart_values = helper.read_yaml(chart_values_file)
 
@@ -182,7 +179,7 @@ class Helm():
         chart_values = helper.deep_merge(chart_values, override_values)
 
         # Store
-        if self.core.dryrun:
+        if self.core.is_dry_run():
             logging.info("Generated Chart.yaml")
             print(yaml.dump(chart, indent=helper.DEFAULT_INDENT))
             logging.info("Generated Values.yaml")
@@ -193,7 +190,7 @@ class Helm():
 
             subprocess.run(
                 "helm package {} -d {}".format( # pylint: disable=consider-using-f-string
-                    self.core.noops_config["package"]["helm"]["chart"],
+                    self.config["chart"],
                     self.core.workdir
                 ),
                 shell=True,
@@ -206,7 +203,7 @@ class Helm():
         """
 
         # Chart.yaml
-        chart_file = os.path.join(self.core.noops_config["package"]["helm"]["chart"], "Chart.yaml")
+        chart_file = os.path.join(self.config["chart"], "Chart.yaml")
         chart = helper.read_yaml(chart_file)
 
         package = chart["name"] + "-" + chart["version"] + ".tgz"

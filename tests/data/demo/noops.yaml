@@ -1,0 +1,13 @@
+# Default noops.yaml file
+
+metadata:
+  version: 1
+
+devops:
+  local:
+    path: devops
+
+pipeline:
+  image:
+    ci: scripts/image-ci.sh
+    pr: scripts/image-pr.sh

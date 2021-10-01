@@ -1,0 +1,52 @@
+# Default noops.yaml file
+
+metadata:
+  version: 1
+
+features:
+  service-catalog: true
+
+package:
+  docker:
+    dockerfile: docker/Dockerfile
+
+  helm:
+    chart: helm/chart
+    preprocessor: helm
+
+    parameters:
+      default:
+        env:
+          service_version: v1
+      prod:
+        replicasCount: 2
+
+    # Per target parameters
+    targets-parameters:
+      one-cluster: null
+      multi-clusters:
+        default:
+          replicasCount: 1
+      active: null
+      standby: null
+
+targets:
+  supported:
+    one-cluster: true
+    multi-cluster: true
+    active-standby: false
+
+pipeline:
+  image:
+    ci: null # n/a
+    pr: null # n/a
+    cd: scripts/image-cd.sh
+
+  deploy:
+    default: scripts/deploy.sh
+
+local:
+  build:
+    posix: scripts/local-image-build.sh
+  run:
+    posix: scripts/local-image-run.sh

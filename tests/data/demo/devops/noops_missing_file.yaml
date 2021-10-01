@@ -1,0 +1,9 @@
+# package.docker.dockerfile is set with a missing file
+# in the devops directory
+
+metadata:
+  version: 1
+
+package:
+  docker:
+    dockerfile: docker/Dockerfile.missing

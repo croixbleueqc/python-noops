@@ -1,0 +1,48 @@
+# Expected merged result from both main noops.yaml
+# {BASE} is replaced with the product path during unittest
+
+devops:
+  local:
+    path: devops
+features:
+  service-catalog: true
+local:
+  build:
+    posix: {BASE}/noops_workdir/scripts/local-image-build.sh
+  run:
+    posix: {BASE}/noops_workdir/scripts/local-image-run.sh
+metadata:
+  version: 1
+package:
+  docker:
+    dockerfile: {BASE}/noops_workdir/docker/Dockerfile
+  helm:
+    chart: {BASE}/noops_workdir/helm/chart
+    parameters:
+      default:
+        env:
+          service_version: v1
+      prod:
+        replicasCount: 2
+    preprocessor: {BASE}/noops_workdir/helm
+    targets-parameters:
+      active: null
+      multi-clusters:
+        default:
+          replicasCount: 1
+      one-cluster: null
+      standby: null
+    values: {BASE}/noops_workdir/helm/chart/noops
+  lib: {}
+pipeline:
+  deploy:
+    default: {BASE}/noops_workdir/scripts/deploy.sh
+  image:
+    cd: {BASE}/noops_workdir/scripts/image-cd.sh
+    ci: {BASE}/scripts/image-ci.sh
+    pr: {BASE}/noops_workdir/scripts/image-pr.sh
+targets:
+  supported:
+    active-standby: false
+    multi-cluster: true
+    one-cluster: true

@@ -31,7 +31,7 @@ from ..noops import NoOps
     count=True, show_default='error')
 @click.option('-d', '--dry-run', help='dry-run', is_flag=True)
 def cli(ctx, verbose, **kwargs):
-    """main cli entrypoint"""
+    """noopsctl controls NoOps pipeline and package"""
 
     # logging
     if verbose == 0:
@@ -45,7 +45,7 @@ def cli(ctx, verbose, **kwargs):
 
     logging.basicConfig(level=level)
 
-    if ctx.invoked_subcommand not in ("version", "targets") and \
+    if ctx.invoked_subcommand not in ("version", "targets", "package") and \
         kwargs['product'] is None:
         raise click.BadOptionUsage("product","Missing option '-p' / '--product'.")
 

@@ -27,8 +27,10 @@ import logging
 import os
 import shutil
 import re
-from .. import helper
+from .. import settings
 from ..utils.external import execute, get_stdout_from_shell, execute_from_shell
+from ..utils import containers
+from ..utils import io
 
 class Helm():
     """
@@ -118,10 +120,10 @@ class Helm():
             values_name = f"{prefix}-{profile}.yaml"
             logging.info("Creating %s", values_name)
 
-            helper.write_yaml(
+            io.write_yaml(
                 self.get_values_path(values_name),
                 config,
-                indent=helper.DEFAULT_INDENT,
+                indent=settings.DEFAULT_INDENT,
                 dry_run=self.core.is_dry_run()
             )
 
@@ -158,7 +160,7 @@ class Helm():
 
         # Chart.yaml
         chart_file = os.path.join(self.config["chart"], "Chart.yaml")
-        chart = helper.read_yaml(chart_file)
+        chart = io.read_yaml(chart_file)
 
         # Extract main chart version (keep only what is before + char)
         version = chart["version"].split("-")[0]
@@ -183,20 +185,20 @@ class Helm():
         chart_values_file = os.path.join(
             self.config["chart"], "values.yaml"
         )
-        chart_values = helper.read_yaml(chart_values_file)
+        chart_values = io.read_yaml(chart_values_file)
 
         # Values from parameters
-        override_values = helper.read_yaml(values)
+        override_values = io.read_yaml(values)
 
         # Merge
-        chart_values = helper.deep_merge(chart_values, override_values)
+        chart_values = containers.deep_merge(chart_values, override_values)
 
         # Store
         logging.info("Generated Chart.yaml")
-        helper.write_yaml(chart_file, chart, dry_run=self.core.is_dry_run())
+        io.write_yaml(chart_file, chart, dry_run=self.core.is_dry_run())
 
         logging.info("Generated Values.yaml")
-        helper.write_yaml(chart_values_file, chart_values, dry_run=self.core.is_dry_run())
+        io.write_yaml(chart_values_file, chart_values, dry_run=self.core.is_dry_run())
 
         execute(
             "helm",
@@ -216,7 +218,7 @@ class Helm():
 
         # Chart.yaml
         chart_file = os.path.join(self.config["chart"], "Chart.yaml")
-        chart = helper.read_yaml(chart_file)
+        chart = io.read_yaml(chart_file)
 
         package = chart["name"] + "-" + chart["version"] + ".tgz"
 

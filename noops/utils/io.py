@@ -1,7 +1,10 @@
 """
-Helper
+Utils: Input/Output
 
-Defines some standard functions or default variables
+Supported format:
+- Yaml
+- Json
+- Text (raw)
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -22,19 +25,8 @@ Defines some standard functions or default variables
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
-from functools import reduce
-from copy import deepcopy
 import yaml
-
-DEFAULT_INDENT=2
-DEFAULT_NOOPS_FILE="noops.yaml"
-DEFAULT_WORKDIR="noops_workdir"
-GENERATED_NOOPS="noops-generated"
-
-DEFAULT_FEATURES={
-    "service-catalog": True,
-    "white-label": False
-}
+from ..settings import DEFAULT_INDENT
 
 def read_yaml(file_path: str) -> dict: # pragma: no cover
     """
@@ -85,29 +77,3 @@ def write_raw(file_path: str, content: str, dry_run: bool = False):
 
     with open(file_path, "w", encoding="UTF-8") as file:
         file.write(content)
-
-def deep_merge(dict_base: dict, dict_custom: dict) -> dict:
-    """
-    Recursive merge in a dict
-
-    There isn't any deep merge for an array. An array is replaced.
-    """
-    result = deepcopy(dict_base)
-    for key, value in dict_custom.items():
-        if isinstance(value, dict):
-            node = result.setdefault(key, {})
-            merged_node = deep_merge(node, value)
-            result[key] = merged_node
-        else:
-            result[key] = value
-
-    return result
-
-def merge(devops: dict, product: dict) -> dict:
-    """
-    Merge 2 dicts.
-
-    product dict overrides devops dict
-    """
-    # Order is important inside the list
-    return reduce(deep_merge, [{}, devops, product])

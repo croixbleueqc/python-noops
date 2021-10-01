@@ -22,7 +22,7 @@ noopsctl target
 import click
 from ..targets import Targets
 from ..typing.targets import Kind
-from ..helper import read_yaml, json2yaml
+from ..utils.io import read_yaml, json2yaml
 from . import cli
 
 @cli.group()

@@ -1,5 +1,7 @@
 """
-noopsctl output
+Settings
+
+Defines some default variables
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -19,16 +21,12 @@ noopsctl output
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-import click
-from ..settings import DEFAULT_INDENT
-from . import cli, create_noops_instance
+DEFAULT_INDENT=2
+DEFAULT_NOOPS_FILE="noops.yaml"
+DEFAULT_WORKDIR="noops_workdir"
+GENERATED_NOOPS="noops-generated"
 
-@cli.command()
-@click.pass_obj
-@click.option('-j', '--json', help='json format', default=False, is_flag=True)
-@click.option('-i', '--indent', help='space indentation',
-    default=DEFAULT_INDENT, show_default=True, type=click.IntRange(2, 8), metavar='SPACES')
-def output(shared, json, indent):
-    """display few informations"""
-    core = create_noops_instance(shared)
-    core.output(asjson=json, indent=indent)
+DEFAULT_FEATURES={
+    "service-catalog": True,
+    "white-label": False
+}

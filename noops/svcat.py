@@ -31,7 +31,8 @@ import subprocess
 import logging
 import os
 import yaml
-from . import helper
+from . import settings
+from .utils import io
 
 class ServiceCatalog(): # pylint: disable=too-few-public-methods
     """
@@ -152,11 +153,11 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
         svcat_kinds = ""
         for obj in svcat_objs:
             # append to svcat kinds definitions
-            svcat_kinds += self.helm.as_chart_template(yaml.dump(obj, indent=helper.DEFAULT_INDENT))
+            svcat_kinds += self.helm.as_chart_template(yaml.dump(obj, indent=settings.DEFAULT_INDENT))
             svcat_kinds += "---\n"
 
         if svcat_kinds != "":
-            helper.write_raw(
+            io.write_raw(
                 os.path.join(
                     self.helm.config["chart"],
                     "templates",
@@ -176,9 +177,9 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
 
         self.helm.create_values_directory()
 
-        helper.write_yaml(
+        io.write_yaml(
             self.helm.get_values_path("values-svcat.yaml"),
             svcat_values,
-            indent=helper.DEFAULT_INDENT,
+            indent=settings.DEFAULT_INDENT,
             dry_run=self.core.is_dry_run()
         )

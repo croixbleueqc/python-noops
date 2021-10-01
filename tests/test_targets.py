@@ -11,7 +11,7 @@ from noops.typing.targets import (
     NoOpsTargetsSupported, Cluster
 )
 from noops.errors import TargetNotSupported, PlanTargetUnknown, ClustersAvailability
-from noops.helper import read_yaml
+from noops.utils.io import read_yaml
 
 class TestTargets(unittest.TestCase):
     """

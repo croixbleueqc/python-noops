@@ -31,10 +31,12 @@ import tempfile
 import shutil
 import stat
 import yaml
-from . import helper
+from . import settings
 from .package.helm import Helm
 from .svcat import ServiceCatalog
 from .utils.external import execute
+from .utils import containers
+from .utils import io
 
 class NoOps():
     """
@@ -53,7 +55,7 @@ class NoOps():
         os.chdir(product_path)
 
         self.dry_run = dry_run
-        self.workdir = os.path.join(product_path, helper.DEFAULT_WORKDIR)
+        self.workdir = os.path.join(product_path, settings.DEFAULT_WORKDIR)
 
         if rm_cache or not self._iscache():
             self._create_cache(product_path)
@@ -78,21 +80,21 @@ class NoOps():
         logging.info("creating cache")
 
         # Load product noops.yaml
-        noops_product = helper.read_yaml(
-            os.path.join(product_path, helper.DEFAULT_NOOPS_FILE)
+        noops_product = io.read_yaml(
+            os.path.join(product_path, settings.DEFAULT_NOOPS_FILE)
             )
         logging.debug("Product config: %s", noops_product)
 
         # Load devops noops.yaml
         self._prepare_devops(noops_product.get("devops", {}))
 
-        noops_devops = helper.read_yaml(
-            os.path.join(self.workdir, helper.DEFAULT_NOOPS_FILE)
+        noops_devops = io.read_yaml(
+            os.path.join(self.workdir, settings.DEFAULT_NOOPS_FILE)
             )
         logging.debug("DevOps config: %s", noops_devops)
 
         # NoOps Merged configuration
-        self.noops_config = helper.merge(noops_devops, noops_product)
+        self.noops_config = containers.merge(noops_devops, noops_product)
         logging.debug("Merged config: %s", self.noops_config)
 
         # NoOps final configuration
@@ -120,11 +122,11 @@ class NoOps():
             self.noops_config["package"]["helm"]["chart"], "noops"
         )
 
-        helper.write_json(
+        io.write_json(
             self._get_generated_noops_json(),
             self.noops_config
         )
-        helper.write_yaml(
+        io.write_yaml(
             self._get_generated_noops_yaml(),
             self.noops_config
         )
@@ -132,13 +134,13 @@ class NoOps():
     def _load_cache(self):
         logging.info("loading cached configuration")
 
-        self.noops_config = helper.read_yaml(self._get_generated_noops_yaml())
+        self.noops_config = io.read_yaml(self._get_generated_noops_yaml())
 
     def _get_generated_noops_json(self):
-        return os.path.join(self.workdir, f"{helper.GENERATED_NOOPS}.json")
+        return os.path.join(self.workdir, f"{settings.GENERATED_NOOPS}.json")
 
     def _get_generated_noops_yaml(self):
-        return os.path.join(self.workdir, f"{helper.GENERATED_NOOPS}.yaml")
+        return os.path.join(self.workdir, f"{settings.GENERATED_NOOPS}.yaml")
 
     def helm(self, chart_name: str = None) -> Helm:
         """
@@ -169,7 +171,7 @@ class NoOps():
 
         if git_config:
             with tempfile.TemporaryDirectory(prefix="noops-") as tmpdirname:
-                clone_path = os.path.join(tmpdirname, helper.DEFAULT_WORKDIR)
+                clone_path = os.path.join(tmpdirname, settings.DEFAULT_WORKDIR)
 
                 # clone
                 execute(
@@ -240,7 +242,7 @@ class NoOps():
         else:
             config_iter[keys[-1]] = os.path.join(product_path, product_file)
 
-    def output(self, asjson=False, indent=helper.DEFAULT_INDENT):
+    def output(self, asjson=False, indent=settings.DEFAULT_INDENT):
         """
         Print the final noops configuration in a json or yaml way
         """
@@ -262,7 +264,7 @@ class NoOps():
         try:
             return self.noops_config["features"][feature]
         except KeyError:
-            return helper.DEFAULT_FEATURES[feature]
+            return settings.DEFAULT_FEATURES[feature]
 
     def prepare(self):
         """

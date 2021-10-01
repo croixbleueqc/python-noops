@@ -26,6 +26,7 @@ Core component
 
 import logging
 import os
+import errno
 import json
 import tempfile
 import shutil
@@ -210,12 +211,28 @@ class NoOps():
     def _file_selector(self, product_path: str, selector: str,
         noops_product: dict, noops_devops: dict):
         """
-        Determines the file to use (remote vs local)
+        Determines the file to use between product and devops directories
 
-        The main target is to use a devops file (remote)
-        This one can be overriden with another version located with the product (local)
+        Product (noops_product) has the highest priority over devops (noops_devops).
+
+        Product can refer to a file located in product or devops directory.
+        Devops can ONLY refer to a file located in devops directory.
+
+        File exists in both directories (same path for each directory):
+        - if product refer it, the file in product directory will be used.
+        - if devops is the ONLY one to refer it, the devops file will be used.
+
+        eg:
+            From DevOps:
+              devops/Dockerfile
+              devops/Dockerfile.distroless
+
+            From Product:
+              package.docker.Dockerfile can be set to devops/Dockerfile{.distroless}
+
+        If a requested file does NOT exist, a FileNotFoundError exception will be raised.
         """
-        logging.debug("file selector for: %s", selector)
+        logging.debug("file selector for '%s'", selector)
 
         keys = selector.split(".")
 
@@ -227,20 +244,50 @@ class NoOps():
             product_iter = product_iter.get(key, {})
             devops_iter = devops_iter.get(key, {})
 
+            # create config entry if missing
+            # product and devops can set different subset of keys
             if config_iter.get(key) is None:
                 config_iter[key]={}
             config_iter = config_iter[key]
 
+        # value in product and devops config
         product_file = product_iter.get(keys[-1])
         devops_file = devops_iter.get(keys[-1])
 
-        if product_file is None:
-            if devops_file is not None:
-                config_iter[keys[-1]] = os.path.join(self.workdir, devops_file)
+        # Order is important.
+        # Product definition has highest priority over devops definition
+        if product_file is not None:
+            # check if the file is in product or devops
+            # priority to product directory
+            if os.path.exists(os.path.join(product_path, product_file)):
+                # product directory
+                product_file_path = os.path.join(product_path, product_file)
+            elif os.path.exists(os.path.join(self.workdir, product_file)):
+                # devops (workdir) directory
+                product_file_path = os.path.join(self.workdir, product_file)
             else:
-                logging.debug("selector %s is not set", selector)
-        else:
-            config_iter[keys[-1]] = os.path.join(product_path, product_file)
+                raise FileNotFoundError(
+                    errno.ENOENT,
+                    os.strerror(errno.ENOENT),
+                    product_file
+                )
+
+            config_iter[keys[-1]] = product_file_path
+            return
+
+        if devops_file is not None:
+            devops_file_path = os.path.join(self.workdir, devops_file)
+            if os.path.exists(devops_file_path):
+                config_iter[keys[-1]] = devops_file_path
+            else:
+                raise FileNotFoundError(
+                    errno.ENOENT,
+                    os.strerror(errno.ENOENT),
+                    devops_file
+                )
+            return
+
+        logging.debug("key '%s' is not set ! [skip]", selector)
 
     def output(self, asjson=False, indent=settings.DEFAULT_INDENT):
         """

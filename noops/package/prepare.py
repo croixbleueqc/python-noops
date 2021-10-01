@@ -21,8 +21,8 @@ Prepare for packaging, ci, cd and deploy
 
 import logging
 from ..noops import NoOps
-from ..package.helm import Helm
-from ..svcat import ServiceCatalog
+from .helm import Helm
+from .svcat import ServiceCatalog
 
 def prepare(core: NoOps, helm: Helm = None, chart_name: str = None):
     """

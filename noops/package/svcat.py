@@ -31,10 +31,10 @@ import subprocess
 import logging
 import os
 import yaml
-from . import settings
-from .utils import io
-from .noops import NoOps
-from .package.helm import Helm
+from .. import settings
+from ..utils import io
+from ..noops import NoOps
+from .helm import Helm
 
 class ServiceCatalog(): # pylint: disable=too-few-public-methods
     """

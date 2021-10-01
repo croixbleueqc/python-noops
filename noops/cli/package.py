@@ -24,7 +24,9 @@ noopsctl package serve
 import os
 import click
 from . import cli, create_noops_instance
+from ..package.prepare import prepare
 from ..package.serve import serve_forever
+from ..package.helm import Helm
 
 @cli.group()
 @click.pass_context
@@ -39,16 +41,17 @@ def package(ctx):
 @click.option('-a', '--app-version', help='Application version')
 @click.option('-r', '--revision', help='Build number', required=True, type=click.INT)
 @click.option('-d', '--description', help='One line description about this new version')
-@click.option('-n', '--name', help='package name')
+@click.option('-c', '--chart-name', help='Override chart name auto detection')
 @click.option('-f', '--values',
     help='override image/tag/... in chart values.yaml', required=True, type=click.Path())
-def create(shared, app_version, revision, description, name, values): # pylint: disable=too-many-arguments
+def create(shared, app_version, revision, description, chart_name, values): # pylint: disable=too-many-arguments
     """create a package"""
     values_file = os.path.abspath(values)
 
     core = create_noops_instance(shared)
-    core.prepare()
-    core.helm().create_package(app_version, revision, description, name, values_file)
+    helm = Helm(core, chart_name)
+    prepare(core, helm)
+    helm.create_package(app_version, revision, description, values_file)
 
 @package.command()
 @click.pass_obj
@@ -60,7 +63,7 @@ def push(shared, directory, url):
 
     directory_abs = os.path.abspath(directory)
     core = create_noops_instance(shared)
-    core.helm().push(directory_abs, url)
+    Helm(core).push(directory_abs, url)
 
 @package.command()
 @click.option('-d', '--directory',

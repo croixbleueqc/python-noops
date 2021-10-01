@@ -31,6 +31,7 @@ from .. import settings
 from ..utils.external import execute, get_stdout_from_shell, execute_from_shell
 from ..utils import containers
 from ..utils import io
+from ..noops import NoOps
 
 class Helm():
     """
@@ -38,27 +39,40 @@ class Helm():
     """
     re_noops_chart = re.compile("{{noops:chart:(.*):(.*)}}")
 
-    def __init__(self, core, chart_name: str = None):
-        self.core = core
-        self.config = core.noops_config["package"]["helm"]
+    def __init__(self, core: NoOps, chart_name: str = None):
+        self._core = core
+        self._config = core.noops_config["package"]["helm"]
 
         # Chart name
         if chart_name is None:
             # Compute chart name
-            self.chart = os.path.split(
-                self.config["chart"]
-                )[1]
+            self._chart_name = os.path.split(os.getcwd())[1]
         else:
-            self.chart = chart_name
+            self._chart_name = chart_name
 
-        logging.info("using chart name '%s'", self.chart)
+        logging.info("using chart name '%s'", self.chart_name)
+
+    @property
+    def config(self) -> dict:
+        """config property"""
+        return self._config
+
+    @property
+    def core(self) -> NoOps:
+        """core property"""
+        return self._core
+
+    @property
+    def chart_name(self) -> str:
+        """chart property"""
+        return self._chart_name
 
     def include(self, macro, nindent=None, root="."):
         """Include chart directive
 
         {{- include "chart.macro" . }}
         """
-        value = f'''include "{self.chart}.{macro}" {root}'''
+        value = f'''include "{self.chart_name}.{macro}" {root}'''
 
         if nindent is not None:
             value += f' | nindent {nindent}'
@@ -140,7 +154,7 @@ class Helm():
         )
 
     def create_package(self, app_version: str, revision: str, # pylint: disable=too-many-arguments
-        description: str, name: str, values: str):
+        description: str, values: str):
         """
         Create a NoOps Helm Package
         """
@@ -155,9 +169,6 @@ class Helm():
                 'git log --pretty=format:"%s" --no-decorate -n 1 HEAD'
             )
 
-        if name is None:
-            name = os.path.split(os.getcwd())[1]
-
         # Chart.yaml
         chart_file = os.path.join(self.config["chart"], "Chart.yaml")
         chart = io.read_yaml(chart_file)
@@ -168,18 +179,18 @@ class Helm():
         chart["version"] = f"{version}-{revision}"
         chart["appVersion"] = app_version
         chart["description"] = description
-        chart["name"] = name
+        chart["name"] = self.chart_name
 
         if chart.get("keywords") is None:
             chart["keywords"] = []
 
         for keyword in (
-            f"{name}--+{app_version}",
-            f"{name}-{version}-+{app_version}",
-            f"{name}-{version}-{revision}+{app_version}"):
+            f"{self.chart_name}--+{app_version}",
+            f"{self.chart_name}-{version}-+{app_version}",
+            f"{self.chart_name}-{version}-{revision}+{app_version}"):
             chart["keywords"].append(keyword)
 
-        logging.info('Creating NoOps Helm Package: %s-%s', name, chart["version"])
+        logging.info('Creating NoOps Helm Package: %s-%s', self.chart_name, chart["version"])
 
         # Values.yaml
         chart_values_file = os.path.join(

@@ -33,8 +33,6 @@ import shutil
 import stat
 import yaml
 from . import settings
-from .package.helm import Helm
-from .svcat import ServiceCatalog
 from .utils.external import execute
 from .utils import containers
 from .utils import io
@@ -142,18 +140,6 @@ class NoOps():
 
     def _get_generated_noops_yaml(self):
         return os.path.join(self.workdir, f"{settings.GENERATED_NOOPS}.yaml")
-
-    def helm(self, chart_name: str = None) -> Helm:
-        """
-        New Helm instance
-        """
-        return Helm(self, chart_name)
-
-    def service_catalog(self) -> ServiceCatalog:
-        """
-        New Service Catalog instance
-        """
-        return ServiceCatalog(self)
 
     def _prepare_devops(self, devops_config: dict):
         """
@@ -312,23 +298,6 @@ class NoOps():
             return self.noops_config["features"][feature]
         except KeyError:
             return settings.DEFAULT_FEATURES[feature]
-
-    def prepare(self):
-        """
-        Generates everything that is needed by the product and set with the noops.yaml
-
-        - Service Catalog
-        - Helm values
-        """
-
-        # Service Catalog
-        if self.is_feature_enabled("service-catalog"):
-            self.service_catalog().create_kinds_and_values()
-        else:
-            logging.info("Service Catalog feature disabled")
-
-        # Helm values-*.yaml
-        self.helm().create_values()
 
     def noops_envs(self):
         """

@@ -2,8 +2,6 @@
 Tests relative to Targets Kind actions (mostly targets.py)
 """
 
-import unittest
-
 from noops.targets import Targets
 from noops.typing.targets import (
     Plan, PlanTarget, Kind,
@@ -13,16 +11,12 @@ from noops.typing.targets import (
 from noops.errors import TargetNotSupported, PlanTargetUnknown, ClustersAvailability
 from noops.utils.io import read_yaml
 
-class TestTargets(unittest.TestCase):
+from . import TestCaseNoOps
+
+class TestTargets(TestCaseNoOps):
     """
     Tests relative to Targets Kind actions
     """
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_helm_flags_one_cluster(self):
         """
         Helm flags [one cluster]

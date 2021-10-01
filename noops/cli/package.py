@@ -27,8 +27,12 @@ from . import cli, create_noops_instance
 from ..package.serve import serve_forever
 
 @cli.group()
-def package():
+@click.pass_context
+def package(ctx):
     """manage packages"""
+    if ctx.invoked_subcommand != "serve" and \
+        ctx.obj['product'] is None:
+        raise click.BadOptionUsage("product","Missing option '-p' / '--product'.", ctx=ctx.parent)
 
 @package.command()
 @click.pass_obj

@@ -33,6 +33,8 @@ import os
 import yaml
 from . import settings
 from .utils import io
+from .noops import NoOps
+from .package.helm import Helm
 
 class ServiceCatalog(): # pylint: disable=too-few-public-methods
     """
@@ -40,9 +42,19 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
     """
     SERVICE_CATALOG="service-catalog"
 
-    def __init__(self, core):
-        self.core = core
-        self.helm = core.helm()
+    def __init__(self, core: NoOps, helm: Helm):
+        self._core = core
+        self._helm = helm
+
+    @property
+    def core(self) -> NoOps:
+        """core property"""
+        return self._core
+
+    @property
+    def helm(self) -> Helm:
+        """core property"""
+        return self._helm
 
         processing = os.environ.get("NOOPS_SVCAT_PROCESSING")
         if processing is not None:

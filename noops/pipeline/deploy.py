@@ -23,6 +23,7 @@ import logging
 from typing import List
 from ..noops import NoOps
 from ..utils.external import execute
+from ..package.prepare import prepare
 
 def pipeline_deploy(core: NoOps, scope: str, cargs: List[str]):
     """
@@ -53,7 +54,7 @@ def _white_label_deployment(core: NoOps, scope: str, cargs: List[str]):
             branding["marketer"]
         )
 
-        core.prepare()
+        prepare(core)
         execute(
             core.noops_config["pipeline"]["deploy"][scope],
             cargs,
@@ -67,7 +68,7 @@ def _regular_deployment(core: NoOps, scope: str, cargs: List[str]):
     """
     logging.info("Regular deployment requested")
 
-    core.prepare()
+    prepare(core)
     execute(
         core.noops_config["pipeline"]["deploy"][scope],
         cargs,

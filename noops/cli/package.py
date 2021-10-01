@@ -55,8 +55,8 @@ def create(shared, app_version, revision, description, chart_name, values): # py
 
 @package.command()
 @click.pass_obj
-@click.option('--directory', help='repository directory', type=click.Path(), required=True)
-@click.option('--url', help='url of chart repository',
+@click.option('-d', '--directory', help='repository directory', type=click.Path(), required=True)
+@click.option('-u', '--url', help='url of chart repository',
     show_default=True, default='http://0.0.0.0:8000', type=click.STRING)
 def push(shared, directory, url):
     """push to a repository"""

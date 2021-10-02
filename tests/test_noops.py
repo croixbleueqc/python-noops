@@ -4,6 +4,7 @@ Tests relative to noops
 
 import tempfile
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import json
@@ -21,7 +22,7 @@ def product_copy():
     Temporary Directory with product copy on it
     """
     with tempfile.TemporaryDirectory(prefix="noops-") as tmp:
-        product_path = os.path.join(tmp, "demo")
+        product_path = Path(tmp) / "demo"
         shutil.copytree(
             DEMO,
             product_path
@@ -39,42 +40,40 @@ class TestNoOps(TestCaseNoOps):
         Instantiate Noops (local)
         """
 
-        expected_noops_generated_file = os.path.abspath(
+        expected_noops_generated_file = Path(
             f"{DEMO}/expected_noops_generated.yaml"
-        )
+        ).resolve()
 
         with product_copy() as product_path:
 
             # Simulate that a cache folder exist
-            os.makedirs(os.path.join(product_path, DEFAULT_WORKDIR, "witness"))
+            (product_path / DEFAULT_WORKDIR / "witness").mkdir(parents=True)
 
             noops = NoOps(product_path, dry_run=True, rm_cache=False)
 
             # cache purged
             self.assertFalse(
-                os.path.exists(
-                    os.path.join(product_path, DEFAULT_WORKDIR, "witness")
-                )
+                (product_path / DEFAULT_WORKDIR / "witness").exists()
             )
 
             # test generated config
             # load expected result
-            with open(expected_noops_generated_file, encoding='UTF-8') as file:
-                content = file.read().replace("{BASE}", product_path)
-                expected_config = yaml.load(content, Loader=yaml.SafeLoader)
+            content = expected_noops_generated_file.read_text(encoding='UTF-8') \
+                                                   .replace("{BASE}", os.fspath(product_path))
+            expected_config = yaml.load(content, Loader=yaml.SafeLoader)
 
             # test in memory config
             self.assertEqual(noops.noops_config, expected_config)
 
             # test yaml file from the cache
-            with open(noops._get_generated_noops_yaml(), encoding='UTF-8') as file: # pylint: disable=protected-access
+            with noops._get_generated_noops_yaml().open(encoding='UTF-8') as file: # pylint: disable=protected-access
                 from_cache = yaml.load(file, Loader=yaml.SafeLoader)
-                self.assertEqual(from_cache, expected_config)
+            self.assertEqual(from_cache, expected_config)
 
             # test json file from the cache
-            with open(noops._get_generated_noops_json(), encoding='UTF-8') as file: # pylint: disable=protected-access
+            with noops._get_generated_noops_json().open(encoding='UTF-8') as file: # pylint: disable=protected-access
                 from_cache = json.load(file)
-                self.assertEqual(from_cache, expected_config)
+            self.assertEqual(from_cache, expected_config)
 
             # noops environments
             expected_noops_envs = {
@@ -92,11 +91,11 @@ class TestNoOps(TestCaseNoOps):
             # Use noops with git
             shutil.copyfile(
                 f"{DEMO}/noops_git.yaml",
-                os.path.join(product_path, "noops.yaml")
+                product_path / "noops.yaml"
             )
 
             # prepare git devops folder
-            devops_path = os.path.join(product_path, "devops")
+            devops_path = product_path / "devops"
             subprocess.run("git init .", cwd=devops_path, check=True, shell=True)
             subprocess.run("git add .", cwd=devops_path, check=True, shell=True)
             subprocess.run("git config init.defaultBranch main",
@@ -106,7 +105,7 @@ class TestNoOps(TestCaseNoOps):
             noops = NoOps(product_path, dry_run=True, rm_cache=False)
 
             self.assertFalse(
-                os.path.exists(os.path.join(noops.workdir, ".git"))
+                (noops.workdir / ".git").exists()
             )
 
     def test_product_missing_file(self):
@@ -117,7 +116,7 @@ class TestNoOps(TestCaseNoOps):
 
             shutil.copyfile(
                 f"{DEMO}/noops_missing_file.yaml",
-                os.path.join(product_path, "noops.yaml")
+                product_path / "noops.yaml"
             )
 
             self.assertRaises(
@@ -133,7 +132,7 @@ class TestNoOps(TestCaseNoOps):
 
             shutil.copyfile(
                 f"{DEMO}/devops/noops_missing_file.yaml",
-                os.path.join(product_path, "devops", "noops.yaml")
+                product_path / "devops" / "noops.yaml"
             )
 
             self.assertRaises(

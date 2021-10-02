@@ -3,7 +3,7 @@ Tests relative to external
 """
 
 import tempfile
-import os
+from pathlib import Path
 from noops.utils.external import execute, execute_from_shell, get_stdout_from_shell
 from . import TestCaseNoOps
 
@@ -16,7 +16,7 @@ class TestIO(TestCaseNoOps):
         Test execute
         """
         with tempfile.TemporaryDirectory(prefix="noops-") as tmp:
-            file_path = os.path.join(tmp, "test.execute")
+            file_path = Path(tmp) / "test.execute"
 
             execute(
                 "bash",
@@ -26,10 +26,10 @@ class TestIO(TestCaseNoOps):
                 ]
             )
 
-            self.assertTrue(os.path.exists(file_path))
+            self.assertTrue(file_path.exists())
 
             # Execute with Dry run
-            os.remove(file_path)
+            file_path.unlink()
             execute(
                 "bash",
                 [
@@ -38,18 +38,18 @@ class TestIO(TestCaseNoOps):
                 ],
                 dry_run=True
             )
-            self.assertFalse(os.path.exists(file_path))
+            self.assertFalse(file_path.exists())
 
     def test_execute_from_shell(self):
         """
         Test execute from a shell
         """
         with tempfile.TemporaryDirectory(prefix="noops-") as tmp:
-            file_path = os.path.join(tmp, "test.execute_from_shell")
+            file_path = Path(tmp) / "test.execute_from_shell"
 
             execute_from_shell(f"touch {file_path}")
 
-            self.assertTrue(os.path.exists(file_path))
+            self.assertTrue(file_path.exists())
 
     def test_stdout_from_shell(self):
         """

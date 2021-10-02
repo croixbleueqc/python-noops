@@ -25,6 +25,7 @@ Handles helm section of noops.yaml
 
 import logging
 import os
+from pathlib import Path
 import shutil
 import re
 from .. import settings
@@ -98,7 +99,7 @@ class Helm():
         if self.core.is_dry_run():
             return
 
-        os.makedirs(self.get_values_path(), exist_ok=True)
+        self.get_values_path().mkdir(parents=True, exist_ok=True)
 
     def create_values(self):
         """
@@ -141,20 +142,17 @@ class Helm():
                 dry_run=self.core.is_dry_run()
             )
 
-    def get_values_path(self, values_filename: str = None) -> str:
+    def get_values_path(self, values_filename: str = None) -> Path:
         """
         Directory where to store values.yaml files
         """
         if values_filename is None:
             return self.config["values"]
 
-        return os.path.join(
-            self.config["values"],
-            values_filename
-        )
+        return self.config["values"] / values_filename
 
     def create_package(self, app_version: str, revision: str, # pylint: disable=too-many-arguments
-        description: str, values: str):
+        description: str, values: Path):
         """
         Create a NoOps Helm Package
         """
@@ -170,7 +168,7 @@ class Helm():
             )
 
         # Chart.yaml
-        chart_file = os.path.join(self.config["chart"], "Chart.yaml")
+        chart_file = self.config["chart"] / "Chart.yaml"
         chart = io.read_yaml(chart_file)
 
         # Extract main chart version (keep only what is before + char)
@@ -193,9 +191,7 @@ class Helm():
         logging.info('Creating NoOps Helm Package: %s-%s', self.chart_name, chart["version"])
 
         # Values.yaml
-        chart_values_file = os.path.join(
-            self.config["chart"], "values.yaml"
-        )
+        chart_values_file = self.config["chart"] / "values.yaml"
         chart_values = io.read_yaml(chart_values_file)
 
         # Values from parameters
@@ -217,27 +213,24 @@ class Helm():
                 "package",
                 self.config["chart"],
                 "-d",
-                self.core.workdir
+                os.fspath(self.core.workdir)
             ],
             dry_run=self.core.is_dry_run()
         )
 
-    def push(self, directory, url):
+    def push(self, directory: Path, url: str):
         """
         Copy package in a directory and index it
         """
 
         # Chart.yaml
-        chart_file = os.path.join(self.config["chart"], "Chart.yaml")
+        chart_file = self.config["chart"] / "Chart.yaml"
         chart = io.read_yaml(chart_file)
 
         package = chart["name"] + "-" + chart["version"] + ".tgz"
 
         shutil.copy(
-            os.path.join(
-                self.core.workdir,
-                package
-            ),
+            self.core.workdir / package,
             directory
         )
 

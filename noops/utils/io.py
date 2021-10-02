@@ -25,10 +25,35 @@ Supported format:
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
+import os
+from pathlib import Path, PosixPath, WindowsPath
+from typing import Union
 import yaml
 from ..settings import DEFAULT_INDENT
 
-def read_yaml(file_path: str) -> dict: # pragma: no cover
+# Json and Yaml representation for Path
+
+class PathEncoder(json.JSONEncoder):
+    """
+    Custom Encoder for Path (json)
+    """
+    def default(self, o):
+        if isinstance(o, Path):
+            return os.fspath(o)
+        return json.JSONEncoder.default(self, o)
+
+def path_representer(dumper: yaml.Dumper, data):
+    """
+    Custom Encoder for Path (yaml)
+    """
+    return dumper.represent_str(os.fspath(data))
+
+yaml.add_representer(PosixPath, path_representer)
+yaml.add_representer(WindowsPath, path_representer)
+
+# IO functions
+
+def read_yaml(file_path: Union[str, Path]) -> dict: # pragma: no cover
     """
     Read a yaml file
     """
@@ -37,7 +62,7 @@ def read_yaml(file_path: str) -> dict: # pragma: no cover
 
     return noops
 
-def write_yaml(file_path: str, content: dict, indent=DEFAULT_INDENT,
+def write_yaml(file_path: Union[str, Path], content: dict, indent=DEFAULT_INDENT,
     dry_run: bool = False):
     """
     Write as a yaml file
@@ -55,19 +80,19 @@ def json2yaml(content: str, indent=DEFAULT_INDENT) -> str: # pragma: no cover
     """
     return yaml.dump(json.loads(content), indent=indent)
 
-def write_json(file_path: str, content: dict, indent=DEFAULT_INDENT,
+def write_json(file_path: Union[str, Path], content: dict, indent=DEFAULT_INDENT,
     dry_run: bool = False):
     """
     Write as a json file
     """
     if dry_run:
-        print(json.dumps(content, indent=indent))
+        print(json.dumps(content, indent=indent, cls=PathEncoder))
         return
 
     with open(file_path, "w", encoding="UTF-8") as file:
-        json.dump(content, fp=file, indent=indent)
+        json.dump(content, fp=file, indent=indent, cls=PathEncoder)
 
-def write_raw(file_path: str, content: str, dry_run: bool = False):
+def write_raw(file_path: Union[str, Path], content: str, dry_run: bool = False):
     """
     Write as a text file
     """

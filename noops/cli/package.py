@@ -21,7 +21,7 @@ noopsctl package serve
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
+from pathlib import Path
 import click
 from . import cli, create_noops_instance
 from ..package.prepare import prepare
@@ -46,7 +46,7 @@ def package(ctx):
     help='override image/tag/... in chart values.yaml', required=True, type=click.Path())
 def create(shared, app_version, revision, description, chart_name, values): # pylint: disable=too-many-arguments
     """create a package"""
-    values_file = os.path.abspath(values)
+    values_file = Path(values).resolve()
 
     core = create_noops_instance(shared)
     helm = Helm(core, chart_name)
@@ -61,7 +61,7 @@ def create(shared, app_version, revision, description, chart_name, values): # py
 def push(shared, directory, url):
     """push to a repository"""
 
-    directory_abs = os.path.abspath(directory)
+    directory_abs = Path(directory).resolve()
     core = create_noops_instance(shared)
     Helm(core).push(directory_abs, url)
 

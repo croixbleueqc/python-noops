@@ -26,11 +26,13 @@ Core component
 
 import logging
 import os
+from pathlib import Path
 import errno
 import json
 import tempfile
 import shutil
 import stat
+from typing import Union
 import yaml
 from . import settings
 from .utils.external import execute
@@ -43,18 +45,18 @@ class NoOps():
     """
 
     def __init__(
-        self, product_path: str, dry_run: bool, rm_cache: bool):
+        self, product_path: Union[str, Path], dry_run: bool, rm_cache: bool):
 
         logging.info("NoOps: Init...")
 
         # Use absolute path
-        product_path = os.path.abspath(product_path)
+        product_path = Path(product_path).resolve()
 
         # change working directory to the product path
         os.chdir(product_path)
 
         self.dry_run = dry_run
-        self.workdir = os.path.join(product_path, settings.DEFAULT_WORKDIR)
+        self.workdir = product_path / settings.DEFAULT_WORKDIR
 
         if rm_cache or not self._iscache():
             self._create_cache(product_path)
@@ -67,29 +69,25 @@ class NoOps():
         logging.info("NoOps: Ready !" if not dry_run else "NoOps: Dry-run mode ready !")
 
     def _iscache(self) -> bool:
-        return os.path.isfile(self._get_generated_noops_json()) and \
-            os.path.isfile(self._get_generated_noops_yaml())
+        return self._get_generated_noops_json().is_file() and \
+            self._get_generated_noops_yaml().is_file()
 
-    def _create_cache(self, product_path: str):
+    def _create_cache(self, product_path: Path):
         # remove possible cache
-        if os.path.exists(self.workdir):
+        if self.workdir.exists():
             logging.info("purging cache")
             shutil.rmtree(self.workdir)
 
         logging.info("creating cache")
 
         # Load product noops.yaml
-        noops_product = io.read_yaml(
-            os.path.join(product_path, settings.DEFAULT_NOOPS_FILE)
-            )
+        noops_product = io.read_yaml(product_path / settings.DEFAULT_NOOPS_FILE)
         logging.debug("Product config: %s", noops_product)
 
         # Load devops noops.yaml
         self._prepare_devops(noops_product.get("devops", {}))
 
-        noops_devops = io.read_yaml(
-            os.path.join(self.workdir, settings.DEFAULT_NOOPS_FILE)
-            )
+        noops_devops = io.read_yaml(self.workdir / settings.DEFAULT_NOOPS_FILE)
         logging.debug("DevOps config: %s", noops_devops)
 
         # NoOps Merged configuration
@@ -117,9 +115,8 @@ class NoOps():
                 self._file_selector(product_path, f"pipeline.{target}.{key}",
                     noops_product, noops_devops)
 
-        self.noops_config["package"]["helm"]["values"] = os.path.join(
-            self.noops_config["package"]["helm"]["chart"], "noops"
-        )
+        self.noops_config["package"]["helm"]["values"] = \
+            self.noops_config["package"]["helm"]["chart"] / "noops"
 
         io.write_json(
             self._get_generated_noops_json(),
@@ -135,11 +132,11 @@ class NoOps():
 
         self.noops_config = io.read_yaml(self._get_generated_noops_yaml())
 
-    def _get_generated_noops_json(self):
-        return os.path.join(self.workdir, f"{settings.GENERATED_NOOPS}.json")
+    def _get_generated_noops_json(self) -> Path:
+        return self.workdir / f"{settings.GENERATED_NOOPS}.json"
 
-    def _get_generated_noops_yaml(self):
-        return os.path.join(self.workdir, f"{settings.GENERATED_NOOPS}.yaml")
+    def _get_generated_noops_yaml(self) -> Path:
+        return self.workdir / f"{settings.GENERATED_NOOPS}.yaml"
 
     def _prepare_devops(self, devops_config: dict):
         """
@@ -158,7 +155,7 @@ class NoOps():
 
         if git_config:
             with tempfile.TemporaryDirectory(prefix="noops-") as tmpdirname:
-                clone_path = os.path.join(tmpdirname, settings.DEFAULT_WORKDIR)
+                clone_path = Path(tmpdirname) / settings.DEFAULT_WORKDIR
 
                 # clone
                 execute(
@@ -168,7 +165,7 @@ class NoOps():
                         "--depth=1",
                         "--branch={}".format(git_config["branch"]), # pylint: disable=consider-using-f-string
                         git_config["clone"],
-                        clone_path
+                        os.fspath(clone_path)
                     ]
                 )
 
@@ -177,11 +174,11 @@ class NoOps():
                 if os.name == "nt":
                     def remove_readonly(callback, path, excinfo): # pylint: disable=unused-argument
                         # Some files in .git folder are flagged read only on Windows
-                        os.chmod(path, stat.S_IWRITE)
+                        Path(path).chmod(stat.S_IWRITE)
                         callback(path)
                     shutil_kwargs["onerror"]=remove_readonly
 
-                shutil.rmtree(os.path.join(clone_path, ".git"), **shutil_kwargs)
+                shutil.rmtree(clone_path / ".git", **shutil_kwargs)
 
                 # move in the product folder
                 shutil.move(
@@ -194,7 +191,7 @@ class NoOps():
         logging.error("devops/local or devops/git not found !")
         raise ValueError()
 
-    def _file_selector(self, product_path: str, selector: str,
+    def _file_selector(self, product_path: Path, selector: str,
         noops_product: dict, noops_devops: dict):
         """
         Determines the file to use between product and devops directories
@@ -245,12 +242,12 @@ class NoOps():
         if product_file is not None:
             # check if the file is in product or devops
             # priority to product directory
-            if os.path.exists(os.path.join(product_path, product_file)):
+            if (product_path / product_file).exists():
                 # product directory
-                product_file_path = os.path.join(product_path, product_file)
-            elif os.path.exists(os.path.join(self.workdir, product_file)):
+                product_file_path = product_path / product_file
+            elif (self.workdir /product_file).exists():
                 # devops (workdir) directory
-                product_file_path = os.path.join(self.workdir, product_file)
+                product_file_path = self.workdir / product_file
             else:
                 raise FileNotFoundError(
                     errno.ENOENT,
@@ -262,8 +259,8 @@ class NoOps():
             return
 
         if devops_file is not None:
-            devops_file_path = os.path.join(self.workdir, devops_file)
-            if os.path.exists(devops_file_path):
+            devops_file_path = self.workdir / devops_file
+            if devops_file_path.exists():
                 config_iter[keys[-1]] = devops_file_path
             else:
                 raise FileNotFoundError(

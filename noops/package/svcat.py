@@ -29,7 +29,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import subprocess
 import logging
-import os
 import yaml
 from .. import settings
 from ..utils import io
@@ -170,11 +169,7 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
 
         if svcat_kinds != "":
             io.write_raw(
-                os.path.join(
-                    self.helm.config["chart"],
-                    "templates",
-                    "svcat.yaml"
-                ),
+                self.helm.config["chart"] / "templates" / "svcat.yaml",
                 svcat_kinds,
                 dry_run=self.core.is_dry_run()
             )

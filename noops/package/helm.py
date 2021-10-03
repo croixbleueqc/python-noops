@@ -147,9 +147,9 @@ class Helm():
         Directory where to store values.yaml files
         """
         if values_filename is None:
-            return self.config["values"]
+            return Path(self.config["values"])
 
-        return self.config["values"] / values_filename
+        return Path(self.config["values"]) / values_filename
 
     def create_package(self, app_version: str, revision: str, # pylint: disable=too-many-arguments
         description: str, values: Path):

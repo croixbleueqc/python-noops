@@ -30,3 +30,5 @@ DEFAULT_FEATURES={
     "service-catalog": True,
     "white-label": False
 }
+
+VERSION="2.0.0-alpha.1"

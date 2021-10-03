@@ -19,14 +19,11 @@ noopsctl version
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-import importlib.metadata
 import click
 from . import cli
+from ..settings import VERSION
 
 @cli.command()
 def version():
     """print the client version information"""
-    try:
-        click.echo(f"version: {importlib.metadata.version('noops')}")
-    except importlib.metadata.PackageNotFoundError:
-        click.echo("version: unknown")
+    click.echo(f"version: {VERSION}")

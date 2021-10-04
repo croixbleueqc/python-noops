@@ -65,14 +65,16 @@ class TestNoOps(TestCaseNoOps):
 
             # test in memory config
             self.assertEqual(
-                json.loads(json.dumps(noops.noops_config, cls=PathEncoder)),
+                json.loads(json.dumps(noops.noops_config, cls=PathEncoder)), # to remove Path()
                 expected_config
             )
 
             # test yaml file from the cache
             with noops._get_generated_noops_yaml().open(encoding='UTF-8') as file: # pylint: disable=protected-access
                 from_cache = yaml.load(file, Loader=yaml.SafeLoader)
-            self.assertEqual(from_cache, expected_config)
+            self.assertEqual(
+                json.loads(json.dumps(from_cache, cls=PathEncoder)), # to remove Path()
+                expected_config)
 
             # test json file from the cache
             with noops._get_generated_noops_json().open(encoding='UTF-8') as file: # pylint: disable=protected-access

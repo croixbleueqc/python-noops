@@ -46,10 +46,17 @@ def path_representer(dumper: yaml.Dumper, data):
     """
     Custom Encoder for Path (yaml)
     """
-    return dumper.represent_str(os.fspath(data))
+    return dumper.represent_scalar('!path', os.fspath(data))
 
-yaml.add_representer(PosixPath, path_representer)
-yaml.add_representer(WindowsPath, path_representer)
+def path_constructor(loader: yaml.Loader, node):
+    """
+    Custom Loader for !path
+    """
+    return Path(loader.construct_scalar(node))
+
+yaml.Dumper.add_representer(PosixPath, path_representer)
+yaml.Dumper.add_representer(WindowsPath, path_representer)
+yaml.SafeLoader.add_constructor('!path', path_constructor)
 
 # IO functions
 

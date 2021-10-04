@@ -39,19 +39,19 @@ def package(ctx):
 @package.command()
 @click.pass_obj
 @click.option('-a', '--app-version', help='Application version')
-@click.option('-r', '--revision', help='Build number', required=True, type=click.INT)
+@click.option('-b', '--build', help='Build number', required=True)
 @click.option('-d', '--description', help='One line description about this new version')
 @click.option('-c', '--chart-name', help='Override chart name auto detection')
 @click.option('-f', '--values',
     help='override image/tag/... in chart values.yaml', required=True, type=click.Path())
-def create(shared, app_version, revision, description, chart_name, values): # pylint: disable=too-many-arguments
+def create(shared, app_version, build, description, chart_name, values): # pylint: disable=too-many-arguments
     """create a package"""
     values_file = Path(values).resolve()
 
     core = create_noops_instance(shared)
     helm = Helm(core, chart_name)
     prepare(core, helm)
-    helm.create_package(app_version, revision, description, values_file)
+    helm.create_package(app_version, build, description, values_file)
 
 @package.command()
 @click.pass_obj

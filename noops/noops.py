@@ -60,8 +60,8 @@ class NoOps():
 
         if rm_cache or not self._iscache():
             self._create_cache(product_path)
-
-        self._load_cache()
+        else:
+            self._load_cache()
 
         logging.debug("Final config: %s", self.noops_config)
 
@@ -130,6 +130,13 @@ class NoOps():
         logging.info("loading cached configuration")
 
         self.noops_config = io.read_yaml(self._get_generated_noops_yaml())
+
+        # TODO: load all path as Path()
+        #       with yaml representer despite it will be less readable for Human ?
+        self.noops_config["package"]["helm"]["values"] = \
+            Path(self.noops_config["package"]["helm"]["values"])
+        self.noops_config["package"]["helm"]["chart"] = \
+            Path(self.noops_config["package"]["helm"]["chart"])
 
     def _get_generated_noops_json(self) -> Path:
         return self.workdir / f"{settings.GENERATED_NOOPS}.json"

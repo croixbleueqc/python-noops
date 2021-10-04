@@ -12,6 +12,7 @@ from contextlib import contextmanager
 import yaml
 from noops.noops import NoOps
 from noops.settings import DEFAULT_WORKDIR
+from noops.utils.io import PathEncoder
 from . import TestCaseNoOps
 
 DEMO="tests/data/demo"
@@ -63,7 +64,10 @@ class TestNoOps(TestCaseNoOps):
             expected_config = yaml.load(content, Loader=yaml.SafeLoader)
 
             # test in memory config
-            self.assertEqual(noops.noops_config, expected_config)
+            self.assertEqual(
+                json.loads(json.dumps(noops.noops_config, cls=PathEncoder)),
+                expected_config
+            )
 
             # test yaml file from the cache
             with noops._get_generated_noops_yaml().open(encoding='UTF-8') as file: # pylint: disable=protected-access

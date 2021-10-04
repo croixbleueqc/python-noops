@@ -147,11 +147,11 @@ class Helm():
         Directory where to store values.yaml files
         """
         if values_filename is None:
-            return Path(self.config["values"])
+            return self.config["values"]
 
-        return Path(self.config["values"]) / values_filename
+        return self.config["values"] / values_filename
 
-    def create_package(self, app_version: str, revision: str, # pylint: disable=too-many-arguments
+    def create_package(self, app_version: str, build: str, # pylint: disable=too-many-arguments
         description: str, values: Path):
         """
         Create a NoOps Helm Package
@@ -171,10 +171,11 @@ class Helm():
         chart_file = self.config["chart"] / "Chart.yaml"
         chart = io.read_yaml(chart_file)
 
-        # Extract main chart version (keep only what is before + char)
-        version = chart["version"].split("-")[0]
+        # Extract main chart version (keep only what is after + char)
+        version = chart["version"].split("+")
+        version = version[1] if len(version) == 2 else version[0]
 
-        chart["version"] = f"{version}-{revision}"
+        chart["version"] = f"{build}+{version}"
         chart["appVersion"] = app_version
         chart["description"] = description
         chart["name"] = self.chart_name
@@ -183,9 +184,9 @@ class Helm():
             chart["keywords"] = []
 
         for keyword in (
-            f"{self.chart_name}--+{app_version}",
-            f"{self.chart_name}-{version}-+{app_version}",
-            f"{self.chart_name}-{version}-{revision}+{app_version}"):
+            f"{self.chart_name}-++{app_version}",
+            f"{self.chart_name}-+{version}+{app_version}",
+            f"{self.chart_name}-{build}+{version}+{app_version}"):
             chart["keywords"].append(keyword)
 
         logging.info('Creating NoOps Helm Package: %s-%s', self.chart_name, chart["version"])
@@ -211,7 +212,7 @@ class Helm():
             "helm",
             [
                 "package",
-                self.config["chart"],
+                os.fspath(self.config["chart"]),
                 "-d",
                 os.fspath(self.core.workdir)
             ],

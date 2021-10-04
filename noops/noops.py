@@ -100,7 +100,6 @@ class NoOps():
             "package.lib.dockerfile",
             "package.helm.chart",
             "package.helm.preprocessor",
-            "pipeline.deploy.default",
             "local.build.posix",
             "local.build.nt",
             "local.run.posix",

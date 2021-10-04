@@ -131,13 +131,6 @@ class NoOps():
 
         self.noops_config = io.read_yaml(self._get_generated_noops_yaml())
 
-        # TODO: load all path as Path()
-        #       with yaml representer despite it will be less readable for Human ?
-        self.noops_config["package"]["helm"]["values"] = \
-            Path(self.noops_config["package"]["helm"]["values"])
-        self.noops_config["package"]["helm"]["chart"] = \
-            Path(self.noops_config["package"]["helm"]["chart"])
-
     def _get_generated_noops_json(self) -> Path:
         return self.workdir / f"{settings.GENERATED_NOOPS}.json"
 
@@ -283,7 +276,7 @@ class NoOps():
         Print the final noops configuration in a json or yaml way
         """
         if asjson:
-            print(json.dumps(self.noops_config, indent=indent))
+            print(json.dumps(self.noops_config, indent=indent, cls=io.PathEncoder))
         else:
             print(yaml.dump(self.noops_config, indent=indent))
 

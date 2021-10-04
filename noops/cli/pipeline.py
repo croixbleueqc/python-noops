@@ -30,7 +30,7 @@ from ..pipeline.deploy import pipeline_deploy
 def pipeline():
     """pipeline control"""
 
-def __image_lib(shared, argument, ci, pr, cd, cargs): # pylint: disable=invalid-name
+def __image_lib(shared, argument, ci, pr, cd, cargs): # pylint: disable=invalid-name,too-many-arguments
     """
     Shared logic for continuous integration, pull request and continuous delivery
     ONLY for deprecated image and lib arguments

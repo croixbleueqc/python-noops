@@ -30,18 +30,11 @@ from ..pipeline.deploy import pipeline_deploy
 def pipeline():
     """pipeline control"""
 
-@pipeline.command()
-@click.pass_obj
-@click.option('--ci', '--continuous-integration',
-    help='on commit in a work branch [default]', is_flag=True, default=False)
-@click.option('--pr', '--pull-request',
-    help='on Pull request', is_flag=True, default=False)
-@click.option('--cd', '--continuous-delivery',
-    help='on merge in main branch', is_flag=True, default=False)
-@click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
-def image(shared, ci, pr, cd, cargs): # pylint: disable=invalid-name
-    """manages ci, pr or cd steps (image) [DEPRECATED]"""
-
+def __image_lib(shared, argument, ci, pr, cd, cargs): # pylint: disable=invalid-name
+    """
+    Shared logic for continuous integration, pull request and continuous delivery
+    ONLY for deprecated image and lib arguments
+    """
     if ci + pr + cd > 1:
         raise click.BadParameter(
             "following parameters are mutually exclusive: --ci, --pr, --cd"
@@ -57,7 +50,7 @@ def image(shared, ci, pr, cd, cargs): # pylint: disable=invalid-name
     core = create_noops_instance(shared)
 
     execute(
-        core.noops_config["pipeline"]["image"][scope],
+        core.noops_config["pipeline"][argument][scope],
         list(cargs),
         core.noops_envs(),
         dry_run=core.is_dry_run()
@@ -72,28 +65,33 @@ def image(shared, ci, pr, cd, cargs): # pylint: disable=invalid-name
 @click.option('--cd', '--continuous-delivery',
     help='on merge in main branch', is_flag=True, default=False)
 @click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
+def image(shared, ci, pr, cd, cargs): # pylint: disable=invalid-name
+    """manages ci, pr or cd steps (image) [DEPRECATED]"""
+
+    __image_lib(
+        shared,
+        "image",
+        ci, pr, cd,
+        cargs
+    )
+
+@pipeline.command()
+@click.pass_obj
+@click.option('--ci', '--continuous-integration',
+    help='on commit in a work branch [default]', is_flag=True, default=False)
+@click.option('--pr', '--pull-request',
+    help='on Pull request', is_flag=True, default=False)
+@click.option('--cd', '--continuous-delivery',
+    help='on merge in main branch', is_flag=True, default=False)
+@click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
 def lib(shared, ci, pr, cd, cargs): # pylint: disable=invalid-name
     """manages ci, pr or cd steps (library) [DEPRECATED]"""
 
-    if ci + pr + cd > 1:
-        raise click.BadParameter(
-            "following parameters are mutually exclusive: --ci, --pr, --cd"
-        )
-
-    if pr:
-        scope = "pr"
-    elif cd:
-        scope = "cd"
-    else:
-        scope = "ci"
-
-    core = create_noops_instance(shared)
-
-    execute(
-        core.noops_config["pipeline"]["lib"][scope],
-        list(cargs),
-        core.noops_envs(),
-        dry_run=core.is_dry_run()
+    __image_lib(
+        shared,
+        "lib",
+        ci, pr, cd,
+        cargs
     )
 
 def __ci_pr_cd(shared, target):

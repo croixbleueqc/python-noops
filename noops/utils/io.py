@@ -40,7 +40,7 @@ class PathEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, Path):
             return os.fspath(o)
-        return json.JSONEncoder.default(self, o)
+        return json.JSONEncoder.default(self, o) # pragma: no cover
 
 def path_representer(dumper: yaml.Dumper, data):
     """

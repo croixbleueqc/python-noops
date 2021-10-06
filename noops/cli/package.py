@@ -27,12 +27,14 @@ from . import cli, create_noops_instance
 from ..package.prepare import prepare
 from ..package.serve import serve_forever
 from ..package.helm import Helm
+from ..package.install import HelmInstall
+from ..typing.targets import PlanTarget
 
 @cli.group()
 @click.pass_context
 def package(ctx):
     """manage packages"""
-    if ctx.invoked_subcommand != "serve" and \
+    if ctx.invoked_subcommand not in ("serve", "install") and \
         ctx.obj['product'] is None:
         raise click.BadOptionUsage("product","Missing option '-p' / '--product'.", ctx=ctx.parent)
 
@@ -43,10 +45,10 @@ def package(ctx):
 @click.option('-d', '--description', help='One line description about this new version')
 @click.option('-c', '--chart-name', help='Override chart name auto detection')
 @click.option('-f', '--values',
-    help='override image/tag/... in chart values.yaml', required=True, type=click.Path())
+    help='override image/tag/... in chart values.yaml', type=click.Path())
 def create(shared, app_version, build, description, chart_name, values): # pylint: disable=too-many-arguments
     """create a package"""
-    values_file = Path(values).resolve()
+    values_file = None if values is None else Path(values).resolve()
 
     core = create_noops_instance(shared)
     helm = Helm(core, chart_name)
@@ -75,3 +77,35 @@ def push(shared, directory, url):
 def serve(directory, bind, port): # pylint: disable=invalid-name
     """Serve packages (not recommended for production)"""
     serve_forever(directory, bind, port)
+
+@package.group()
+def install():
+    """
+    install a package
+    """
+
+@install.command(name='helm')
+@click.pass_obj
+@click.option('-n', '--namespace', help='namespace scope')
+@click.option('-r', '--release', help='release name')
+@click.option('-c', '--chart', help='chart keyword')
+@click.option('-e', '--env', help='Environment', default='dev', show_default=True)
+@click.option('-p', '--pre-processing', help='Preprocessing script', type=click.Path())
+@click.option('-t', '--target',
+    type=click.Choice(PlanTarget.list_installable_targets(), case_sensitive=True))
+@click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
+def install_helm(shared, namespace, release, chart, env, pre_processing, target, cargs): # pylint: disable=too-many-arguments
+    """
+    install a NoOps helm package
+
+    CARGS are passed directly to helm
+    """
+    helm = HelmInstall(shared["dry_run"])
+    helm.upgrade(
+        namespace,
+        release,
+        chart,
+        env,
+        Path(pre_processing) if pre_processing is not None else None,
+        list(cargs),
+        target=PlanTarget(target) if target is not None else None)

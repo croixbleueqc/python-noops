@@ -28,6 +28,7 @@ import os
 from pathlib import Path
 import shutil
 import re
+from typing import Optional
 from .. import settings
 from ..utils.external import execute, get_stdout_from_shell, execute_from_shell
 from ..utils import containers
@@ -152,7 +153,7 @@ class Helm():
         return self.config["values"] / values_filename
 
     def create_package(self, app_version: str, build: str, # pylint: disable=too-many-arguments
-        description: str, values: Path):
+        description: str, values: Optional[Path]):
         """
         Create a NoOps Helm Package
         """
@@ -191,22 +192,32 @@ class Helm():
 
         logging.info('Creating NoOps Helm Package: %s-%s', self.chart_name, chart["version"])
 
-        # Values.yaml
-        chart_values_file = self.config["chart"] / "values.yaml"
-        chart_values = io.read_yaml(chart_values_file)
-
-        # Values from parameters
-        override_values = io.read_yaml(values)
-
-        # Merge
-        chart_values = containers.deep_merge(chart_values, override_values)
-
-        # Store
         logging.info("Generated Chart.yaml")
         io.write_yaml(chart_file, chart, dry_run=self.core.is_dry_run())
 
-        logging.info("Generated Values.yaml")
-        io.write_yaml(chart_values_file, chart_values, dry_run=self.core.is_dry_run())
+        # Values.yaml
+        if values is not None:
+            # Values.yaml
+            chart_values_file = self.config["chart"] / "values.yaml"
+            chart_values = io.read_yaml(chart_values_file)
+
+            # Values from parameters
+            override_values = io.read_yaml(values)
+
+            # Merge
+            chart_values = containers.deep_merge(chart_values, override_values)
+
+            logging.info("Generated Values.yaml")
+            io.write_yaml(chart_values_file, chart_values, dry_run=self.core.is_dry_run())
+
+        # noops.yaml chart
+        noops_chart_config = {
+            "apiVersion": "noops.local/v1alpha1",
+            "kind": "chart",
+            "targets": self.core.noops_config.get("targets")
+        }
+        noops_file = self.config["chart"] / settings.DEFAULT_NOOPS_FILE
+        io.write_yaml(noops_file, noops_chart_config, dry_run=self.core.is_dry_run())
 
         execute(
             "helm",

@@ -79,6 +79,18 @@ class PlanTarget(str, Enum):
     STANDBY = 'standby' # Helm only
     UNKNOWN = 'unknown'
 
+    @classmethod
+    def list_installable_targets (cls) -> List[str]:
+        """
+        List only installable targets
+        """
+        return [
+            cls.ONE_CLUSTER.value,
+            cls.MULTI_CLUSTER.value,
+            cls.ACTIVE.value,
+            cls.STANDBY.value
+        ]
+
 class Plan(BaseModel): # pylint: disable=R0903
     """
     Model to provide a plan with clusters to used per target

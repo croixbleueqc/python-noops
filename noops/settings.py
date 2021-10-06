@@ -21,6 +21,8 @@ Defines some default variables
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
+VERSION="2.0.0-alpha.1"
+
 DEFAULT_INDENT=2
 DEFAULT_NOOPS_FILE="noops.yaml"
 DEFAULT_WORKDIR="noops_workdir"
@@ -31,4 +33,6 @@ DEFAULT_FEATURES={
     "white-label": False
 }
 
-VERSION="2.0.0-alpha.1"
+VALUES_SVCAT="svcat"
+
+TMP_PREFIX="noops-"

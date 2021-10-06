@@ -17,66 +17,9 @@ class TestTargets(TestCaseNoOps):
     """
     Tests relative to Targets Kind actions
     """
-    def test_helm_flags_one_cluster(self):
+    def test_verify_one_cluster(self):
         """
         Helm flags [one cluster]
-        """
-        plan = Plan()
-        plan.target = PlanTarget.ONE_CLUSTER
-        targets = Targets({})
-
-        self.assertEqual(
-            targets.helm_flags(plan, PlanTarget.ONE_CLUSTER),
-            "-f target-one-cluster.yaml"
-        )
-
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.MULTI_CLUSTER)
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.ACTIVE_STANDBY)
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.ACTIVE)
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.STANDBY)
-
-    def test_helm_flags_multi_cluster(self):
-        """
-        Helm flags [multi-cluster]
-        """
-        plan = Plan()
-        plan.target = PlanTarget.MULTI_CLUSTER
-        targets = Targets({})
-
-        self.assertEqual(
-            targets.helm_flags(plan, PlanTarget.MULTI_CLUSTER),
-            "-f target-multi-cluster.yaml"
-        )
-
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.ONE_CLUSTER)
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.ACTIVE_STANDBY)
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.ACTIVE)
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.STANDBY)
-
-    def test_helm_flags_active_standby(self):
-        """
-        Helm flags [active-standby]
-        """
-        plan = Plan()
-        plan.target = PlanTarget.ACTIVE_STANDBY
-        targets = Targets({})
-
-        self.assertEqual(
-            targets.helm_flags(plan, PlanTarget.ACTIVE),
-            "-f target-active.yaml"
-        )
-        self.assertEqual(
-            targets.helm_flags(plan, PlanTarget.STANDBY),
-            "-f target-standby.yaml"
-        )
-
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.ONE_CLUSTER)
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.MULTI_CLUSTER)
-        self.assertRaises(TargetNotSupported, targets.helm_flags, plan, PlanTarget.ACTIVE_STANDBY)
-
-    def test_is_compatible_one_cluster(self):
-        """
-        Compatibility [one-cluster]
         """
         plan = Plan()
         plan.target = PlanTarget.ONE_CLUSTER
@@ -90,13 +33,16 @@ class TestTargets(TestCaseNoOps):
             }
         )
 
-        self.assertTrue(targets.is_compatible(plan, supported))
-        supported.one_cluster = False
-        self.assertFalse(targets.is_compatible(plan, supported))
+        self.assertRaises(
+            TargetNotSupported, targets.verify, plan, PlanTarget.MULTI_CLUSTER, supported)
+        self.assertRaises(
+            TargetNotSupported, targets.verify, plan, PlanTarget.ACTIVE_STANDBY, supported)
+        self.assertRaises(TargetNotSupported, targets.verify, plan, PlanTarget.ACTIVE, supported)
+        self.assertRaises(TargetNotSupported, targets.verify, plan, PlanTarget.STANDBY, supported)
 
-    def test_is_compatible_multi_cluster(self):
+    def test_verify_multi_cluster(self):
         """
-        Compatibility [multi-cluster]
+        Helm flags [multi-cluster]
         """
         plan = Plan()
         plan.target = PlanTarget.MULTI_CLUSTER
@@ -110,13 +56,16 @@ class TestTargets(TestCaseNoOps):
             }
         )
 
-        self.assertTrue(targets.is_compatible(plan, supported))
-        supported.multi_cluster = False
-        self.assertFalse(targets.is_compatible(plan, supported))
+        self.assertRaises(
+            TargetNotSupported, targets.verify, plan, PlanTarget.ONE_CLUSTER, supported)
+        self.assertRaises(
+            TargetNotSupported, targets.verify, plan, PlanTarget.ACTIVE_STANDBY, supported)
+        self.assertRaises(TargetNotSupported, targets.verify, plan, PlanTarget.ACTIVE, supported)
+        self.assertRaises(TargetNotSupported, targets.verify, plan, PlanTarget.STANDBY, supported)
 
-    def test_is_compatible_active_standby(self):
+    def test_verify_active_standby(self):
         """
-        Compatibility [active-standby]
+        Helm flags [active-standby]
         """
         plan = Plan()
         plan.target = PlanTarget.ACTIVE_STANDBY
@@ -130,9 +79,12 @@ class TestTargets(TestCaseNoOps):
             }
         )
 
-        self.assertTrue(targets.is_compatible(plan, supported))
-        supported.active_standby = False
-        self.assertFalse(targets.is_compatible(plan, supported))
+        self.assertRaises(
+            TargetNotSupported, targets.verify, plan, PlanTarget.ONE_CLUSTER, supported)
+        self.assertRaises(
+            TargetNotSupported, targets.verify, plan, PlanTarget.MULTI_CLUSTER, supported)
+        self.assertRaises(
+            TargetNotSupported, targets.verify, plan, PlanTarget.ACTIVE_STANDBY, supported)
 
     def test_init(self):
         """

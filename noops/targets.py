@@ -125,33 +125,36 @@ class Targets():
         return list(clusters_selected)
 
     @classmethod
-    def is_compatible(cls, plan: Plan, supported: NoOpsTargetsSupported) -> bool:
+    def is_compatible(cls, target: PlanTarget, supported: NoOpsTargetsSupported) -> bool:
         """
         Verify if NoOps Project (by noops.yaml) support the target plan
         """
-        if plan.target == PlanTarget.ONE_CLUSTER and supported.one_cluster:
+        if target == PlanTarget.ONE_CLUSTER and supported.one_cluster:
             return True
 
-        if plan.target == PlanTarget.MULTI_CLUSTER and supported.multi_cluster:
+        if target == PlanTarget.MULTI_CLUSTER and supported.multi_cluster:
             return True
 
-        if plan.target == PlanTarget.ACTIVE_STANDBY and supported.active_standby:
+        if target in (PlanTarget.ACTIVE_STANDBY, PlanTarget.ACTIVE, PlanTarget.STANDBY) \
+            and supported.active_standby:
             return True
 
         return False
 
     @classmethod
-    def helm_flags(cls, plan: Plan, target: PlanTarget) -> str:
-        """Get helm flags to set the target"""
-        if plan.target == target.ONE_CLUSTER and target != PlanTarget.ONE_CLUSTER:
+    def verify(cls, plan: Plan, target: PlanTarget, supported: NoOpsTargetsSupported):
+        """Verify compatibility of the plan, target and what is supported"""
+
+        if not cls.is_compatible(target, supported):
+            raise TargetNotSupported(target)
+
+        if plan.target == PlanTarget.ONE_CLUSTER and target != PlanTarget.ONE_CLUSTER:
             raise TargetNotSupported(target, PlanTarget.ONE_CLUSTER)
 
-        if plan.target == target.MULTI_CLUSTER and target != PlanTarget.MULTI_CLUSTER:
+        if plan.target == PlanTarget.MULTI_CLUSTER and target != PlanTarget.MULTI_CLUSTER:
             raise TargetNotSupported(target, PlanTarget.MULTI_CLUSTER)
 
-        if plan.target == target.ACTIVE_STANDBY and \
+        if plan.target == PlanTarget.ACTIVE_STANDBY and \
             target != PlanTarget.ACTIVE and \
             target != PlanTarget.STANDBY:
             raise TargetNotSupported(target, PlanTarget.ACTIVE, PlanTarget.STANDBY)
-
-        return f"-f target-{target}.yaml"

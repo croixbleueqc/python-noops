@@ -130,8 +130,8 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
     def create_kinds_and_values(self):
         """
         Create:
-        - kinds ServiceInstance/ServiceBinding in {package.helm.chart}/templates/svcat.yaml
-        - bindings available in {workdir}/helm/values-svcat.yaml
+        - kinds ServiceInstance/ServiceBinding in {package.helm.chart}/templates/{VALUES_SVCAT}.yaml
+        - bindings available in {workdir}/helm/values-{VALUES_SVCAT}.yaml
         """
         svcat_bindings=[]
 
@@ -169,7 +169,7 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
 
         if svcat_kinds != "":
             io.write_raw(
-                self.helm.config["chart"] / "templates" / "svcat.yaml",
+                self.helm.config["chart"] / "templates" / f"{settings.VALUES_SVCAT}.yaml",
                 svcat_kinds,
                 dry_run=self.core.is_dry_run()
             )
@@ -185,7 +185,7 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
         self.helm.create_values_directory()
 
         io.write_yaml(
-            self.helm.get_values_path("values-svcat.yaml"),
+            self.helm.get_values_path(f"values-{settings.VALUES_SVCAT}.yaml"),
             svcat_values,
             indent=settings.DEFAULT_INDENT,
             dry_run=self.core.is_dry_run()

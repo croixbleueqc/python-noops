@@ -26,8 +26,13 @@ class NoopsException(Exception):
 
 class TargetNotSupported(NoopsException):
     """Target not supported for this plan"""
-    def __init__(self, target, expected1, expected2=None):
-        if expected2 is None:
+    def __init__(self, target, expected1=None, expected2=None):
+        if expected1 is None:
+            NoopsException.__init__(
+                self,
+                f"{target} is not supported by this product !"
+            )
+        elif expected2 is None:
             NoopsException.__init__(
                 self,
                 f"{target} is not supported for this plan. Please strictly use {expected1} !"

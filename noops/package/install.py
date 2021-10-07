@@ -25,7 +25,8 @@ import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List
-from ..typing.targets import PlanTarget, NoOpsTargetsSupported
+from ..typing.targets import TargetsEnum
+from ..typing.charts import ChartKind
 from ..utils.external import execute, execute_from_shell, get_stdout_from_shell
 from ..utils.io import read_yaml
 from ..targets import Targets
@@ -89,8 +90,8 @@ class HelmInstall():
         return dst / pkg_name
 
     def upgrade(self, namespace: str, release: str, chart: str, env: str, # pylint: disable=too-many-arguments
-        pre_processing: Path, cargs: List[str],
-        pre_processing_envs: dict = None, target: PlanTarget = None):
+        pre_processing_path: Path, cargs: List[str],
+        pre_processing_envs: dict = None, target: TargetsEnum = None):
         """
         helm upgrade {release}
             {chart}
@@ -112,15 +113,18 @@ class HelmInstall():
             # Pull it
             dst = self.pull(pkg, Path(tmp))
 
+            # noops.yaml (chart kind)
+            chartkind = self._chart_kind(dst)
+
             # Values
             values_args = self._values_args(env, dst)
-            values_args += self._targets_args(target, env, dst)
+            values_args += self._targets_args(chartkind, target, env, dst)
 
             # pre-processing
-            # /path/to/pre-processing -e {env} -f values1.yaml -f valuesN.yaml
-            if pre_processing is not None:
+            # args to pass: -e {env} -f values1.yaml -f valuesN.yaml
+            for pre_processing in chartkind.spec.package.helm.preprocessing:
                 execute(
-                    os.fspath(pre_processing),
+                    os.fspath(pre_processing_path / pre_processing),
                     [ "-e", env ] + values_args,
                     extra_envs=pre_processing_envs,
                     product_path=os.fspath(dst),
@@ -142,6 +146,15 @@ class HelmInstall():
             )
 
     @classmethod
+    def _chart_kind(cls, dst: Path) -> ChartKind:
+        """
+        Read the noops.yaml from chart
+        """
+        return ChartKind.parse_obj(
+            read_yaml(dst / settings.DEFAULT_NOOPS_FILE)
+        )
+
+    @classmethod
     def _values_args(cls, env: str, dst: Path) -> List[str]:
         """
         Select all values*.yaml files requested to install the package
@@ -157,23 +170,24 @@ class HelmInstall():
         return values_args
 
     @classmethod
-    def _targets_args(cls, target: PlanTarget, env: str, dst: Path) -> List[str]:
+    def _targets_args(cls, chartkind: ChartKind, target: TargetsEnum, env: str,
+        dst: Path) -> List[str]:
+        """
+        Create targets arguments to use
+        """
         targets_args=[]
 
         if target is None:
             return targets_args
 
         # check compatibility
-        noops_chart_config = read_yaml(dst / settings.DEFAULT_NOOPS_FILE)
-
         if not Targets.is_compatible(
             target,
-            NoOpsTargetsSupported.parse_obj(noops_chart_config["targets"]["supported"])
-        ):
+            chartkind.spec.package.supported.target_classes):
             raise TargetNotSupported(target)
 
-        for values in ("default", env):
-            values_file = dst / "noops" / f"target-{target.value}-{values}.yaml"
+        for values in ("-default", f"-{env}", ""):
+            values_file = dst / "noops" / f"target-{target.value}{values}.yaml"
             if values_file.exists():
                 targets_args.append("-f")
                 targets_args.append(os.fspath(values_file))

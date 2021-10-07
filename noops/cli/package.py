@@ -28,7 +28,7 @@ from ..package.prepare import prepare
 from ..package.serve import serve_forever
 from ..package.helm import Helm
 from ..package.install import HelmInstall
-from ..typing.targets import PlanTarget
+from ..typing.targets import TargetsEnum
 
 @cli.group()
 @click.pass_context
@@ -90,11 +90,12 @@ def install():
 @click.option('-r', '--release', help='release name')
 @click.option('-c', '--chart', help='chart keyword')
 @click.option('-e', '--env', help='Environment', default='dev', show_default=True)
-@click.option('-p', '--pre-processing', help='Preprocessing script', type=click.Path())
+@click.option('-p', '--pre-processing-path',
+    help='Pre-processing scripts/binaries path', type=click.Path(), required=True)
 @click.option('-t', '--target',
-    type=click.Choice(PlanTarget.list_installable_targets(), case_sensitive=True))
+    type=click.Choice(TargetsEnum.list(), case_sensitive=True))
 @click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
-def install_helm(shared, namespace, release, chart, env, pre_processing, target, cargs): # pylint: disable=too-many-arguments
+def install_helm(shared, namespace, release, chart, env, pre_processing_path, target, cargs): # pylint: disable=too-many-arguments
     """
     install a NoOps helm package
 
@@ -106,6 +107,6 @@ def install_helm(shared, namespace, release, chart, env, pre_processing, target,
         release,
         chart,
         env,
-        Path(pre_processing) if pre_processing is not None else None,
+        Path(pre_processing_path).resolve(),
         list(cargs),
-        target=PlanTarget(target) if target is not None else None)
+        target=TargetsEnum(target) if target is not None else None)

@@ -23,9 +23,9 @@ noopsctl targets [-f targets.yaml] compute
 
 from typing import List
 from .typing.targets import (
-    Plan, Kind, PlanTarget,
+    Plan, Kind, TargetsEnum, TargetClassesEnum,
     TargetSpec, RequiredSpec,
-    Cluster, NoOpsTargetsSupported)
+    Cluster, TargetClasses)
 from .errors import TargetNotSupported, ClustersAvailability, PlanTargetUnknown
 
 class Targets():
@@ -61,15 +61,15 @@ class Targets():
         if len(plan.standby) == 0:
             if len(plan.active) == 1:
                 # target is one-cluster
-                plan.target = PlanTarget.ONE_CLUSTER
+                plan.target = TargetClassesEnum.ONE_CLUSTER
             elif len(plan.active) > 1:
                 # target is multi-cluster
-                plan.target = PlanTarget.MULTI_CLUSTER
+                plan.target = TargetClassesEnum.MULTI_CLUSTER
             else:
                 raise PlanTargetUnknown()
         elif len(plan.active) >= 1:
             # target is active-standby
-            plan.target = PlanTarget.ACTIVE_STANDBY
+            plan.target = TargetClassesEnum.ACTIVE_STANDBY
         else:
             raise PlanTargetUnknown()
 
@@ -125,36 +125,36 @@ class Targets():
         return list(clusters_selected)
 
     @classmethod
-    def is_compatible(cls, target: PlanTarget, supported: NoOpsTargetsSupported) -> bool:
+    def is_compatible(cls, target: TargetsEnum, supported: TargetClasses) -> bool:
         """
         Verify if NoOps Project (by noops.yaml) support the target plan
         """
-        if target == PlanTarget.ONE_CLUSTER and supported.one_cluster:
+        if target == TargetsEnum.ONE_CLUSTER and supported.one_cluster:
             return True
 
-        if target == PlanTarget.MULTI_CLUSTER and supported.multi_cluster:
+        if target == TargetsEnum.MULTI_CLUSTER and supported.multi_cluster:
             return True
 
-        if target in (PlanTarget.ACTIVE_STANDBY, PlanTarget.ACTIVE, PlanTarget.STANDBY) \
+        if target in (TargetsEnum.ACTIVE, TargetsEnum.STANDBY) \
             and supported.active_standby:
             return True
 
         return False
 
     @classmethod
-    def verify(cls, plan: Plan, target: PlanTarget, supported: NoOpsTargetsSupported):
+    def verify(cls, plan: Plan, target: TargetsEnum, supported: TargetClasses):
         """Verify compatibility of the plan, target and what is supported"""
 
         if not cls.is_compatible(target, supported):
             raise TargetNotSupported(target)
 
-        if plan.target == PlanTarget.ONE_CLUSTER and target != PlanTarget.ONE_CLUSTER:
-            raise TargetNotSupported(target, PlanTarget.ONE_CLUSTER)
+        if plan.target == TargetClassesEnum.ONE_CLUSTER and target != TargetsEnum.ONE_CLUSTER:
+            raise TargetNotSupported(target, TargetsEnum.ONE_CLUSTER)
 
-        if plan.target == PlanTarget.MULTI_CLUSTER and target != PlanTarget.MULTI_CLUSTER:
-            raise TargetNotSupported(target, PlanTarget.MULTI_CLUSTER)
+        if plan.target == TargetClassesEnum.MULTI_CLUSTER and target != TargetsEnum.MULTI_CLUSTER:
+            raise TargetNotSupported(target, TargetsEnum.MULTI_CLUSTER)
 
-        if plan.target == PlanTarget.ACTIVE_STANDBY and \
-            target != PlanTarget.ACTIVE and \
-            target != PlanTarget.STANDBY:
-            raise TargetNotSupported(target, PlanTarget.ACTIVE, PlanTarget.STANDBY)
+        if plan.target == TargetClassesEnum.ACTIVE_STANDBY and \
+            target != TargetsEnum.ACTIVE and \
+            target != TargetsEnum.STANDBY:
+            raise TargetNotSupported(target, TargetsEnum.ACTIVE, TargetsEnum.STANDBY)

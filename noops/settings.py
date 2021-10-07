@@ -36,3 +36,43 @@ DEFAULT_FEATURES={
 VALUES_SVCAT="svcat"
 
 TMP_PREFIX="noops-"
+
+DEFAULT_PKG_HELM_DEFINITIONS = {
+    # Define targets based on target classes supported
+    # class one-cluster uses one-cluster
+    # class multi-cluster uses multi-cluster
+    # class active-standby uses active,standby
+    "targets": {
+        "one-cluster": {
+            "noops": { "target": "one-cluster" }
+        },
+        "multi-cluster": {
+            "noops": { "target": "multi-cluster" }
+        },
+        "active": {
+            "noops": { "target": "active" }
+        },
+        "standby": {
+            "noops": { "target": "standby" }
+        }
+    },
+    # Define profiles based on profile classes supported
+    # class canary uses canary, canary-endpoints-only. Optionally dedicated-endpoints
+    # class blue-green uses canary class definition
+    # class dedicated-endpoints uses dedicated-endpoints
+    # class services-only uses services-only
+    "profiles": {
+        "canary": {
+            "noops": { "endpoints": False }
+        },
+        "canary-endpoints-only": {
+            "noops": { "canary-endpoints-only" : True }
+        },
+        "dedicated-endpoints": {
+            "noops": { "dedicated-endpoints": True }
+        },
+        "services-only": {
+            "noops": { "services-only": True }
+        }
+    }
+}

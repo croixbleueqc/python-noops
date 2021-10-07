@@ -32,37 +32,37 @@ class OperatorSpec(str, Enum):
     EXISTS = 'Exists'
     DOES_NOT_EXIST = 'DoesNotExist'
 
-class MatchExpressionSpec(BaseModel): # pylint: disable=R0903
+class MatchExpressionSpec(BaseModel): # pylint: disable=too-few-public-methods
     """Filtering expression model"""
     key: str
     operator: OperatorSpec
     values: Optional[List[str]]
 
-class MatchExpressionsSpec(BaseModel): # pylint: disable=R0903
+class MatchExpressionsSpec(BaseModel): # pylint: disable=too-few-public-methods
     """List of filtering expressions model"""
     matchExpressions: List[MatchExpressionSpec]
 
-class RequiredSpec(BaseModel): # pylint: disable=R0903
+class RequiredSpec(BaseModel): # pylint: disable=too-few-public-methods
     """requiredDuringSchedulingIgnoredDuringExecution model"""
     clusterSelectorTerms: List[MatchExpressionsSpec]
 
-class ClusterAffinitySpec(BaseModel): # pylint: disable=R0903
+class ClusterAffinitySpec(BaseModel): # pylint: disable=too-few-public-methods
     """clusterAffinity spec"""
     requiredDuringSchedulingIgnoredDuringExecution: RequiredSpec
 
-class TargetSpec(BaseModel): # pylint: disable=R0903
+class TargetSpec(BaseModel): # pylint: disable=too-few-public-methods
     """active, standby, service-only targets model"""
     clusterAffinity: Optional[ClusterAffinitySpec]
     clustersCount: Union[int, str] = 0
 
-class Spec(BaseModel): # pylint: disable=R0903
+class Spec(BaseModel): # pylint: disable=too-few-public-methods
     """Kind spec model"""
     active: TargetSpec
     standby: TargetSpec
     service_only: TargetSpec = Field(None, alias=SERVICE_ONLY)
     localLoadBalancer: bool = False
 
-class Kind(BaseModel): # pylint: disable=R0903
+class Kind(BaseModel): # pylint: disable=too-few-public-methods
     """Kind model"""
     apiVersion: str = 'noops.local/v1alpha1'
     kind: str = 'target'
@@ -70,32 +70,35 @@ class Kind(BaseModel): # pylint: disable=R0903
 
 # Plan compute
 
-class PlanTarget(str, Enum):
-    """Plan and Helm targets enum"""
+class TargetClassesEnum(str, Enum):
+    """
+    Target classes enumeration
+    """
     ONE_CLUSTER = 'one-cluster'
     MULTI_CLUSTER = 'multi-cluster'
     ACTIVE_STANDBY = 'active-standby'
-    ACTIVE = 'active' # Helm only
-    STANDBY = 'standby' # Helm only
-    UNKNOWN = 'unknown'
+
+class TargetsEnum(str, Enum):
+    """
+    Sub class Targets enumeration
+    """
+    ONE_CLUSTER = 'one-cluster'
+    MULTI_CLUSTER = 'multi-cluster'
+    ACTIVE = 'active'
+    STANDBY = 'standby'
 
     @classmethod
-    def list_installable_targets (cls) -> List[str]:
+    def list(cls):
         """
-        List only installable targets
+        List sub class targets
         """
-        return [
-            cls.ONE_CLUSTER.value,
-            cls.MULTI_CLUSTER.value,
-            cls.ACTIVE.value,
-            cls.STANDBY.value
-        ]
+        return [sub.value for sub in cls]
 
-class Plan(BaseModel): # pylint: disable=R0903
+class Plan(BaseModel): # pylint: disable=too-few-public-methods
     """
     Model to provide a plan with clusters to used per target
     """
-    target: PlanTarget = PlanTarget.UNKNOWN
+    target: TargetClassesEnum = TargetClassesEnum.ONE_CLUSTER
     active: List[str] = []
     standby: List[str] = []
     service_only: List[str] = Field([], alias=SERVICE_ONLY)
@@ -153,8 +156,19 @@ class Cluster(BaseModel):
 
 # NoOps yaml
 
-class NoOpsTargetsSupported(BaseModel): # pylint: disable=R0903
-    """noops.targets.supported model"""
+class TargetClasses(BaseModel): # pylint: disable=too-few-public-methods
+    """
+    package.supported.target-classes model
+    """
     one_cluster: bool = Field(False, alias="one-cluster")
     multi_cluster: bool = Field(False, alias="multi-cluster")
     active_standby: bool = Field(False, alias="active-standby")
+
+class ProfileClasses(BaseModel): # pylint: disable=too-few-public-methods
+    """
+    package.supported.profile-classes model
+    """
+    canary: bool = False
+    blue_green: bool = Field(False, alias='blue-green')
+    dedicated_endpoints: bool = Field(False, alias='dedicated-endpoints')
+    services_only: bool = Field(False, alias='services-only')

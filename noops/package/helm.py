@@ -107,16 +107,20 @@ class Helm():
         Create values files based on:
         - package.helm.parameters
         - package.helm.targets-parameters
+        - package.helm.definitions.targets (or default settings)
+        - package.helm.definitions.profiles (or default settings)
         """
         logging.info("Creating values files")
 
         self.create_values_directory()
 
+        # "regular" values
         self._create_values(
             self.config["parameters"],
             "values"
         )
 
+        # targets
         for target, parameters in \
             self.config.get("targets-parameters", {}).items():
             if parameters is None:
@@ -126,6 +130,17 @@ class Helm():
                 parameters,
                 f"target-{target}"
             )
+
+        self._create_values(
+            self.config.get("definitions", settings.DEFAULT_PKG_HELM_DEFINITIONS)["targets"],
+            "target"
+        )
+
+        # profiles
+        self._create_values(
+            self.config.get("definitions", settings.DEFAULT_PKG_HELM_DEFINITIONS)["profiles"],
+            "profile"
+        )
 
     def _create_values(self, parameters: dict, prefix: str):
         """
@@ -214,7 +229,15 @@ class Helm():
         noops_chart_config = {
             "apiVersion": "noops.local/v1alpha1",
             "kind": "chart",
-            "targets": self.core.noops_config.get("targets")
+            "spec": {
+                "package": {
+                    "supported": self.core.noops_config["package"].get("supported"),
+                    "helm": {
+                        "pre-processing" : self.core.noops_config["package"] \
+                                            .get("helm", {}).get("pre-processing", [])
+                    }
+                }
+            }
         }
         noops_file = self.config["chart"] / settings.DEFAULT_NOOPS_FILE
         io.write_yaml(noops_file, noops_chart_config, dry_run=self.core.is_dry_run())

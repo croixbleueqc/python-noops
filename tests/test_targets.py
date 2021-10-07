@@ -4,9 +4,9 @@ Tests relative to Targets Kind actions (mostly targets.py)
 
 from noops.targets import Targets
 from noops.typing.targets import (
-    Plan, PlanTarget, Kind,
+    Plan, TargetClassesEnum, TargetsEnum, Kind,
     MatchExpressionsSpec,
-    NoOpsTargetsSupported, Cluster
+    TargetClasses, Cluster
 )
 from noops.errors import TargetNotSupported, PlanTargetUnknown, ClustersAvailability
 from noops.utils.io import read_yaml
@@ -22,10 +22,10 @@ class TestTargets(TestCaseNoOps):
         Helm flags [one cluster]
         """
         plan = Plan()
-        plan.target = PlanTarget.ONE_CLUSTER
+        plan.target = TargetClassesEnum.ONE_CLUSTER
         targets = Targets({})
 
-        supported: NoOpsTargetsSupported = NoOpsTargetsSupported.parse_obj(
+        supported: TargetClasses = TargetClasses.parse_obj(
             {
                 "one-cluster":True,
                 "multi-cluster":False,
@@ -34,21 +34,19 @@ class TestTargets(TestCaseNoOps):
         )
 
         self.assertRaises(
-            TargetNotSupported, targets.verify, plan, PlanTarget.MULTI_CLUSTER, supported)
-        self.assertRaises(
-            TargetNotSupported, targets.verify, plan, PlanTarget.ACTIVE_STANDBY, supported)
-        self.assertRaises(TargetNotSupported, targets.verify, plan, PlanTarget.ACTIVE, supported)
-        self.assertRaises(TargetNotSupported, targets.verify, plan, PlanTarget.STANDBY, supported)
+            TargetNotSupported, targets.verify, plan, TargetsEnum.MULTI_CLUSTER, supported)
+        self.assertRaises(TargetNotSupported, targets.verify, plan, TargetsEnum.ACTIVE, supported)
+        self.assertRaises(TargetNotSupported, targets.verify, plan, TargetsEnum.STANDBY, supported)
 
     def test_verify_multi_cluster(self):
         """
         Helm flags [multi-cluster]
         """
         plan = Plan()
-        plan.target = PlanTarget.MULTI_CLUSTER
+        plan.target = TargetClassesEnum.MULTI_CLUSTER
         targets = Targets({})
 
-        supported: NoOpsTargetsSupported = NoOpsTargetsSupported.parse_obj(
+        supported: TargetClasses = TargetClasses.parse_obj(
             {
                 "one-cluster":False,
                 "multi-cluster":True,
@@ -57,21 +55,19 @@ class TestTargets(TestCaseNoOps):
         )
 
         self.assertRaises(
-            TargetNotSupported, targets.verify, plan, PlanTarget.ONE_CLUSTER, supported)
-        self.assertRaises(
-            TargetNotSupported, targets.verify, plan, PlanTarget.ACTIVE_STANDBY, supported)
-        self.assertRaises(TargetNotSupported, targets.verify, plan, PlanTarget.ACTIVE, supported)
-        self.assertRaises(TargetNotSupported, targets.verify, plan, PlanTarget.STANDBY, supported)
+            TargetNotSupported, targets.verify, plan, TargetsEnum.ONE_CLUSTER, supported)
+        self.assertRaises(TargetNotSupported, targets.verify, plan, TargetsEnum.ACTIVE, supported)
+        self.assertRaises(TargetNotSupported, targets.verify, plan, TargetsEnum.STANDBY, supported)
 
     def test_verify_active_standby(self):
         """
         Helm flags [active-standby]
         """
         plan = Plan()
-        plan.target = PlanTarget.ACTIVE_STANDBY
+        plan.target = TargetClassesEnum.ACTIVE_STANDBY
         targets = Targets({})
 
-        supported: NoOpsTargetsSupported = NoOpsTargetsSupported.parse_obj(
+        supported: TargetClasses = TargetClasses.parse_obj(
             {
                 "one-cluster":False,
                 "multi-cluster":False,
@@ -80,11 +76,9 @@ class TestTargets(TestCaseNoOps):
         )
 
         self.assertRaises(
-            TargetNotSupported, targets.verify, plan, PlanTarget.ONE_CLUSTER, supported)
+            TargetNotSupported, targets.verify, plan, TargetsEnum.ONE_CLUSTER, supported)
         self.assertRaises(
-            TargetNotSupported, targets.verify, plan, PlanTarget.MULTI_CLUSTER, supported)
-        self.assertRaises(
-            TargetNotSupported, targets.verify, plan, PlanTarget.ACTIVE_STANDBY, supported)
+            TargetNotSupported, targets.verify, plan, TargetsEnum.MULTI_CLUSTER, supported)
 
     def test_init(self):
         """
@@ -111,14 +105,14 @@ class TestTargets(TestCaseNoOps):
         # One cluster
         k.spec.active.clustersCount = 1
         plan = targets.compute(k)
-        self.assertEqual(plan.target, PlanTarget.ONE_CLUSTER)
+        self.assertEqual(plan.target, TargetClassesEnum.ONE_CLUSTER)
         self.assertListEqual(plan.active, ["c1"])
         self.assertListEqual(plan.standby, [])
 
         # Multi Cluster
         k.spec.active.clustersCount = 2
         plan = targets.compute(k)
-        self.assertEqual(plan.target, PlanTarget.MULTI_CLUSTER)
+        self.assertEqual(plan.target, TargetClassesEnum.MULTI_CLUSTER)
         self.assertListEqual(plan.active, ["c1", "c2"])
         self.assertListEqual(plan.standby, [])
         self.assertListEqual(plan.service_only, [])
@@ -126,7 +120,7 @@ class TestTargets(TestCaseNoOps):
         # Active-Standby
         k.spec.standby.clustersCount = 1
         plan = targets.compute(k)
-        self.assertEqual(plan.target, PlanTarget.ACTIVE_STANDBY)
+        self.assertEqual(plan.target, TargetClassesEnum.ACTIVE_STANDBY)
         self.assertListEqual(plan.active, ["c1", "c2"])
         self.assertListEqual(plan.standby, ["c4"])
         self.assertListEqual(plan.service_only, [])
@@ -134,7 +128,7 @@ class TestTargets(TestCaseNoOps):
         # Service Only
         k.spec.service_only.clustersCount = "Remaining"
         plan = targets.compute(k)
-        self.assertEqual(plan.target, PlanTarget.ACTIVE_STANDBY)
+        self.assertEqual(plan.target, TargetClassesEnum.ACTIVE_STANDBY)
         self.assertListEqual(plan.active, ["c1", "c2"])
         self.assertListEqual(plan.standby, ["c4"])
         self.assertListEqual(plan.service_only, ["c3"])

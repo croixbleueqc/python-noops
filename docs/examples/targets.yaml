@@ -21,7 +21,7 @@ spec:
             operator: In
             values:
             - active
-    clustersCount: 1
+    clusterCount: 1
 
   standby:
     clusterAffinity:
@@ -44,10 +44,10 @@ spec:
         - matchExpressions: # any other service
           - key: service/status
             operator: Exists
-    clustersCount: 1
+    clusterCount: 1
 
   service-only:
     clusterAffinity: null
-    clustersCount: Remaining
+    clusterCount: Remaining
 
   localLoadBalancer: true # Stick the request in the cluster if possible

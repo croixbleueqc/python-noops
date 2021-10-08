@@ -53,7 +53,7 @@ class ClusterAffinitySpec(BaseModel): # pylint: disable=too-few-public-methods
 class TargetSpec(BaseModel): # pylint: disable=too-few-public-methods
     """active, standby, service-only targets model"""
     clusterAffinity: Optional[ClusterAffinitySpec]
-    clustersCount: Union[int, str] = 0
+    clusterCount: Union[int, str] = 0
 
 class Spec(BaseModel): # pylint: disable=too-few-public-methods
     """Kind spec model"""

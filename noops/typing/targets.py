@@ -20,12 +20,12 @@ Targets Typing
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import List, Union, Optional
-from enum import Enum
-from pydantic import BaseModel, Field # pylint: disable=E0611
+from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
+from . import StrEnum
 
 SERVICE_ONLY="service-only"
 
-class OperatorSpec(str, Enum):
+class OperatorSpec(StrEnum):
     """Filtering operator enum"""
     IN = 'In'
     NOT_IN = 'NotIn'
@@ -70,7 +70,7 @@ class Kind(BaseModel): # pylint: disable=too-few-public-methods
 
 # Plan compute
 
-class TargetClassesEnum(str, Enum):
+class TargetClassesEnum(StrEnum):
     """
     Target classes enumeration
     """
@@ -78,7 +78,7 @@ class TargetClassesEnum(str, Enum):
     MULTI_CLUSTER = 'multi-cluster'
     ACTIVE_STANDBY = 'active-standby'
 
-class TargetsEnum(str, Enum):
+class TargetsEnum(StrEnum):
     """
     Sub class Targets enumeration
     """
@@ -86,13 +86,6 @@ class TargetsEnum(str, Enum):
     MULTI_CLUSTER = 'multi-cluster'
     ACTIVE = 'active'
     STANDBY = 'standby'
-
-    @classmethod
-    def list(cls):
-        """
-        List sub class targets
-        """
-        return [sub.value for sub in cls]
 
 class Plan(BaseModel): # pylint: disable=too-few-public-methods
     """
@@ -163,12 +156,3 @@ class TargetClasses(BaseModel): # pylint: disable=too-few-public-methods
     one_cluster: bool = Field(False, alias="one-cluster")
     multi_cluster: bool = Field(False, alias="multi-cluster")
     active_standby: bool = Field(False, alias="active-standby")
-
-class ProfileClasses(BaseModel): # pylint: disable=too-few-public-methods
-    """
-    package.supported.profile-classes model
-    """
-    canary: bool = False
-    blue_green: bool = Field(False, alias='blue-green')
-    dedicated_endpoints: bool = Field(False, alias='dedicated-endpoints')
-    services_only: bool = Field(False, alias='services-only')

@@ -26,11 +26,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List
 from ..typing.targets import TargetsEnum
+from ..typing.profiles import ProfileEnum
 from ..typing.charts import ChartKind
 from ..utils.external import execute, execute_from_shell, get_stdout_from_shell
 from ..utils.io import read_yaml
 from ..targets import Targets
-from ..errors import TargetNotSupported
+from ..profiles import Profiles
+from ..package.helm import Helm
 from .. import settings
 
 class HelmInstall():
@@ -89,8 +91,8 @@ class HelmInstall():
 
         return dst / pkg_name
 
-    def upgrade(self, namespace: str, release: str, chart: str, env: str, # pylint: disable=too-many-arguments
-        pre_processing_path: Path, cargs: List[str],
+    def upgrade(self, namespace: str, release: str, chart: str, env: str, # pylint: disable=too-many-arguments,too-many-locals
+        pre_processing_path: Path, profiles: List[ProfileEnum], cargs: List[str],
         pre_processing_envs: dict = None, target: TargetsEnum = None):
         """
         helm upgrade {release}
@@ -117,8 +119,9 @@ class HelmInstall():
             chartkind = self._chart_kind(dst)
 
             # Values
-            values_args = self._values_args(env, dst)
-            values_args += self._targets_args(chartkind, target, env, dst)
+            values_args = Helm.helm_values_args(env, dst)
+            values_args += Targets.helm_targets_args(
+                chartkind.spec.package.supported.target_classes, target, env, dst)
 
             # pre-processing
             # args to pass: -e {env} -f values1.yaml -f valuesN.yaml
@@ -130,6 +133,10 @@ class HelmInstall():
                     product_path=os.fspath(dst),
                     dry_run=self.dry_run
                 )
+
+            # Profiles
+            values_args += Profiles.helm_profiles_args(
+                chartkind.spec.package.supported.profile_classes, profiles, dst)
 
             # let's go !
             execute(
@@ -153,43 +160,3 @@ class HelmInstall():
         return ChartKind.parse_obj(
             read_yaml(dst / settings.DEFAULT_NOOPS_FILE)
         )
-
-    @classmethod
-    def _values_args(cls, env: str, dst: Path) -> List[str]:
-        """
-        Select all values*.yaml files requested to install the package
-        """
-        # Values: Look for default, {env}, svcat
-        values_args=[]
-        for values in ("default", env, settings.VALUES_SVCAT):
-            values_file = dst / "noops" / f"values-{values}.yaml"
-            if values_file.exists():
-                values_args.append("-f")
-                values_args.append(os.fspath(values_file))
-
-        return values_args
-
-    @classmethod
-    def _targets_args(cls, chartkind: ChartKind, target: TargetsEnum, env: str,
-        dst: Path) -> List[str]:
-        """
-        Create targets arguments to use
-        """
-        targets_args=[]
-
-        if target is None:
-            return targets_args
-
-        # check compatibility
-        if not Targets.is_compatible(
-            target,
-            chartkind.spec.package.supported.target_classes):
-            raise TargetNotSupported(target)
-
-        for values in ("-default", f"-{env}", ""):
-            values_file = dst / "noops" / f"target-{target.value}{values}.yaml"
-            if values_file.exists():
-                targets_args.append("-f")
-                targets_args.append(os.fspath(values_file))
-
-        return targets_args

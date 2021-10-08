@@ -1,7 +1,7 @@
 """
 NoOps Targets
 
-noopsctl targets [-f targets.yaml] compute
+target.noops.local/v1alpha1
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -76,7 +76,7 @@ class Targets():
         return plan
 
     def _filter_usable_clusters(self, target: TargetSpec, clusters_used: List[str]) -> List[str]:
-        if isinstance(target.clustersCount, int) and target.clustersCount < 1:
+        if isinstance(target.clusterCount, int) and target.clusterCount < 1:
             return []
 
         if target.clusterAffinity is not None:
@@ -96,21 +96,21 @@ class Targets():
                 # cluster used not part of the selection
                 pass
 
-        if isinstance(target.clustersCount, int):
-            if target.clustersCount > len(clusters_selection):
-                raise ClustersAvailability(len(clusters_selection), target.clustersCount)
+        if isinstance(target.clusterCount, int):
+            if target.clusterCount > len(clusters_selection):
+                raise ClustersAvailability(len(clusters_selection), target.clusterCount)
 
-            clusters_selection = clusters_selection[:target.clustersCount]
+            clusters_selection = clusters_selection[:target.clusterCount]
             clusters_used.extend(clusters_selection)
 
             return clusters_selection
 
-        if target.clustersCount == "Remaining":
+        if target.clusterCount == "Remaining":
             clusters_used.extend(clusters_selection)
 
             return clusters_selection
 
-        raise ValueError(f"clustersCount value {target.clustersCount} is not supported !")
+        raise ValueError(f"clusterCount value {target.clusterCount} is not supported !")
 
     def _find_clusters(self, required: RequiredSpec) -> List[str]:
         # Use dict to get unique ordered clusters

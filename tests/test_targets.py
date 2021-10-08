@@ -103,14 +103,14 @@ class TestTargets(TestCaseNoOps):
         self.assertRaises(PlanTargetUnknown, targets.compute, k)
 
         # One cluster
-        k.spec.active.clustersCount = 1
+        k.spec.active.clusterCount = 1
         plan = targets.compute(k)
         self.assertEqual(plan.target, TargetClassesEnum.ONE_CLUSTER)
         self.assertListEqual(plan.active, ["c1"])
         self.assertListEqual(plan.standby, [])
 
         # Multi Cluster
-        k.spec.active.clustersCount = 2
+        k.spec.active.clusterCount = 2
         plan = targets.compute(k)
         self.assertEqual(plan.target, TargetClassesEnum.MULTI_CLUSTER)
         self.assertListEqual(plan.active, ["c1", "c2"])
@@ -118,7 +118,7 @@ class TestTargets(TestCaseNoOps):
         self.assertListEqual(plan.service_only, [])
 
         # Active-Standby
-        k.spec.standby.clustersCount = 1
+        k.spec.standby.clusterCount = 1
         plan = targets.compute(k)
         self.assertEqual(plan.target, TargetClassesEnum.ACTIVE_STANDBY)
         self.assertListEqual(plan.active, ["c1", "c2"])
@@ -126,23 +126,23 @@ class TestTargets(TestCaseNoOps):
         self.assertListEqual(plan.service_only, [])
 
         # Service Only
-        k.spec.service_only.clustersCount = "Remaining"
+        k.spec.service_only.clusterCount = "Remaining"
         plan = targets.compute(k)
         self.assertEqual(plan.target, TargetClassesEnum.ACTIVE_STANDBY)
         self.assertListEqual(plan.active, ["c1", "c2"])
         self.assertListEqual(plan.standby, ["c4"])
         self.assertListEqual(plan.service_only, ["c3"])
 
-        # active clustersCount negative !
-        k.spec.active.clustersCount = -1
+        # active clusterCount negative !
+        k.spec.active.clusterCount = -1
         self.assertRaises(PlanTargetUnknown, targets.compute, k)
 
         # Not enough clusters
-        k.spec.active.clustersCount = 10
+        k.spec.active.clusterCount = 10
         self.assertRaises(ClustersAvailability, targets.compute, k)
 
-        # Invalid clustersCount
-        k.spec.active.clustersCount = "TEST"
+        # Invalid clusterCount
+        k.spec.active.clusterCount = "TEST"
         self.assertRaises(ValueError, targets.compute, k)
 
     def test_cluster_match(self):

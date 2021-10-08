@@ -21,7 +21,9 @@ target.noops.local/v1alpha1
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List
+import os
+from typing import List, Optional
+from pathlib import Path
 from .typing.targets import (
     Plan, Kind, TargetsEnum, TargetClassesEnum,
     TargetSpec, RequiredSpec,
@@ -129,15 +131,14 @@ class Targets():
         """
         Verify if NoOps Project (by noops.yaml) support the target plan
         """
-        if target == TargetsEnum.ONE_CLUSTER and supported.one_cluster:
-            return True
+        if target == TargetsEnum.ONE_CLUSTER:
+            return supported.one_cluster
 
-        if target == TargetsEnum.MULTI_CLUSTER and supported.multi_cluster:
-            return True
+        if target == TargetsEnum.MULTI_CLUSTER:
+            return supported.multi_cluster
 
-        if target in (TargetsEnum.ACTIVE, TargetsEnum.STANDBY) \
-            and supported.active_standby:
-            return True
+        if target in (TargetsEnum.ACTIVE, TargetsEnum.STANDBY):
+            return supported.active_standby
 
         return False
 
@@ -158,3 +159,26 @@ class Targets():
             target != TargetsEnum.ACTIVE and \
             target != TargetsEnum.STANDBY:
             raise TargetNotSupported(target, TargetsEnum.ACTIVE, TargetsEnum.STANDBY)
+
+    @classmethod
+    def helm_targets_args(cls, supported: TargetClasses, target: Optional[TargetsEnum],
+        env: str, dst: Path) -> List[str]:
+        """
+        Create targets arguments to use by helm
+        """
+        targets_args=[]
+
+        if target is None:
+            return targets_args
+
+        # check compatibility
+        if not cls.is_compatible(target, supported):
+            raise TargetNotSupported(target)
+
+        for values in ("-default", f"-{env}", ""):
+            values_file = dst / "noops" / f"target-{target.value}{values}.yaml"
+            if values_file.exists():
+                targets_args.append("-f")
+                targets_args.append(os.fspath(values_file))
+
+        return targets_args

@@ -21,7 +21,8 @@ Charts Typing
 
 from typing import Optional, List
 from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
-from .targets import TargetClasses, ProfileClasses
+from .targets import TargetClasses
+from .profiles import ProfileClasses
 
 class SupportedSpec(BaseModel): # pylint: disable=too-few-public-methods
     """

@@ -1,5 +1,5 @@
 """
-Common structures for typing
+Profile Typing
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -19,16 +19,23 @@ Common structures for typing
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from enum import Enum
+from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
+from . import StrEnum
 
-class StrEnum(str, Enum):
+class ProfileClasses(BaseModel): # pylint: disable=too-few-public-methods
+    """
+    package.supported.profile-classes model
+    """
+    canary: bool = False
+    blue_green: bool = Field(False, alias='blue-green')
+    dedicated_endpoints: bool = Field(False, alias='dedicated-endpoints')
+    services_only: bool = Field(False, alias='services-only')
+
+class ProfileEnum(StrEnum):
     """
     Sub class Profile enumeration
     """
-
-    @classmethod
-    def list(cls):
-        """
-        List sub class
-        """
-        return [sub.value for sub in cls]
+    CANARY = 'canary'
+    CANARY_ENDPOINTS_ONLY = 'canary-endpoints-only'
+    DEDICATED_ENDPOINTS = 'dedicated-endpoints'
+    SERVICES_ONLY = 'services-only'

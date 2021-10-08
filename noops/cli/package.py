@@ -29,6 +29,7 @@ from ..package.serve import serve_forever
 from ..package.helm import Helm
 from ..package.install import HelmInstall
 from ..typing.targets import TargetsEnum
+from ..typing.profiles import ProfileEnum
 
 @cli.group()
 @click.pass_context
@@ -90,17 +91,23 @@ def install():
 @click.option('-r', '--release', help='release name')
 @click.option('-c', '--chart', help='chart keyword')
 @click.option('-e', '--env', help='Environment', default='dev', show_default=True)
-@click.option('-p', '--pre-processing-path',
+@click.option('-z', '--pre-processing-path',
     help='Pre-processing scripts/binaries path', type=click.Path(), required=True)
 @click.option('-t', '--target',
     type=click.Choice(TargetsEnum.list(), case_sensitive=True))
+@click.option('-p', '--profile', multiple=True, default=[],
+    type=click.Choice(ProfileEnum.list(), case_sensitive=True))
 @click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
-def install_helm(shared, namespace, release, chart, env, pre_processing_path, target, cargs): # pylint: disable=too-many-arguments
+def install_helm(shared, namespace, release, chart, env, # pylint: disable=too-many-arguments
+    pre_processing_path, target, profile, cargs):
     """
     install a NoOps helm package
 
     CARGS are passed directly to helm
     """
+
+    profiles = [ProfileEnum(i) for i in profile]
+
     helm = HelmInstall(shared["dry_run"])
     helm.upgrade(
         namespace,
@@ -108,5 +115,6 @@ def install_helm(shared, namespace, release, chart, env, pre_processing_path, ta
         chart,
         env,
         Path(pre_processing_path).resolve(),
+        profiles,
         list(cargs),
         target=TargetsEnum(target) if target is not None else None)

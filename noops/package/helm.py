@@ -28,7 +28,7 @@ import os
 from pathlib import Path
 import shutil
 import re
-from typing import Optional
+from typing import Optional, List
 from .. import settings
 from ..utils.external import execute, get_stdout_from_shell, execute_from_shell
 from ..utils import containers
@@ -270,3 +270,18 @@ class Helm():
         )
 
         execute_from_shell(f"helm repo index {directory} --url {url}")
+
+    @classmethod
+    def helm_values_args(cls, env: str, dst: Path) -> List[str]:
+        """
+        Select all values*.yaml files requested to install the package
+        """
+        # Values: Look for default, {env}, svcat
+        values_args=[]
+        for values in ("default", env, settings.VALUES_SVCAT):
+            values_file = dst / "noops" / f"values-{values}.yaml"
+            if values_file.exists():
+                values_args.append("-f")
+                values_args.append(os.fspath(values_file))
+
+        return values_args

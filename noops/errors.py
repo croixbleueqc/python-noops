@@ -24,25 +24,32 @@ All exceptions primitives
 class NoopsException(Exception):
     """Base Exception for all NoOps Exception"""
 
+class ProfileNotSupported(NoopsException):
+    """Profile is not supported by this product"""
+    def __init__(self, profile=None, canary_conflict: bool = False, multi_conflict: bool = False):
+        if profile is not None:
+            msg = f"{profile} is not supported by this product !"
+        elif canary_conflict:
+            msg = "canary profile can only be used with dedicated-endpoints profile !"
+        elif multi_conflict:
+            msg = "only one profile can be set except for (canary,dedicated-endpoints)"
+        else:
+            msg = "unknown issue !"
+
+        NoopsException.__init__(self, msg)
+
 class TargetNotSupported(NoopsException):
-    """Target not supported for this plan"""
+    """Target is not supported by this product"""
     def __init__(self, target, expected1=None, expected2=None):
         if expected1 is None:
-            NoopsException.__init__(
-                self,
-                f"{target} is not supported by this product !"
-            )
+            msg = f"{target} is not supported by this product !"
         elif expected2 is None:
-            NoopsException.__init__(
-                self,
-                f"{target} is not supported for this plan. Please strictly use {expected1} !"
-            )
+            msg = f"{target} is not supported for this product. Please strictly use {expected1} !"
         else:
-            NoopsException.__init__(
-                self,
-                f"{target} is not supported for this plan. " \
-                f"Please strictly use {expected1} or {expected2} !"
-            )
+            msg = f"{target} is not supported for this product. " \
+                  f"Please strictly use {expected1} or {expected2} !"
+
+        NoopsException.__init__(self, msg)
 
 class PlanTargetUnknown(NoopsException):
     """Parameters do not permit to know the target (eg: active, one-cluste, ...)"""

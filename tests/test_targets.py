@@ -4,11 +4,11 @@ Tests relative to Targets Kind actions (mostly targets.py)
 
 from noops.targets import Targets
 from noops.typing.targets import (
-    Plan, TargetClassesEnum, TargetsEnum, Kind,
+    TargetPlan, TargetClassesEnum, TargetsEnum, TargetKind,
     MatchExpressionsSpec,
     TargetClasses, Cluster
 )
-from noops.errors import TargetNotSupported, PlanTargetUnknown, ClustersAvailability
+from noops.errors import TargetNotSupported, TargetPlanUnknown, ClustersAvailability
 from noops.utils.io import read_yaml
 
 from . import TestCaseNoOps
@@ -21,8 +21,8 @@ class TestTargets(TestCaseNoOps):
         """
         Helm flags [one cluster]
         """
-        plan = Plan()
-        plan.target = TargetClassesEnum.ONE_CLUSTER
+        plan = TargetPlan()
+        plan.target_class = TargetClassesEnum.ONE_CLUSTER
         targets = Targets({})
 
         supported: TargetClasses = TargetClasses.parse_obj(
@@ -42,8 +42,8 @@ class TestTargets(TestCaseNoOps):
         """
         Helm flags [multi-cluster]
         """
-        plan = Plan()
-        plan.target = TargetClassesEnum.MULTI_CLUSTER
+        plan = TargetPlan()
+        plan.target_class = TargetClassesEnum.MULTI_CLUSTER
         targets = Targets({})
 
         supported: TargetClasses = TargetClasses.parse_obj(
@@ -63,8 +63,8 @@ class TestTargets(TestCaseNoOps):
         """
         Helm flags [active-standby]
         """
-        plan = Plan()
-        plan.target = TargetClassesEnum.ACTIVE_STANDBY
+        plan = TargetPlan()
+        plan.target_class = TargetClassesEnum.ACTIVE_STANDBY
         targets = Targets({})
 
         supported: TargetClasses = TargetClasses.parse_obj(
@@ -91,59 +91,59 @@ class TestTargets(TestCaseNoOps):
         self.assertEqual(len(clusters), len(targets.get_clusters()))
         self.assertEqual(len(clusters), len(targets.get_clusters_name()))
 
-    def test_compute(self):
+    def test_plan(self):
         """
         Plan creation
         """
         clusters = read_yaml("tests/data/clusters.yaml")
         targets = Targets(clusters)
-        k: Kind = Kind.parse_obj(read_yaml("tests/data/targets.yaml"))
+        k: TargetKind = TargetKind.parse_obj(read_yaml("tests/data/targets.yaml"))
 
         # No active
-        self.assertRaises(PlanTargetUnknown, targets.compute, k)
+        self.assertRaises(TargetPlanUnknown, targets.plan, k)
 
         # One cluster
         k.spec.active.clusterCount = 1
-        plan = targets.compute(k)
-        self.assertEqual(plan.target, TargetClassesEnum.ONE_CLUSTER)
+        plan = targets.plan(k)
+        self.assertEqual(plan.target_class, TargetClassesEnum.ONE_CLUSTER)
         self.assertListEqual(plan.active, ["c1"])
         self.assertListEqual(plan.standby, [])
 
         # Multi Cluster
         k.spec.active.clusterCount = 2
-        plan = targets.compute(k)
-        self.assertEqual(plan.target, TargetClassesEnum.MULTI_CLUSTER)
+        plan = targets.plan(k)
+        self.assertEqual(plan.target_class, TargetClassesEnum.MULTI_CLUSTER)
         self.assertListEqual(plan.active, ["c1", "c2"])
         self.assertListEqual(plan.standby, [])
-        self.assertListEqual(plan.service_only, [])
+        self.assertListEqual(plan.services_only, [])
 
         # Active-Standby
         k.spec.standby.clusterCount = 1
-        plan = targets.compute(k)
-        self.assertEqual(plan.target, TargetClassesEnum.ACTIVE_STANDBY)
+        plan = targets.plan(k)
+        self.assertEqual(plan.target_class, TargetClassesEnum.ACTIVE_STANDBY)
         self.assertListEqual(plan.active, ["c1", "c2"])
         self.assertListEqual(plan.standby, ["c4"])
-        self.assertListEqual(plan.service_only, [])
+        self.assertListEqual(plan.services_only, [])
 
         # Service Only
-        k.spec.service_only.clusterCount = "Remaining"
-        plan = targets.compute(k)
-        self.assertEqual(plan.target, TargetClassesEnum.ACTIVE_STANDBY)
+        k.spec.services_only.clusterCount = "Remaining"
+        plan = targets.plan(k)
+        self.assertEqual(plan.target_class, TargetClassesEnum.ACTIVE_STANDBY)
         self.assertListEqual(plan.active, ["c1", "c2"])
         self.assertListEqual(plan.standby, ["c4"])
-        self.assertListEqual(plan.service_only, ["c3"])
+        self.assertListEqual(plan.services_only, ["c3"])
 
         # active clusterCount negative !
         k.spec.active.clusterCount = -1
-        self.assertRaises(PlanTargetUnknown, targets.compute, k)
+        self.assertRaises(TargetPlanUnknown, targets.plan, k)
 
         # Not enough clusters
         k.spec.active.clusterCount = 10
-        self.assertRaises(ClustersAvailability, targets.compute, k)
+        self.assertRaises(ClustersAvailability, targets.plan, k)
 
         # Invalid clusterCount
         k.spec.active.clusterCount = "TEST"
-        self.assertRaises(ValueError, targets.compute, k)
+        self.assertRaises(ValueError, targets.plan, k)
 
     def test_cluster_match(self):
         """

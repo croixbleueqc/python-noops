@@ -25,8 +25,7 @@ spec:
             - standby
     clustersCount: 0
 
-  service-only:
+  services-only:
     clusterAffinity: null
     clustersCount: 0
 
-  localLoadBalancer: true # Stick the request in the cluster if possible

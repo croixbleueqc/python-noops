@@ -32,7 +32,6 @@ class Profiles():
     - check NoOps Helm Package compatibility
     - create helm arguments
     """
-
     @classmethod
     def is_compatible(cls, profile: ProfileEnum, supported: ProfileClasses) -> bool:
         """

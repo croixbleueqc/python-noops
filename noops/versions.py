@@ -1,5 +1,7 @@
 """
-noopsctl (cli composition)
+NoOps Versions
+
+To handle version.noops.local/v1alpha1
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -19,10 +21,9 @@ noopsctl (cli composition)
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-import noops.cli.version    # pylint: disable=unused-import
-import noops.cli.output     # pylint: disable=unused-import
-import noops.cli.pipeline   # pylint: disable=unused-import
-import noops.cli.local      # pylint: disable=unused-import
-import noops.cli.experimental    # pylint: disable=unused-import
-import noops.cli.package    # pylint: disable=unused-import
-from . import cli           # pylint: disable=unused-import
+class Versions():
+    """
+    Versions permit to:
+    - load version.noops.local kind
+    - reconcile
+    """

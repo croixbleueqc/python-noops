@@ -22,23 +22,28 @@ target.noops.local/v1alpha1
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from typing import List, Optional
+from typing import List, Optional, Union
 from pathlib import Path
 from .typing.targets import (
-    Plan, Kind, TargetsEnum, TargetClassesEnum,
+    TargetPlan, TargetKind, TargetsEnum, TargetClassesEnum,
     TargetSpec, RequiredSpec,
     Cluster, TargetClasses)
-from .errors import TargetNotSupported, ClustersAvailability, PlanTargetUnknown
+from .errors import TargetNotSupported, ClustersAvailability, TargetPlanUnknown
 
 class Targets():
     """
     Targets permit to :
     - load clusters configuration (name + labels)
-    - compute a plan based on targets kind ans clusters definitions
+    - create a plan based on targets kind and clusters definitions
     - get helm flags to set the target
     """
-    def __init__(self, clusters: dict):
-        self._clusters = [ Cluster.parse_obj(i) for i in clusters ]
+    def __init__(self, clusters: Union[List[dict], List[Cluster]]):
+        if len(clusters) == 0:
+            self._clusters = []
+        elif isinstance(clusters[0], dict):
+            self._clusters = [ Cluster.parse_obj(i) for i in clusters ]
+        else:
+            self._clusters = clusters
         self._clusters_name = [ i.name for i in self._clusters ]
 
     def get_clusters(self) -> List[Cluster]:
@@ -49,31 +54,31 @@ class Targets():
         """Get the list of clusters' name"""
         return self._clusters_name
 
-    def compute(self, kind: Kind) -> Plan:
+    def plan(self, kind: TargetKind) -> TargetPlan:
         """
         Create the plan to apply by selecting clusters to used and target
         """
-        plan = Plan()
+        plan = TargetPlan()
 
         clusters_used = [] # updated into _filter_usable_clusters
         plan.active = self._filter_usable_clusters(kind.spec.active, clusters_used)
         plan.standby = self._filter_usable_clusters(kind.spec.standby, clusters_used)
-        plan.service_only = self._filter_usable_clusters(kind.spec.service_only, clusters_used)
+        plan.services_only = self._filter_usable_clusters(kind.spec.services_only, clusters_used)
 
         if len(plan.standby) == 0:
             if len(plan.active) == 1:
                 # target is one-cluster
-                plan.target = TargetClassesEnum.ONE_CLUSTER
+                plan.target_class = TargetClassesEnum.ONE_CLUSTER
             elif len(plan.active) > 1:
                 # target is multi-cluster
-                plan.target = TargetClassesEnum.MULTI_CLUSTER
+                plan.target_class = TargetClassesEnum.MULTI_CLUSTER
             else:
-                raise PlanTargetUnknown()
+                raise TargetPlanUnknown()
         elif len(plan.active) >= 1:
             # target is active-standby
-            plan.target = TargetClassesEnum.ACTIVE_STANDBY
+            plan.target_class = TargetClassesEnum.ACTIVE_STANDBY
         else:
-            raise PlanTargetUnknown()
+            raise TargetPlanUnknown()
 
         return plan
 
@@ -143,19 +148,20 @@ class Targets():
         return False
 
     @classmethod
-    def verify(cls, plan: Plan, target: TargetsEnum, supported: TargetClasses):
+    def verify(cls, plan: TargetPlan, target: TargetsEnum, supported: TargetClasses):
         """Verify compatibility of the plan, target and what is supported"""
 
         if not cls.is_compatible(target, supported):
             raise TargetNotSupported(target)
 
-        if plan.target == TargetClassesEnum.ONE_CLUSTER and target != TargetsEnum.ONE_CLUSTER:
+        if plan.target_class == TargetClassesEnum.ONE_CLUSTER and target != TargetsEnum.ONE_CLUSTER:
             raise TargetNotSupported(target, TargetsEnum.ONE_CLUSTER)
 
-        if plan.target == TargetClassesEnum.MULTI_CLUSTER and target != TargetsEnum.MULTI_CLUSTER:
+        if plan.target_class == TargetClassesEnum.MULTI_CLUSTER and \
+            target != TargetsEnum.MULTI_CLUSTER:
             raise TargetNotSupported(target, TargetsEnum.MULTI_CLUSTER)
 
-        if plan.target == TargetClassesEnum.ACTIVE_STANDBY and \
+        if plan.target_class == TargetClassesEnum.ACTIVE_STANDBY and \
             target != TargetsEnum.ACTIVE and \
             target != TargetsEnum.STANDBY:
             raise TargetNotSupported(target, TargetsEnum.ACTIVE, TargetsEnum.STANDBY)

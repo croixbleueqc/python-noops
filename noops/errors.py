@@ -24,6 +24,9 @@ All exceptions primitives
 class NoopsException(Exception):
     """Base Exception for all NoOps Exception"""
 
+class VerifyFailure(NoopsException):
+    """Issue with an object validation"""
+
 class ProfileNotSupported(NoopsException):
     """Profile is not supported by this product"""
     def __init__(self, profile=None, canary_conflict: bool = False, multi_conflict: bool = False):
@@ -51,7 +54,7 @@ class TargetNotSupported(NoopsException):
 
         NoopsException.__init__(self, msg)
 
-class PlanTargetUnknown(NoopsException):
+class TargetPlanUnknown(NoopsException):
     """Parameters do not permit to know the target (eg: active, one-cluste, ...)"""
     def __init__(self):
         NoopsException.__init__(

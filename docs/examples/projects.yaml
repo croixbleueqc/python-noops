@@ -1,0 +1,15 @@
+apiVersion: noops.local/v1alpha1
+kind: project
+metadata:
+    name: name
+spec:
+  package:
+    install:
+      chart: example
+      env: prod
+      target: active
+      services-only: false
+      flags: null
+      envs: # Environment variables to use
+        TEST: test
+  versions: {} # from versions.spec

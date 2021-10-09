@@ -1,5 +1,5 @@
 """
-Charts Typing
+Projects Typing
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -19,39 +19,30 @@ Charts Typing
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional, List, Literal
+from typing import Literal, Optional
 from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
-from .targets import TargetClasses
-from .profiles import ProfileClasses
+from . import versions
 
-class SupportedSpec(BaseModel): # pylint: disable=too-few-public-methods
-    """
-    Supported model
-    """
-    profile_classes: ProfileClasses = Field(..., alias="profile-classes")
-    target_classes: TargetClasses = Field(..., alias='target-classes')
-
-class HelmSpec(BaseModel): # pylint: disable=too-few-public-methods
-    """
-    Helm model
-    """
-    preprocessing: List[str] = Field([], alias='pre-processing')
+class InstallSpec(BaseModel): # pylint: disable=too-few-public-methods
+    """package install spec"""
+    chart: str
+    env: str
+    target: Optional[str]
+    services_only: bool = Field(False, alias='services-only')
+    flags: Optional[str]
+    envs: Optional[dict]
 
 class PackageSpec(BaseModel): # pylint: disable=too-few-public-methods
-    """
-    Package model
-    """
-    helm: HelmSpec
-    supported: Optional[SupportedSpec]
+    """package spec"""
+    install: InstallSpec
 
 class Spec(BaseModel): # pylint: disable=too-few-public-methods
-    """
-    Specification model
-    """
+    """kind spec model"""
     package: PackageSpec
+    versions: Optional[versions.Spec]
 
-class ChartKind(BaseModel): # pylint: disable=too-few-public-methods
-    """Chart Kind model"""
-    apiVersion: Literal['noops.local/v1alpha1']
-    kind: Literal['chart']
+class ProjectKind(BaseModel): # pylint: disable=too-few-public-methods
+    """Project Kind model"""
+    apiVersion: Literal['noops.local/v1alpha1'] = 'noops.local/v1alpha1'
+    kind: Literal['project'] = 'project'
     spec: Spec

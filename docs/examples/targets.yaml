@@ -46,8 +46,6 @@ spec:
             operator: Exists
     clusterCount: 1
 
-  service-only:
+  services-only:
     clusterAffinity: null
     clusterCount: Remaining
-
-  localLoadBalancer: true # Stick the request in the cluster if possible

@@ -19,11 +19,11 @@ Targets Typing
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Literal
 from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
 from . import StrEnum
 
-SERVICE_ONLY="service-only"
+SERVICES_ONLY="services-only"
 
 class OperatorSpec(StrEnum):
     """Filtering operator enum"""
@@ -59,13 +59,12 @@ class Spec(BaseModel): # pylint: disable=too-few-public-methods
     """Kind spec model"""
     active: TargetSpec
     standby: TargetSpec
-    service_only: TargetSpec = Field(None, alias=SERVICE_ONLY)
-    localLoadBalancer: bool = False
+    services_only: TargetSpec = Field(None, alias=SERVICES_ONLY)
 
-class Kind(BaseModel): # pylint: disable=too-few-public-methods
+class TargetKind(BaseModel): # pylint: disable=too-few-public-methods
     """Kind model"""
-    apiVersion: str = 'noops.local/v1alpha1'
-    kind: str = 'target'
+    apiVersion: Literal['noops.local/v1alpha1']
+    kind: Literal['target']
     spec: Spec
 
 # Plan compute
@@ -87,14 +86,14 @@ class TargetsEnum(StrEnum):
     ACTIVE = 'active'
     STANDBY = 'standby'
 
-class Plan(BaseModel): # pylint: disable=too-few-public-methods
+class TargetPlan(BaseModel): # pylint: disable=too-few-public-methods
     """
     Model to provide a plan with clusters to used per target
     """
-    target: TargetClassesEnum = TargetClassesEnum.ONE_CLUSTER
+    target_class: TargetClassesEnum = Field(TargetClassesEnum.ONE_CLUSTER, alias="target-class")
     active: List[str] = []
     standby: List[str] = []
-    service_only: List[str] = Field([], alias=SERVICE_ONLY)
+    services_only: List[str] = Field([], alias=SERVICES_ONLY)
 
 # Cluster
 

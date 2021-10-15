@@ -37,11 +37,14 @@ class Profiles():
         """
         Verify if NoOps Project (by noops.yaml) support the profile
         """
-        if profile in (ProfileEnum.CANARY, ProfileEnum.CANARY_ENDPOINTS_ONLY):
-            return supported.canary
+        if profile == ProfileEnum.DEFAULT:
+            return True
 
-        if profile == ProfileEnum.DEDICATED_ENDPOINTS:
-            return supported.dedicated_endpoints
+        if profile in (
+            ProfileEnum.CANARY,
+            ProfileEnum.CANARY_ENDPOINTS_ONLY,
+            ProfileEnum.CANARY_DEDICATED_ENDPOINTS):
+            return supported.canary
 
         if profile == ProfileEnum.SERVICES_ONLY:
             return supported.services_only
@@ -49,22 +52,20 @@ class Profiles():
         return False
 
     @classmethod
-    def helm_profiles_args(cls, supported: ProfileClasses, profiles: Optional[List[ProfileEnum]],
+    def helm_profiles_args(cls, supported: ProfileClasses, profiles: List[ProfileEnum],
         dst: Path) -> List[str]:
         """
         Create profiles arguments to use
         """
         profiles_args=[]
 
-        if profiles is None:
-            return profiles_args
-
         # Check profile settings
-        if len(profiles) == 2:
-            if ProfileEnum.CANARY in profiles and ProfileEnum.DEDICATED_ENDPOINTS not in profiles:
-                raise ProfileNotSupported(canary_conflict=True)
-        elif len(profiles) > 1:
-            raise ProfileNotSupported(multi_conflict=True)
+        if len(profiles) == 0 or profiles[0] != ProfileEnum.DEFAULT:
+            raise ProfileNotSupported(msg="Default profile is mandatory !")
+        if len(profiles) == 3 and profiles[2] != ProfileEnum.SERVICES_ONLY:
+            raise ProfileNotSupported(msg="Profile services-only should be set !")
+        if len(profiles) > 3:
+            raise ProfileNotSupported(msg="More than 3 profiles is forbidden !")
 
         for profile in profiles:
             # check compatibility

@@ -1,5 +1,5 @@
 """
-Profile Typing
+Utils: Transformation
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -19,22 +19,22 @@ Profile Typing
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
-from . import StrEnum
+import string
+import re
 
-class ProfileClasses(BaseModel): # pylint: disable=too-few-public-methods
+def label_rfc1035(label: str) -> str:
     """
-    package.supported.profile-classes model
+    The labels must follow the rules for ARPANET host names.  They must
+    start with a letter, end with a letter or digit, and have as interior
+    characters only letters, digits, and hyphen.  There are also some
+    restrictions on the length.  Labels must be 63 characters or less.
     """
-    canary: bool = False
-    services_only: bool = Field(False, alias='services-only')
+    accepted = string.ascii_lowercase + string.digits + "-"
+    transform = label.lower() # lower case only
+    transform = re.sub(f'[^{accepted}]', '-', transform) # replace unaccepted chars
+    transform = transform[:63] # 63 chars maximum
 
-class ProfileEnum(StrEnum):
-    """
-    Sub class Profile enumeration
-    """
-    DEFAULT = 'default'
-    CANARY = 'canary'
-    CANARY_ENDPOINTS_ONLY = 'canary-endpoints-only'
-    CANARY_DEDICATED_ENDPOINTS = 'canary-dedicated-endpoints'
-    SERVICES_ONLY = 'services-only'
+    while transform[-1] == "-":
+        transform = transform[:-1]
+
+    return transform

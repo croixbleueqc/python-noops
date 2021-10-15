@@ -19,9 +19,10 @@ Projects Typing
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
 from . import versions
+from .metadata import MetadataSpec
 
 class InstallSpec(BaseModel): # pylint: disable=too-few-public-methods
     """package install spec"""
@@ -29,7 +30,7 @@ class InstallSpec(BaseModel): # pylint: disable=too-few-public-methods
     env: str
     target: Optional[str]
     services_only: bool = Field(False, alias='services-only')
-    flags: Optional[str]
+    args: Optional[List[str]]
     envs: Optional[dict]
 
 class PackageSpec(BaseModel): # pylint: disable=too-few-public-methods
@@ -46,3 +47,4 @@ class ProjectKind(BaseModel): # pylint: disable=too-few-public-methods
     apiVersion: Literal['noops.local/v1alpha1'] = 'noops.local/v1alpha1'
     kind: Literal['project'] = 'project'
     spec: Spec
+    metadata: MetadataSpec

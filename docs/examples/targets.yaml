@@ -44,8 +44,8 @@ spec:
         - matchExpressions: # any other service
           - key: service/status
             operator: Exists
-    clusterCount: 1
+    clusterCount: 0
 
   services-only:
     clusterAffinity: null
-    clusterCount: Remaining
+    clusterCount: 0

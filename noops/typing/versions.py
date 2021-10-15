@@ -33,30 +33,33 @@ class MultiSpec(BaseModel): # pylint: disable=too-few-public-methods
     build: Optional[str]
     weight: Optional[int]
     dedicated_endpoints: Optional[bool] = Field(None, alias='dedicated-endpoints')
+    args: Optional[List[str]]
 
     @property
     def profiles(self) -> List[ProfileEnum]:
         """Profiles to use"""
+        _profiles = [ProfileEnum.DEFAULT]
+
         if self.weight is not None:
+            # weight set means Canary or Blue/Green deployment
             if self.dedicated_endpoints:
-                return [ProfileEnum.CANARY, ProfileEnum.DEDICATED_ENDPOINTS]
-            return [ProfileEnum.CANARY]
+                _profiles.append(ProfileEnum.CANARY_DEDICATED_ENDPOINTS)
+            else:
+                _profiles.append(ProfileEnum.CANARY)
 
-        if self.dedicated_endpoints:
-            return [ProfileEnum.DEDICATED_ENDPOINTS]
-
-        return []
+        return _profiles
 
 class OneSpec(BaseModel): # pylint: disable=too-few-public-methods
     """One deployment model"""
     app_version: str
     version: Optional[str]
     build: Optional[str]
+    args: Optional[List[str]]
 
     @property
     def profiles(self) -> List[ProfileEnum]:
         """Profiles to use"""
-        return []
+        return [ProfileEnum.DEFAULT]
 
 class Spec(BaseModel): # pylint: disable=too-few-public-methods
     """kind spec model"""

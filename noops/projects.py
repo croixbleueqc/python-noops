@@ -22,11 +22,13 @@ To handle package.noops.local/v1alpha1
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import List
+from pathlib import Path
 from .typing.targets import Cluster, TargetKind, TargetClassesEnum, TargetsEnum
 from .typing.versions import VersionKind
 from .typing.projects import ProjectKind, Spec as ProjectKindSpec
 from .typing.projectplans import ProjectPlanKind, ProjectPlanSpec
 from .targets import Targets
+from .package.install import HelmInstall
 
 class Projects():
     """
@@ -83,7 +85,8 @@ class Projects():
             spec = {
                 "target-class": target_plan.target_class,
                 "plan": plan
-            }
+            },
+            metadata = kproject.metadata.copy(deep=True)
         )
 
         # TODO: Verify NoOps Helm package compatibility involved with the plan
@@ -91,8 +94,8 @@ class Projects():
         return project_plan
 
     @classmethod
-    def create(cls, chart: str, env: str,
-        cargs: List[str] = None, pre_processing_envs: dict = None):
+    def create(cls, namespace: str, release: str, chart: str, env: str,
+        cargs: List[str] = None, extra_envs: dict = None):
         """
         Create a new project
         """
@@ -102,11 +105,26 @@ class Projects():
                     "install": {
                         "chart": chart,
                         "env": env,
-                        "flags": " ".join(cargs) if cargs else None,
-                        "envs": pre_processing_envs
+                        "args": cargs,
+                        "envs": extra_envs
                     }
                 }
+            },
+            metadata={
+                "name": release,
+                "namespace": namespace
             }
         )
 
         print(project.dict(by_alias=True))
+
+    @classmethod
+    def apply(cls, kplan: ProjectPlanKind, pre_processing_path: Path, dry_run: bool):
+        """
+        Apply the plan
+
+        Connect to each cluster and install the project (install.py)
+        """
+        for plan in kplan.spec.plan:
+            kproject = ProjectKind(spec=plan.template.spec, metadata=kplan.metadata)
+            HelmInstall(dry_run).reconciliation(kproject, pre_processing_path)

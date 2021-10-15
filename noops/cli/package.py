@@ -95,7 +95,7 @@ def install():
     help='Pre-processing scripts/binaries path', type=click.Path(), required=True)
 @click.option('-t', '--target',
     type=click.Choice(TargetsEnum.list(), case_sensitive=True))
-@click.option('-p', '--profile', multiple=True, default=[],
+@click.option('-p', '--profile', multiple=True, default=['default'],
     type=click.Choice(ProfileEnum.list(), case_sensitive=True))
 @click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
 def install_helm(shared, namespace, release, chart, env, # pylint: disable=too-many-arguments

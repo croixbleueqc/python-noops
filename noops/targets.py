@@ -35,7 +35,6 @@ class Targets():
     Targets permit to :
     - load clusters configuration (name + labels)
     - create a plan based on targets kind and clusters definitions
-    - get helm flags to set the target
     """
     def __init__(self, clusters: Union[List[dict], List[Cluster]]):
         if len(clusters) == 0:

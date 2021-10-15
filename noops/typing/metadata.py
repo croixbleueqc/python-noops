@@ -1,5 +1,5 @@
 """
-Profile Typing
+Metadata Typing
 """
 
 # Copyright 2021 Croix Bleue du Québec
@@ -19,22 +19,11 @@ Profile Typing
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
-from . import StrEnum
+from pydantic import BaseModel # pylint: disable=no-name-in-module
 
-class ProfileClasses(BaseModel): # pylint: disable=too-few-public-methods
+class MetadataSpec(BaseModel): # pylint: disable=too-few-public-methods
     """
-    package.supported.profile-classes model
+    Metadata model
     """
-    canary: bool = False
-    services_only: bool = Field(False, alias='services-only')
-
-class ProfileEnum(StrEnum):
-    """
-    Sub class Profile enumeration
-    """
-    DEFAULT = 'default'
-    CANARY = 'canary'
-    CANARY_ENDPOINTS_ONLY = 'canary-endpoints-only'
-    CANARY_DEDICATED_ENDPOINTS = 'canary-dedicated-endpoints'
-    SERVICES_ONLY = 'services-only'
+    name: str
+    namespace: str

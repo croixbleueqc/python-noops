@@ -4,14 +4,17 @@ metadata:
   name: demo
 spec:
   # one: # Only one version at a time
-  #   app_version: 1.0.0
+  #   app_version: sha-7c5a0d8
 
   multi: # Multiple versions + Canary or Blue/Green support + Dedicated endpoints support
-  - app_version: 1.1.0
+  - app_version: sha-7c5a0d8
     weight: 10
     dedicated-endpoints: true # default to false when canary is used
-  - app_version: 2.0.0
+  - app_version: sha-8c5a0d9
     weight: 90
-  - app_version: 3.0.0
-    version: 10.0.0 # optional
-    build: 1        # optional
+    args:
+    - --set
+    - env.service_version=vCUSTOM
+  # - app_version: sha-8c5a0d9
+  #   # version: 10.0.0 # optional
+  #   # build: 30        # optional

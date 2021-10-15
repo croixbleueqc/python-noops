@@ -58,21 +58,29 @@ DEFAULT_PKG_HELM_DEFINITIONS = {
     },
     # Define profiles based on profile classes supported
     # class canary uses canary, canary-endpoints-only. Optionally dedicated-endpoints
-    # class blue-green uses canary class definition
-    # class dedicated-endpoints uses dedicated-endpoints
     # class services-only uses services-only
     "profiles": {
+        "default": {
+            "noops": {
+                "canary": { "enabled": False, "instances": [] },
+                "endpoints": True,
+                "canaryEndpointsOnly": False,
+                "servicesOnly": False
+            }
+        },
         "canary": {
-            "noops": { "endpoints": False }
+            "noops": { "canary": { "enabled": True }, "endpoints": False }
+        },
+        "canary-dedicated-endpoints": {
+            "noops": { "canary": { "enabled": True }}
         },
         "canary-endpoints-only": {
-            "noops": { "canary-endpoints-only" : True }
-        },
-        "dedicated-endpoints": {
-            "noops": { "dedicated-endpoints": True }
+            "noops": { "canary": { "enabled": True }, "canaryEndpointsOnly" : True }
         },
         "services-only": {
-            "noops": { "services-only": True }
+            "noops": { "endpoints": False, "servicesOnly": True }
         }
     }
 }
+
+DEFAULT_PKG_HELM_CANARY_KEY="noops.canary"

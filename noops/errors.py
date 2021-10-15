@@ -29,15 +29,9 @@ class VerifyFailure(NoopsException):
 
 class ProfileNotSupported(NoopsException):
     """Profile is not supported by this product"""
-    def __init__(self, profile=None, canary_conflict: bool = False, multi_conflict: bool = False):
+    def __init__(self, msg=None, profile=None):
         if profile is not None:
             msg = f"{profile} is not supported by this product !"
-        elif canary_conflict:
-            msg = "canary profile can only be used with dedicated-endpoints profile !"
-        elif multi_conflict:
-            msg = "only one profile can be set except for (canary,dedicated-endpoints)"
-        else:
-            msg = "unknown issue !"
 
         NoopsException.__init__(self, msg)
 
@@ -71,3 +65,8 @@ class ClustersAvailability(NoopsException):
             available,
             "s" if available > 1 else ""
         ))
+
+class ChartNotFound(NoopsException):
+    """Chart not found during a search"""
+    def __init__(self, chart: str):
+        NoopsException.__init__(self, f"chart not found with keyword {chart} !")

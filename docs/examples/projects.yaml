@@ -1,15 +1,18 @@
 apiVersion: noops.local/v1alpha1
 kind: project
 metadata:
-    name: name
+  name: myproject
+  namespace: myns
 spec:
   package:
     install:
-      chart: example
+      chart: demo
       env: prod
       target: active
       services-only: false
-      flags: null
+      args:
+      - --set
+      - env.service_version=v10
       envs: # Environment variables to use
         TEST: test
   versions: {} # from versions.spec

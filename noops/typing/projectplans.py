@@ -23,6 +23,7 @@ from typing import Literal, List
 from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
 from .projects import Spec as ProjectsSpec
 from .targets import TargetClassesEnum
+from .metadata import MetadataSpec
 
 class TemplateSpec(BaseModel): # pylint: disable=too-few-public-methods
     """Template spec model"""
@@ -43,3 +44,4 @@ class ProjectPlanKind(BaseModel): # pylint: disable=too-few-public-methods
     apiVersion: Literal['noops.local/v1alpha1'] = 'noops.local/v1alpha1'
     kind: Literal['projectplan'] = 'projectplan'
     spec: Spec
+    metadata: MetadataSpec

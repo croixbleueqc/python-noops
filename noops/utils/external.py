@@ -26,7 +26,7 @@ from typing import List
 
 def execute(cmd: str, args: List[str],
     extra_envs: dict = None, product_path: str = None,
-    dry_run: bool = False):
+    dry_run: bool = False, shell: bool = False):
     """
     Execute a command.
 
@@ -37,14 +37,18 @@ def execute(cmd: str, args: List[str],
 
     custom_envs = {**os.environ, **extra_envs}
 
-    logging.debug("execute: %s %s", cmd, " ".join(args))
+    cmd_str = "{} {}".format( # pylint: disable=consider-using-f-string
+        cmd,
+        " ".join(args)
+    )
+    logging.debug("execute: %s", cmd_str)
 
     if dry_run:
         return
 
     subprocess.run(
-        [cmd] + args,
-        shell=False,
+        [cmd] + args if not shell else cmd_str,
+        shell=shell,
         check=True,
         env=custom_envs,
         cwd=product_path or os.getcwd()

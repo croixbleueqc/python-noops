@@ -15,4 +15,7 @@ spec:
       - env.service_version=v10
       envs: # Environment variables to use
         TEST: test
+      white-label: # disabled if set to null
+        rebrand: test
+        marketer: Test Inc
   versions: {} # from versions.spec

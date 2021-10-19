@@ -80,7 +80,10 @@ DEFAULT_PKG_HELM_DEFINITIONS = {
         "services-only": {
             "noops": { "endpoints": False, "servicesOnly": True }
         }
+    },
+    # Define keys used to set canary/white-label/... details
+    "keys": {
+        "canary": "noops.canary",
+        "white-label": "noops.white-label"
     }
 }
-
-DEFAULT_PKG_HELM_CANARY_KEY="noops.canary"

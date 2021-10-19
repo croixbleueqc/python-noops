@@ -24,6 +24,11 @@ from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
 from . import versions
 from .metadata import MetadataSpec
 
+class WhiteLabelSpec(BaseModel): # pylint: disable=too-few-public-methods
+    """package white-label spec"""
+    rebrand: str
+    marketer: str
+
 class InstallSpec(BaseModel): # pylint: disable=too-few-public-methods
     """package install spec"""
     chart: str
@@ -32,6 +37,7 @@ class InstallSpec(BaseModel): # pylint: disable=too-few-public-methods
     services_only: bool = Field(False, alias='services-only')
     args: Optional[List[str]]
     envs: Optional[dict]
+    white_label: Optional[WhiteLabelSpec] = Field(None, alias='white-label')
 
 class PackageSpec(BaseModel): # pylint: disable=too-few-public-methods
     """package spec"""

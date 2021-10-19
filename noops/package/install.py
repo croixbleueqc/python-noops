@@ -198,7 +198,7 @@ class HelmInstall():
                     version,
                     pre_processing_path,
                     cargs=self._helm_canary_weight(
-                        settings.DEFAULT_PKG_HELM_CANARY_KEY + ".weight",
+                        settings.DEFAULT_PKG_HELM_DEFINITIONS["keys"]["canary"] + ".weight",
                         version.weight
                     )
                 )
@@ -214,7 +214,7 @@ class HelmInstall():
                     pre_processing_path,
                     override_profiles=[ProfileEnum.DEFAULT, ProfileEnum.CANARY_ENDPOINTS_ONLY],
                     cargs=self._helm_canary_versions(
-                        settings.DEFAULT_PKG_HELM_CANARY_KEY + ".instances",
+                        settings.DEFAULT_PKG_HELM_DEFINITIONS["keys"]["canary"] + ".instances",
                         canary_versions
                     )
                 )
@@ -268,6 +268,19 @@ class HelmInstall():
         args = cargs or []
         args.extend(spec.args or [])
         args.extend(version.args or [])
+
+        if spec.white_label is not None:
+            keybase = settings.DEFAULT_PKG_HELM_DEFINITIONS["keys"]["white-label"]
+            args.extend(
+                [
+                    "--set",
+                    keybase + ".enabled=true",
+                    "--set",
+                    f"{keybase}.rebrand={spec.white_label.rebrand}",
+                    "--set",
+                    f"{keybase}.marketer={spec.white_label.marketer}",
+                ]
+            )
 
         # profiles
         profiles = override_profiles or version.profiles

@@ -24,6 +24,10 @@ Expose bindings to use in a values-svcat.yaml file
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Optional, List
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import subprocess
 import logging
 import yaml
 import os
@@ -35,6 +39,78 @@ class ServiceCatalog(object):
     def __init__(self, core):
         self.core = core
 
+        processing = os.environ.get("NOOPS_SVCAT_PROCESSING")
+        if processing is not None:
+            self._processing = Path(processing)
+        else:
+            self._processing = None
+
+    @classmethod
+    def _external_converter(cls, name:str, service_request: dict, converter: Path) -> List[dict]:
+        """
+        Use an external converter to create Service Catalog objects
+        """
+        with TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            request = tmp / "request.yaml"
+            objects = tmp / "objects.yaml"
+
+            with request.open("w", encoding="UTF-8") as stream:
+                yaml.dump(service_request, stream)
+
+            subprocess.run(
+                [
+                    os.fspath(converter),
+                    "-n", name,
+                    "-r", os.fspath(request),
+                    "-o", os.fspath(objects)
+                ],
+                shell=False,
+                check=True
+            )
+
+            return yaml.safe_load(objects.read_text(encoding='UTF-8'))
+
+    @classmethod
+    def _internal_converter(cls, name: str, service_request: dict) -> List[dict]:
+        """
+        Assume that this is a standard Service Catalog
+        """
+
+        instance = {
+            "apiVersion": "servicecatalog.k8s.io/v1beta1",
+            "kind": "ServiceInstance",
+            "spec": {
+                "clusterServiceClassExternalName": service_request["class"],
+                "clusterServicePlanExternalName": service_request["plan"],
+                "parameters": service_request["instance"]["parameters"]
+            }
+        }
+
+        binding = {
+            "apiVersion": "servicecatalog.k8s.io/v1beta1",
+            "kind": "ServiceBinding",
+            "spec": {
+                "instanceRef": {
+                    "name": name
+                },
+                "parameters": service_request["binding"]["parameters"]
+            }
+        }
+
+        return [instance, binding]
+
+    def __set_metadata(self, name: str, objs: List[dict]):
+        """
+        Add metadata on all objects
+        """
+        for obj in objs:
+            obj["metadata"] = {
+                "name": name,
+                "labels": self.core.helm.include("labels", 4),
+                "annotations": self.core.helm.include("annotations", 4)
+            }
+
     def create_kinds_and_values(self):
         """
         Create:
@@ -42,56 +118,39 @@ class ServiceCatalog(object):
         - bindings available in {workdir}/helm/values-svcat.yaml
         """
         svcat_bindings=[]
-        svcat_kinds = ""
 
         logging.info("Creating service catalog kinds...")
 
+        svcat_objs = []
         for svcat in self.core.noops_config.get(ServiceCatalog.SERVICE_CATALOG, []):
             logging.info(f" ... {svcat['name']}")
 
-            instance_name="{}-instance".format(svcat["name"])
-            binding_name="{}-binding".format(svcat["name"])
+            use_external = False
+            if self._processing is not None:
+                external_converter = self._processing / svcat['class'] / svcat["plan"]
+                if external_converter.exists():
+                    use_external = True
 
-            instance = {
-                "apiVersion": "servicecatalog.k8s.io/v1beta1",
-                "kind": "ServiceInstance",
-                "metadata": {
-                    "name": instance_name,
-                    "labels": self.core.helm.include("labels", 4),
-                    "annotations": self.core.helm.include("annotations", 4)
-                },
-                "spec": {
-                    "clusterServiceClassExternalName": svcat["class"],
-                    "clusterServicePlanExternalName": svcat["plan"],
-                    "parameters": svcat["instance"]["parameters"]
-                }
-            }
+            name="{}-binding".format(svcat["name"])
 
-            binding = {
-                "apiVersion": "servicecatalog.k8s.io/v1beta1",
-                "kind": "ServiceBinding",
-                "metadata": {
-                    "name": binding_name,
-                    "labels": self.core.helm.include("labels", 4),
-                    "annotations": self.core.helm.include("annotations", 4)
-                },
-                "spec": {
-                    "instanceRef": {
-                        "name": instance["metadata"]["name"]
-                    },
-                    "parameters": svcat["binding"]["parameters"]
-                }
-            }
+            if use_external:
+                objs = self._external_converter(name, svcat, external_converter)
+            else:
+                objs = self._internal_converter(name, svcat)
 
+            # metadata
+            self.__set_metadata(name, objs)
+
+            # add to global bindings arrays
+            svcat_bindings.append(name)
+            svcat_objs.extend(objs)
+
+        svcat_kinds = ""
+        for obj in svcat_objs:
             # append to svcat kinds definitions
-            svcat_kinds += self.core.helm.as_chart_template(yaml.dump(instance, indent=helper.DEFAULT_INDENT))
-            svcat_kinds += "---\n"
-            svcat_kinds += self.core.helm.as_chart_template(yaml.dump(binding, indent=helper.DEFAULT_INDENT))
+            svcat_kinds += self.core.helm.as_chart_template(yaml.dump(obj, indent=helper.DEFAULT_INDENT))
             svcat_kinds += "---\n"
 
-            # add to global bindings array
-            svcat_bindings.append(binding_name)
-        
         if svcat_kinds != "":
             if self.core.dryrun:
                 print(svcat_kinds)
@@ -117,4 +176,3 @@ class ServiceCatalog(object):
                 svcat_values,
                 indent=helper.DEFAULT_INDENT
             )
-

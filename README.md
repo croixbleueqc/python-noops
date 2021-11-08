@@ -30,6 +30,8 @@ The devops part can be a remote resource with its own `noops.yaml` file.
                * [Docker](#docker)
                * [Helm](#helm)
             * [Service-catalog](#service-catalog)
+               * [Open Service Broker](#open-service-broker)
+               * [Custom (Operator, Service Broker, ...)](#custom-operator-service-broker-...)
             * [White-label](#white-label)
             * [Pipeline and local](#pipeline-and-local)
       * [Installation](#installation)
@@ -323,6 +325,10 @@ Everything else in parameters will use a deep merge strategy.
 
 #### Service-catalog
 
+By default, `noopsctl` will create objects in the `{pakage.helm.chart}/templates/svcat.yaml` and binding secrets available in `./noops_workdir/helm/values-svcat.yaml`.
+
+##### Open Service Broker
+
 ```yaml
 service-catalog:
 - name: example
@@ -334,9 +340,88 @@ service-catalog:
     parameters: {}
 ```
 
-By default, `noopsctl` will create compatible objects with [Kubernetes Service Catalog](https://svc-cat.io/) in the `{pakage.helm.chart}/templates/svcat.yaml` and binding secrets available in `./noops_workdir/helm/values-svcat.yaml`.
+By default, `noopsctl` will create compatible objects with [Kubernetes Service Catalog](https://svc-cat.io/).
 
 This implementation is compatible with [Open Service Broker API](https://www.openservicebrokerapi.org/).
+
+##### Custom (Operator, Service Broker, ...)
+
+```yaml
+service-catalog:
+- name: example
+  class: a_class
+  plan: a_plan
+  # anything else that you needs
+```
+
+`noopsctl` can handle any kind of service by using an external service catalog processing that will read a `service request` and provide an `object list`.
+
+```bash
+# declare service catalog directory (before invoking noopsctl)
+NOOPS_SVCAT_PROCESSING=/path/to/service-catalog-processing
+```
+
+In the processing directory, you can set all your custom scripts with the structure `/path/to/service-catalog-processing/class/plan` (eg: /processing/**a_class/a_plan**).
+
+`plan` script has to be executable and has to define those options:
+
+```bash
+Usage: <plan> [OPTIONS] COMMAND [ARGS]...
+
+  Create objects for <class>/<plan>
+
+Options:
+  -n, --name TEXT     metadata.name used  [required]
+  -r, --request PATH  service request (yaml)  [required]
+  -o, --objects PATH  service catalog objects (yaml)  [required]
+  -h, --help          Show this message and exit.
+```
+
+A processing script will read a yaml service request (**-r**), create an object **list** (for an Operator, Service Catalog etc) without metadata and write them as a yaml (**-o**) 
+
+Example:
+
+```python
+from typing import List
+from pathlib import Path
+import yaml
+import click
+
+def convert(service_request: dict) -> List[dict]:
+    """Convert a service requests to an object list"""
+    objs = []
+    # TODO: Convert
+    return objs
+
+def store(objs: dict, output: Path, indent=2):
+    """Store Operator Objects to the requested file"""
+    with output.open(mode='w', encoding='UTF-8') as file:
+        yaml.dump(objs, stream=file, indent=indent)
+
+@click.group(
+    context_settings=dict(help_option_names=["-h", "--help"]),
+    invoke_without_command=True
+)
+@click.option('-n', '--name', help='metadata.name used', required=True)
+@click.option('-r', '--request',
+    help='service request (yaml)', type=click.Path(exists=True), required=True)
+@click.option('-o', '--objects',
+    help='service catalog objects (yaml)', type=click.Path(), required=True)
+def cli(name, request, objects):
+    """Create objects for plan/class'"""
+
+    service_request = yaml.safe_load(
+        Path(request).read_text(encoding='UTF-8')
+    )
+
+    objs = convert(service_request)
+    store(objs, Path(objects))
+
+    click.echo("created operator objects for plan/class")
+
+```
+
+
 
 #### White-label
 

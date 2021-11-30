@@ -24,14 +24,14 @@ Expose bindings to use in a values-svcat.yaml file
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional, List
+from typing import List
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import subprocess
+import os
 import logging
 import yaml
 from .. import settings
-from ..utils import io
+from ..utils import io, external
 from ..noops import NoOps
 from .helm import Helm
 
@@ -45,6 +45,12 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
         self._core = core
         self._helm = helm
 
+        processing = os.environ.get("NOOPS_SVCAT_PROCESSING")
+        if processing is not None:
+            self._processing = Path(processing)
+        else:
+            self._processing = None
+
     @property
     def core(self) -> NoOps:
         """core property"""
@@ -54,12 +60,6 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
     def helm(self) -> Helm:
         """core property"""
         return self._helm
-
-        processing = os.environ.get("NOOPS_SVCAT_PROCESSING")
-        if processing is not None:
-            self._processing = Path(processing)
-        else:
-            self._processing = None
 
     @classmethod
     def _external_converter(cls, name:str, service_request: dict, converter: Path) -> List[dict]:
@@ -74,15 +74,13 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
             with request.open("w", encoding="UTF-8") as stream:
                 yaml.dump(service_request, stream)
 
-            subprocess.run(
+            external.execute(
+                os.fspath(converter),
                 [
-                    os.fspath(converter),
                     "-n", name,
                     "-r", os.fspath(request),
                     "-o", os.fspath(objects)
-                ],
-                shell=False,
-                check=True
+                ]
             )
 
             return yaml.safe_load(objects.read_text(encoding='UTF-8'))
@@ -144,8 +142,7 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
             use_external = False
             if self._processing is not None:
                 external_converter = self._processing / svcat['class'] / svcat["plan"]
-                if external_converter.exists():
-                    use_external = True
+                use_external = external_converter.exists()
 
             name="{}-binding".format(svcat["name"]) # pylint: disable=consider-using-f-string
 
@@ -164,7 +161,8 @@ class ServiceCatalog(): # pylint: disable=too-few-public-methods
         svcat_kinds = ""
         for obj in svcat_objs:
             # append to svcat kinds definitions
-            svcat_kinds += self.helm.as_chart_template(yaml.dump(obj, indent=settings.DEFAULT_INDENT))
+            svcat_kinds += \
+                self.helm.as_chart_template(yaml.dump(obj, indent=settings.DEFAULT_INDENT))
             svcat_kinds += "---\n"
 
         if svcat_kinds != "":

@@ -23,6 +23,7 @@ from typing import Literal, Optional, List
 from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
 from . import versions
 from .metadata import MetadataSpec
+from .targets import TargetsEnum
 
 class WhiteLabelSpec(BaseModel): # pylint: disable=too-few-public-methods
     """package white-label spec"""
@@ -33,7 +34,7 @@ class InstallSpec(BaseModel): # pylint: disable=too-few-public-methods
     """package install spec"""
     chart: str
     env: str
-    target: Optional[str]
+    target: Optional[TargetsEnum]
     services_only: bool = Field(False, alias='services-only')
     args: Optional[List[str]]
     envs: Optional[dict]

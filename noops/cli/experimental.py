@@ -98,7 +98,7 @@ def project_plan(clusters, targets, versions, projects): # pylint: disable=redef
         projects_obj)
 
     click.echo(
-        json2yaml(plan.json(by_alias=True,  exclude_unset=True, exclude_none=True))
+        json2yaml(plan.json(by_alias=True, exclude_none=True))
     )
 
 @projects.command(name="create")

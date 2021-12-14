@@ -69,7 +69,7 @@ class Spec(BaseModel): # pylint: disable=too-few-public-methods
 class VersionKind(BaseModel): # pylint: disable=too-few-public-methods
     """Version Kind model"""
     apiVersion: Literal['noops.local/v1alpha1']
-    kind: Literal['version']
+    kind: Literal['Version']
     spec: Spec
 
     def verify(self, check=True) -> bool:

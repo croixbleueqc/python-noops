@@ -128,3 +128,10 @@ class Projects():
         for plan in kplan.spec.plan:
             kproject = ProjectKind(spec=plan.template.spec, metadata=kplan.metadata)
             HelmInstall(dry_run).reconciliation(kproject, pre_processing_path)
+
+    @classmethod
+    def apply_incluster(cls, kproject: ProjectKind, pre_processing_path: Path, dry_run: bool):
+        """
+        Install the project in cluster
+        """
+        HelmInstall(dry_run).reconciliation(kproject, pre_processing_path)

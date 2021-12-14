@@ -228,7 +228,7 @@ class Helm():
         # noops.yaml chart
         noops_chart_config = {
             "apiVersion": "noops.local/v1alpha1",
-            "kind": "chart",
+            "kind": "Chart",
             "spec": {
                 "package": {
                     "supported": self.core.noops_config["package"].get("supported"),

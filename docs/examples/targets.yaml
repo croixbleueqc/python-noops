@@ -1,5 +1,5 @@
 apiVersion: noops.local/v1alpha1
-kind: target
+kind: Target
 metadata:
   name: demo
 spec:

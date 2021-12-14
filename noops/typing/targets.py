@@ -64,7 +64,7 @@ class Spec(BaseModel): # pylint: disable=too-few-public-methods
 class TargetKind(BaseModel): # pylint: disable=too-few-public-methods
     """Kind model"""
     apiVersion: Literal['noops.local/v1alpha1']
-    kind: Literal['target']
+    kind: Literal['Target']
     spec: Spec
 
 # Plan compute

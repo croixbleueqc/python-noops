@@ -51,6 +51,6 @@ class Spec(BaseModel): # pylint: disable=too-few-public-methods
 class ProjectKind(BaseModel): # pylint: disable=too-few-public-methods
     """Project Kind model"""
     apiVersion: Literal['noops.local/v1alpha1'] = 'noops.local/v1alpha1'
-    kind: Literal['project'] = 'project'
+    kind: Literal['Project'] = 'Project'
     spec: Spec
     metadata: MetadataSpec

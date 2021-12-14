@@ -1,5 +1,5 @@
 apiVersion: noops.local/v1alpha1
-kind: project
+kind: Project
 metadata:
   name: myproject
   namespace: myns

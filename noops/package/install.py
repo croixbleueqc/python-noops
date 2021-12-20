@@ -28,8 +28,8 @@ from typing import List, Union, Optional
 from ..typing.targets import TargetsEnum
 from ..typing.profiles import ProfileEnum
 from ..typing.charts import ChartKind
-from ..typing.projects import ProjectKind, InstallSpec
-from ..typing.versions import Spec as VersionSpec, OneSpec, MultiSpec
+from ..typing.projects import ProjectKind, InstallSpec, ProjectReconciliationPlan
+from ..typing.versions import OneSpec, MultiSpec
 from ..utils.external import execute, execute_from_shell, get_stdout_from_shell
 from ..utils.io import read_yaml
 from ..utils.transformation import label_rfc1035
@@ -156,6 +156,21 @@ class HelmInstall():
                 dry_run=self.dry_run
             )
 
+    def uninstall(self, namespace: str, release: str):
+        """
+        Uninstall a release
+        """
+        # let's go !
+        execute(
+            "helm",
+            [
+                "uninstall",
+                release,
+                "--namespace", namespace
+            ],
+            dry_run=self.dry_run
+        )
+
     @classmethod
     def _chart_kind(cls, dst: Path) -> ChartKind:
         """
@@ -165,32 +180,40 @@ class HelmInstall():
             read_yaml(dst / settings.DEFAULT_NOOPS_FILE)
         )
 
-    def reconciliation(self, kproject: ProjectKind, pre_processing_path: Path):
+    def reconciliation(self, kproject: ProjectKind, kprevious: ProjectKind,
+        pre_processing_path: Optional[Path] = None):
         """
         Upgrade all versions and clean up
-
-        TODO: compare with previous status to cleanup orphan releases
         """
 
-        versions: VersionSpec = kproject.spec.versions
-        if versions is None:
-            return
+        plan = self._reconciliation_plan(kproject, kprevious)
 
-        if versions.one is not None:
-            self._reconciliation_upgrade(
+        for version in plan.removed:
+            if isinstance(version, OneSpec):
+                release = kproject.metadata.name
+            else:
+                release = f"{kproject.metadata.name}-{version.app_version}"
+
+            self._reconciliation_uninstall(kproject.metadata.namespace, release)
+
+        if plan.removed_canary:
+            self._reconciliation_uninstall(
                 kproject.metadata.namespace,
-                kproject.metadata.name,
-                kproject.spec.package.install,
-                versions.one,
-                pre_processing_path
+                kproject.metadata.name
             )
 
-        if versions.multi is not None:
-            canary_versions = []
-            for version in versions.multi:
-                if version.weight is not None:
-                    canary_versions.append(version)
-
+        for version in plan.changed + plan.added:
+            if isinstance(version, OneSpec):
+                # versions.one
+                self._reconciliation_upgrade(
+                    kproject.metadata.namespace,
+                    kproject.metadata.name,
+                    kproject.spec.package.install,
+                    version,
+                    pre_processing_path
+                )
+            else:
+                # one entry in versions.multi
                 self._reconciliation_upgrade(
                     kproject.metadata.namespace,
                     f"{kproject.metadata.name}-{version.app_version}",
@@ -203,21 +226,20 @@ class HelmInstall():
                     )
                 )
 
-            # Canary endpoints ?
-            if len(canary_versions) > 0:
-                version = canary_versions[-1] # TODO: Document it !
-                self._reconciliation_upgrade(
-                    kproject.metadata.namespace,
-                    kproject.metadata.name,
-                    kproject.spec.package.install,
-                    version,
-                    pre_processing_path,
-                    override_profiles=[ProfileEnum.DEFAULT, ProfileEnum.CANARY_ENDPOINTS_ONLY],
-                    cargs=self._helm_canary_versions(
-                        settings.DEFAULT_PKG_HELM_DEFINITIONS["keys"]["canary"] + ".instances",
-                        canary_versions
-                    )
+        if plan.canary_versions is not None:
+            version = plan.canary_versions[-1] # TODO: Document it !
+            self._reconciliation_upgrade(
+                kproject.metadata.namespace,
+                kproject.metadata.name,
+                kproject.spec.package.install,
+                version,
+                pre_processing_path,
+                override_profiles=[ProfileEnum.DEFAULT, ProfileEnum.CANARY_ENDPOINTS_ONLY],
+                cargs=self._helm_canary_versions(
+                    settings.DEFAULT_PKG_HELM_DEFINITIONS["keys"]["canary"] + ".instances",
+                    plan.canary_versions
                 )
+            )
 
     @classmethod
     def _helm_canary_weight(cls, key: str, weight: Optional[int]) -> List[str]:
@@ -249,6 +271,107 @@ class HelmInstall():
             args.append(f"{key}[{index}].weight={version.weight}")
 
         return args if len(args) > 0 else None
+
+    @classmethod
+    def _reconciliation_plan(cls,
+        current: ProjectKind, previous: ProjectKind) -> ProjectReconciliationPlan:
+        """
+        Determine what need to be changed from previous to current project definition
+        """
+
+        plan = ProjectReconciliationPlan()
+
+        # if package definition has changed, we will need to update everything
+        forced_change = (current.spec.package != previous.spec.package)
+
+        # One
+        if current.spec.versions.one != previous.spec.versions.one:
+            if current.spec.versions.one is None:
+                # remove
+                plan.removed.append(previous.spec.versions.one)
+            elif previous.spec.versions.one is None:
+                # add
+                plan.added.append(current.spec.versions.one)
+            else:
+                # change
+                plan.changed.append(current.spec.versions.one)
+        elif current.spec.versions.one is not None and forced_change:
+            # forced change due to package definition
+            plan.changed.append(current.spec.versions.one)
+
+        # Multi
+        if current.spec.versions.multi != previous.spec.versions.multi:
+            if current.spec.versions.multi is None:
+                # remove all
+                for version in previous.spec.versions.multi:
+                    plan.removed.append(version)
+            elif previous.spec.versions.multi is None:
+                # add all
+                for version in current.spec.versions.multi:
+                    plan.added.append(version)
+            else:
+                # determine remove/add/change in the list
+
+                # List to dict with primary key app_version
+                previous_multi_dict = {i.app_version: i for i in previous.spec.versions.multi}
+                current_multi_dict = {i.app_version: i for i in current.spec.versions.multi}
+
+                # Create sets of keys only
+                previous_multi_keys = set(previous_multi_dict)
+                current_multi_keys = set(current_multi_dict)
+
+                removed = list(
+                    map(
+                        lambda x: previous_multi_dict[x],
+                        list(previous_multi_keys - current_multi_keys)
+                    )
+                )
+                added = list(
+                    map(
+                        lambda x: current_multi_dict[x],
+                        list(current_multi_keys - previous_multi_keys)
+                    )
+                )
+
+                changed = []
+                for key in list(current_multi_keys & previous_multi_keys):
+                    if forced_change or current_multi_dict[key] != previous_multi_dict[key]:
+                        changed.append(current_multi_dict[key])
+
+                plan.removed = removed
+                plan.added = added
+                plan.changed = changed
+        elif current.spec.versions.multi is not None and forced_change:
+            # forced change due to package definition
+            for version in current.spec.versions.multi:
+                plan.changed.append(version)
+
+        # Canary
+        previous_canary_versions = []
+        if previous.spec.versions.multi is not None:
+            for version in previous.spec.versions.multi:
+                if version.weight is not None:
+                    previous_canary_versions.append(version)
+
+        current_canary_versions = []
+        if current.spec.versions.multi is not None:
+            for version in current.spec.versions.multi:
+                if version.weight is not None:
+                    current_canary_versions.append(version)
+
+        len_previous_canary_versions = len(previous_canary_versions)
+        len_current_canary_versions = len(current_canary_versions)
+
+        if len_previous_canary_versions > 0: # was used
+            if len_current_canary_versions > 0: # still used
+                if forced_change or previous_canary_versions != current_canary_versions:
+                    plan.canary_versions = current_canary_versions
+            else: # not used anymore
+                plan.removed_canary = True
+        elif len_current_canary_versions > 0: # will be used
+            plan.canary_versions = current_canary_versions
+
+        return plan
 
     def _reconciliation_upgrade(self, namespace: str, release: str, # pylint: disable=too-many-arguments
         spec: InstallSpec, version: Union[OneSpec, MultiSpec],
@@ -297,4 +420,13 @@ class HelmInstall():
             args,
             spec.envs,
             spec.target
+        )
+
+    def _reconciliation_uninstall(self, namespace: str, release: str):
+        """
+        Run uninstall
+        """
+        self.uninstall(
+            namespace,
+            label_rfc1035(release)
         )

@@ -19,11 +19,20 @@ Projects Typing
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Literal, Optional, List
+from typing import Literal, Optional, List, Union
 from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
-from . import versions
+from .versions import OneSpec, MultiSpec, Spec as VersionSpec
 from .metadata import MetadataSpec
 from .targets import TargetsEnum
+
+class ProjectReconciliationPlan(BaseModel): # pylint: disable=too-few-public-methods
+    """Plan to reconcile an older project with a new one"""
+    added: List[Union[OneSpec, MultiSpec]] = []
+    changed: List[Union[OneSpec, MultiSpec]] = []
+    removed: List[Union[OneSpec, MultiSpec]] = []
+
+    canary_versions: Optional[List[Union[OneSpec, MultiSpec]]]
+    removed_canary: bool = False
 
 class WhiteLabelSpec(BaseModel): # pylint: disable=too-few-public-methods
     """package white-label spec"""
@@ -47,7 +56,7 @@ class PackageSpec(BaseModel): # pylint: disable=too-few-public-methods
 class Spec(BaseModel): # pylint: disable=too-few-public-methods
     """kind spec model"""
     package: PackageSpec
-    versions: Optional[versions.Spec]
+    versions: VersionSpec = VersionSpec()
 
 class ProjectKind(BaseModel): # pylint: disable=too-few-public-methods
     """Project Kind model"""

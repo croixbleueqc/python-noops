@@ -119,19 +119,49 @@ class Projects():
         print(project.dict(by_alias=True))
 
     @classmethod
+    def create_skeleton_from(cls, kproject: ProjectKind) -> ProjectKind:
+        """
+        Create a project based on an existing one but without any versions set
+        """
+        return ProjectKind(
+            metadata = kproject.metadata,
+            spec = {
+                "package": {
+                    "install": kproject.spec.package.install
+                }
+            }
+        )
+
+    @classmethod
     def apply(cls, kplan: ProjectPlanKind, pre_processing_path: Path, dry_run: bool):
         """
         Apply the plan
 
         Connect to each cluster and install the project (install.py)
         """
-        for plan in kplan.spec.plan:
-            kproject = ProjectKind(spec=plan.template.spec, metadata=kplan.metadata)
-            HelmInstall(dry_run).reconciliation(kproject, pre_processing_path)
+        # for plan in kplan.spec.plan:
+        #     kproject = ProjectKind(spec=plan.template.spec, metadata=kplan.metadata)
+        #     HelmInstall(dry_run).reconciliation(kproject, pre_processing_path)
+        raise NotImplementedError()
 
     @classmethod
-    def apply_incluster(cls, kproject: ProjectKind, pre_processing_path: Path, dry_run: bool):
+    def apply_incluster(cls, kproject: ProjectKind, pre_processing_path: Path, dry_run: bool,
+        kprevious: ProjectKind = None):
         """
         Install the project in cluster
         """
-        HelmInstall(dry_run).reconciliation(kproject, pre_processing_path)
+        if kprevious is None:
+            # We need an empty from for reconciliation
+            kprevious = cls.create_skeleton_from(kproject)
+
+        HelmInstall(dry_run).reconciliation(kproject, kprevious, pre_processing_path)
+
+    @classmethod
+    def delete_incluster(cls, kproject: ProjectKind, dry_run: bool):
+        """
+        Delete everything controlled by this project
+        """
+        kempty = cls.create_skeleton_from(kproject)
+
+        # kempty is the target as we want to remove all versions previously installed.
+        HelmInstall(dry_run).reconciliation(kempty, kproject)

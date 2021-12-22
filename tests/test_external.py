@@ -4,7 +4,7 @@ Tests relative to external
 
 import tempfile
 from pathlib import Path
-from noops.utils.external import execute, execute_from_shell, get_stdout_from_shell
+from noops.utils.external import execute, get_stdout
 from . import TestCaseNoOps
 
 class TestIO(TestCaseNoOps):
@@ -47,7 +47,7 @@ class TestIO(TestCaseNoOps):
         with tempfile.TemporaryDirectory(prefix="noops-") as tmp:
             file_path = Path(tmp) / "test.execute_from_shell"
 
-            execute_from_shell(f"touch {file_path}")
+            execute(f"touch {file_path}", shell=True)
 
             self.assertTrue(file_path.exists())
 
@@ -55,5 +55,7 @@ class TestIO(TestCaseNoOps):
         """
         Test to get output from a command
         """
-        output = get_stdout_from_shell("echo 'TEST'")
+        output = get_stdout(
+            execute("echo 'TEST'", shell=True, capture_output=True)
+        )
         self.assertEqual(output, "TEST")

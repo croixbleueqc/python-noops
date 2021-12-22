@@ -30,7 +30,7 @@ from ..typing.profiles import ProfileEnum
 from ..typing.charts import ChartKind
 from ..typing.projects import ProjectKind, InstallSpec, ProjectReconciliationPlan
 from ..typing.versions import OneSpec, MultiSpec
-from ..utils.external import execute, execute_from_shell, get_stdout_from_shell
+from ..utils.external import execute, get_stdout
 from ..utils.io import read_yaml
 from ..utils.transformation import label_rfc1035
 from ..targets import Targets
@@ -59,7 +59,12 @@ class HelmInstall():
 
         helm repo update
         """
-        execute_from_shell("helm repo update")
+        logging.info("update repositories")
+        _ = execute(
+            "helm",
+            ["repo", "update"],
+            capture_output=True
+        )
 
     @classmethod
     def search_latest(cls, keyword: str) -> dict:
@@ -69,8 +74,12 @@ class HelmInstall():
         helm search repo ...
         """
         charts = json.loads(
-            get_stdout_from_shell(
-                f"helm search repo {keyword} -o json"
+            get_stdout(
+                execute(
+                    "helm",
+                    ["search", "repo", keyword, "-o", "json"],
+                    capture_output=True
+                )
             )
         )
         if len(charts) == 0:
@@ -89,8 +98,15 @@ class HelmInstall():
         pkg_name = pkg_fullname.split("/")[1]
         pkg_version = pkg["version"]
 
-        execute_from_shell(
-            f"helm pull {pkg_fullname} --untar --version {pkg_version} --untardir {os.fspath(dst)}"
+        logging.debug("pull version %s for %s", pkg_version, pkg_fullname)
+        _ = execute(
+            "helm",
+            [
+                "pull", pkg_fullname,
+                "--version", pkg_version,
+                "--untar", "--untardir", os.fspath(dst)
+            ],
+            capture_output=True
         )
 
         return dst / pkg_name
@@ -113,7 +129,10 @@ class HelmInstall():
         self.update()
         pkg = self.search_latest(chart)
 
-        logging.info("Installation of %s", str(pkg))
+        logging.info(
+            "Installation of %s in namespace %s (chart: %s-%s)",
+            release, namespace, pkg["name"], pkg["version"]
+        )
 
         with TemporaryDirectory(prefix=settings.TMP_PREFIX) as tmp:
             # Pull it
@@ -130,12 +149,13 @@ class HelmInstall():
             # pre-processing
             # args to pass: -e {env} -f values1.yaml -f valuesN.yaml
             for pre_processing in chartkind.spec.package.helm.preprocessing:
-                execute(
+                _ = execute(
                     os.fspath(pre_processing_path / pre_processing),
                     [ "-e", env ] + values_args,
                     extra_envs=extra_envs,
                     product_path=os.fspath(dst),
-                    dry_run=self.dry_run
+                    dry_run=self.dry_run,
+                    capture_output=True
                 )
 
             # Profiles
@@ -143,7 +163,7 @@ class HelmInstall():
                 chartkind.spec.package.supported.profile_classes, profiles, dst)
 
             # let's go !
-            execute(
+            _ = execute(
                 "helm",
                 [
                     "upgrade",
@@ -153,7 +173,8 @@ class HelmInstall():
                     "--create-namespace",
                     "--namespace", namespace
                 ] + values_args + cargs,
-                dry_run=self.dry_run
+                dry_run=self.dry_run,
+                capture_output=True
             )
 
     def uninstall(self, namespace: str, release: str):
@@ -161,14 +182,16 @@ class HelmInstall():
         Uninstall a release
         """
         # let's go !
-        execute(
+        logging.info("Uninstall %s in namespace %s", release, namespace)
+        _ = execute(
             "helm",
             [
                 "uninstall",
                 release,
                 "--namespace", namespace
             ],
-            dry_run=self.dry_run
+            dry_run=self.dry_run,
+            capture_output=True
         )
 
     @classmethod

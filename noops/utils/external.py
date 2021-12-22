@@ -22,11 +22,12 @@ Utils: run external commands
 import os
 import subprocess
 import logging
-from typing import List
+from typing import List, Optional
 
-def execute(cmd: str, args: List[str],
+def execute(cmd: str, args: List[str] = None,
     extra_envs: dict = None, product_path: str = None,
-    dry_run: bool = False, shell: bool = False):
+    dry_run: bool = False, shell: bool = False,
+    capture_output: bool = False) -> Optional[subprocess.CompletedProcess]:
     """
     Execute a command.
 
@@ -34,6 +35,8 @@ def execute(cmd: str, args: List[str],
     """
     if extra_envs is None:
         extra_envs = {}
+    if args is None:
+        args = []
 
     custom_envs = {**os.environ, **extra_envs}
 
@@ -46,28 +49,20 @@ def execute(cmd: str, args: List[str],
     if dry_run:
         return
 
-    subprocess.run(
+    done = subprocess.run(
         [cmd] + args if not shell else cmd_str,
         shell=shell,
         check=True,
         env=custom_envs,
-        cwd=product_path or os.getcwd()
+        cwd=product_path or os.getcwd(),
+        capture_output=capture_output
     )
 
-def get_stdout_from_shell(cmd: str) -> str:
-    """
-    Execute a command from a shell and return the captured output
-    """
-    return subprocess.run(
-        cmd,
-        shell=True, check=True, capture_output=True
-    ).stdout.decode().strip()
+    if capture_output:
+        return done
 
-def execute_from_shell(cmd: str):
+def get_stdout(done: subprocess.CompletedProcess) -> str:
     """
-    Execute a command from a shell
+    Return the captured standard output
     """
-    subprocess.run(
-        cmd,
-        shell=True, check=True
-    )
+    return done.stdout.decode().strip()

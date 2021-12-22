@@ -30,7 +30,7 @@ import shutil
 import re
 from typing import Optional, List
 from .. import settings
-from ..utils.external import execute, get_stdout_from_shell, execute_from_shell
+from ..utils.external import execute, get_stdout
 from ..utils import containers
 from ..utils import io
 from ..noops import NoOps
@@ -146,7 +146,6 @@ class Helm():
         """
         Create values files based on package.helm.parameters
         """
-
         for profile, config in parameters.items():
             values_name = f"{prefix}-{profile}.yaml"
             logging.info("Creating %s", values_name)
@@ -176,11 +175,17 @@ class Helm():
         # Compute missing parameters values
         if app_version is None:
             app_version = "sha-" + \
-                get_stdout_from_shell("git rev-parse --short=7 HEAD")
+                get_stdout(
+                    execute("git", ["rev-parse", "--short=7", "HEAD"], capture_output=True)
+                )
 
         if description is None:
-            description = get_stdout_from_shell(
-                'git log --pretty=format:"%s" --no-decorate -n 1 HEAD'
+            description = get_stdout(
+                execute(
+                    'git',
+                    ['log', '--pretty=format:"%s"', '--no-decorate', '-n', '1', 'HEAD'],
+                    capture_output=True
+                )
             )
 
         # Chart.yaml
@@ -269,7 +274,10 @@ class Helm():
             directory
         )
 
-        execute_from_shell(f"helm repo index {directory} --url {url}")
+        execute(
+            "helm",
+            [ "repo", "index", directory, "--url", url ]
+        )
 
     @classmethod
     def helm_values_args(cls, env: str, dst: Path) -> List[str]:

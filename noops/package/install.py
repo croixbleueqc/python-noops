@@ -22,6 +22,8 @@ Helm install
 import logging
 import json
 import os
+import threading
+from enum import IntEnum
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List, Union, Optional
@@ -39,10 +41,15 @@ from ..package.helm import Helm
 from ..errors import ChartNotFound
 from .. import settings
 
+class HelmRepoUpdate(IntEnum):
+    NOT_UPDATED=0
+    UPDATED=1
+
 class HelmInstall():
     """
     Manages Helm upgrade/install and everything around that process
     """
+    LOCK = threading.Lock()
 
     def __init__(self, dry_run: bool):
         self._dry_run = dry_run
@@ -59,12 +66,15 @@ class HelmInstall():
 
         helm repo update
         """
-        logging.info("update repositories")
-        _ = execute(
-            "helm",
-            ["repo", "update"],
-            capture_output=True
-        )
+
+        # protect helm repo update to avoid conflict (shared setup)
+        with HelmInstall.LOCK:
+            logging.info("update repositories")
+            _ = execute(
+                "helm",
+                ["repo", "update"],
+                capture_output=True
+            )
 
     @classmethod
     def search_latest(cls, keyword: str) -> dict:
@@ -73,17 +83,26 @@ class HelmInstall():
 
         helm search repo ...
         """
-        charts = json.loads(
-            get_stdout(
-                execute(
-                    "helm",
-                    ["search", "repo", keyword, "-o", "json"],
-                    capture_output=True
+
+        # trying to get the chart without running repo update first
+        # if we are not able to find it, we will try again after an update !
+        for state in (HelmRepoUpdate.NOT_UPDATED, HelmRepoUpdate.UPDATED):
+            charts = json.loads(
+                get_stdout(
+                    execute(
+                        "helm",
+                        ["search", "repo", keyword, "-o", "json"],
+                        capture_output=True
+                    )
                 )
             )
-        )
-        if len(charts) == 0:
-            raise ChartNotFound(keyword)
+            if len(charts) == 0:
+                if state == HelmRepoUpdate.NOT_UPDATED:
+                    cls.update()
+                else:
+                    raise ChartNotFound(keyword)
+            else:
+                break # we got one
 
         return charts[0]
 
@@ -126,7 +145,6 @@ class HelmInstall():
         """
 
         # Get the chart
-        self.update()
         pkg = self.search_latest(chart)
 
         logging.info(

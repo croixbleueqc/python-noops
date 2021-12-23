@@ -56,15 +56,15 @@ class TargetSpec(BaseModel): # pylint: disable=too-few-public-methods
     clusterCount: Union[int, str] = 0
 
 class Spec(BaseModel): # pylint: disable=too-few-public-methods
-    """Kind spec model"""
+    """spec model"""
     active: TargetSpec
     standby: TargetSpec
     services_only: TargetSpec = Field(None, alias=SERVICES_ONLY)
 
 class TargetKind(BaseModel): # pylint: disable=too-few-public-methods
     """Kind model"""
-    apiVersion: Literal['noops.local/v1alpha1']
-    kind: Literal['Target']
+    apiVersion: Literal['noops.local/v1alpha1'] = 'noops.local/v1alpha1'
+    kind: Literal['Target'] = 'Target'
     spec: Spec
 
 # Plan compute

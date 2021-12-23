@@ -52,6 +52,6 @@ class Spec(BaseModel): # pylint: disable=too-few-public-methods
 
 class ChartKind(BaseModel): # pylint: disable=too-few-public-methods
     """Chart Kind model"""
-    apiVersion: Literal['noops.local/v1alpha1']
-    kind: Literal['Chart']
+    apiVersion: Literal['noops.local/v1alpha1'] = 'noops.local/v1alpha1'
+    kind: Literal['Chart'] = 'Chart'
     spec: Spec

@@ -10,7 +10,7 @@ with open('README.md', encoding='UTF-8') as file:
 
 setup(
     name='noops',
-    version='1.2.0',
+    version='1.2.1',
     python_requires='>=3.8',
     packages=find_packages(exclude=['tests']),
     install_requires=[

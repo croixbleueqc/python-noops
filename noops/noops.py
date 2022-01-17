@@ -94,11 +94,12 @@ class NoOps():
         self.noops_config = containers.merge(noops_devops, noops_product)
         logging.debug("Merged config: %s", self.noops_config)
 
-        # NoOps final configuration
+        # Check and set files path to used
         selectors=[
             "package.docker.dockerfile",
             "package.lib.dockerfile",
             "package.helm.chart",
+            "package.helm.chart.destination",
             "package.helm.preprocessor",
             "local.build.posix",
             "local.build.nt",
@@ -109,14 +110,30 @@ class NoOps():
         for selector in selectors:
             self._file_selector(product_path, selector, noops_product, noops_devops)
 
+        # pipeline.<target>.{ci,cd,pr,default,*}
         for target, cfg in self.noops_config["pipeline"].items():
             for key in cfg.keys():
                 self._file_selector(product_path, f"pipeline.{target}.{key}",
                     noops_product, noops_devops)
 
-        self.noops_config["package"]["helm"]["values"] = \
-            self.noops_config["package"]["helm"]["chart"] / "noops"
+        # package.docker.<target>.{dockerfile}
+        for target, cfg in self.noops_config["package"]["docker"].items():
+            if isinstance(cfg, dict) and "dockerfile" in cfg.keys():
+                self._file_selector(product_path, f"package.docker.{target}.dockerfile",
+                    noops_product, noops_devops)
 
+        # Set computed package.helm.values
+        if isinstance(self.noops_config["package"]["helm"]["chart"], dict):
+            self.noops_config["package"]["helm"]["values"] = \
+                self.noops_config["package"]["helm"]["chart"]["destination"] / "noops"
+        else:
+            self.noops_config["package"]["helm"]["values"] = \
+                self.noops_config["package"]["helm"]["chart"] / "noops"
+
+        # Deprecated
+        self._deprecated_noops()
+
+        # NoOps final configuration
         io.write_json(
             self._get_generated_noops_json(),
             self.noops_config
@@ -125,6 +142,26 @@ class NoOps():
             self._get_generated_noops_yaml(),
             self.noops_config
         )
+
+    def _deprecated_noops(self):
+        warn_path=[
+            ("package.docker.dockerfile", "package.docker.<target>.dockerfile"),
+            ("package.lib.dockerfile", "package.docker.lib.dockerfile"),
+            ("package.helm.preprocessor", "package.helm.pre-processing")
+        ]
+
+        for deprecated_path, new_path in warn_path:
+            keys = deprecated_path.split(".")
+            cfg = self.noops_config
+
+            try:
+                for key in keys:
+                    cfg = cfg[key]
+            except KeyError:
+                cfg = None
+
+            if cfg is not None:
+                logging.warning("%s is DEPRECATED! Please use %s", deprecated_path, new_path)
 
     def _load_cache(self):
         logging.info("loading cached configuration")
@@ -238,7 +275,7 @@ class NoOps():
 
         # Order is important.
         # Product definition has highest priority over devops definition
-        if product_file is not None:
+        if isinstance(product_file, str):
             # check if the file is in product or devops
             # priority to product directory
             if (product_path / product_file).exists():
@@ -257,7 +294,7 @@ class NoOps():
             config_iter[keys[-1]] = product_file_path
             return
 
-        if devops_file is not None:
+        if isinstance(devops_file, str):
             devops_file_path = self.workdir / devops_file
             if devops_file_path.exists():
                 config_iter[keys[-1]] = devops_file_path

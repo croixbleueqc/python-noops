@@ -122,13 +122,19 @@ class NoOps():
                 self._file_selector(product_path, f"package.docker.{target}.dockerfile",
                     noops_product, noops_devops)
 
+        chart = self.noops_config["package"]["helm"]["chart"]
+
         # Set computed package.helm.values
-        if isinstance(self.noops_config["package"]["helm"]["chart"], dict):
+        if isinstance(chart, dict):
             self.noops_config["package"]["helm"]["values"] = \
-                self.noops_config["package"]["helm"]["chart"]["destination"] / "noops"
+                chart["destination"] / "noops"
         else:
             self.noops_config["package"]["helm"]["values"] = \
-                self.noops_config["package"]["helm"]["chart"] / "noops"
+                chart / "noops"
+
+        # Pull helm/chart (if necessary)
+        if isinstance(chart, dict):
+            self._pull_helm_chart(chart)
 
         # Deprecated
         self._deprecated_noops()
@@ -162,6 +168,40 @@ class NoOps():
 
             if cfg is not None:
                 logging.warning("%s is DEPRECATED! Please use %s", deprecated_path, new_path)
+
+    def _pull_helm_chart(self, chart: dict):
+        logging.info("pulling helm chart")
+
+        url = chart.get("url")
+        name = chart.get("name")
+        version = chart.get("version")
+        dst = chart.get("destination")
+
+        with tempfile.TemporaryDirectory(prefix="noops-") as tmpdirname:
+            args = [
+                "pull",
+                name or url, # if both are set, name is prefered
+                "--untar", "--untardir", tmpdirname
+            ]
+            if name and version is not None:
+                args.append("--version")
+                args.append(version)
+
+            _ = execute(
+                "helm",
+                args,
+                capture_output=True,
+                dry_run=self.is_dry_run()
+            )
+
+            # Move chart in final destination
+            if self.is_dry_run():
+                return
+
+            tmp = Path(tmpdirname)
+            chart = list(tmp.glob("*"))[0]
+            shutil.rmtree(dst)
+            shutil.move(chart, dst)
 
     def _load_cache(self):
         logging.info("loading cached configuration")
@@ -270,8 +310,8 @@ class NoOps():
             config_iter = config_iter[key]
 
         # value in product and devops config
-        product_file = product_iter.get(keys[-1])
-        devops_file = devops_iter.get(keys[-1])
+        product_file = product_iter.get(keys[-1]) if isinstance(product_iter, dict) else None
+        devops_file = devops_iter.get(keys[-1]) if isinstance(devops_iter, dict) else None
 
         # Order is important.
         # Product definition has highest priority over devops definition

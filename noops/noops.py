@@ -330,12 +330,10 @@ class NoOps():
             product_profile_iter = product_profile_iter.get(key, {})
             devops_profile_iter = devops_profile_iter.get(key, {})
 
-            # create config entry if missing
-            # product and devops can set different subset of keys
-            if config_iter.get(key) is None:
-                config_iter[key]={}
-            config_iter = config_iter[key]
-            # config_iter = config_iter.get(key, {})
+            config_iter = config_iter.get(key)
+            if config_iter is None:
+                # the selector is not used in the final configuration. skip it now !
+                return
 
         # Determine the product and/or devops file to use
         product_file = product_iter.get(keys[-1]) if isinstance(product_iter, dict) else None

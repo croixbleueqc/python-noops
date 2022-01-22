@@ -39,11 +39,11 @@ def deep_merge(dict_base: dict, dict_custom: dict) -> dict:
 
     return result
 
-def merge(devops: dict, product: dict) -> dict:
+def merge(low: dict, high: dict) -> dict:
     """
     Merge 2 dicts.
 
-    product dict overrides devops dict
+    high dict overrides low dict
     """
     # Order is important inside the list
-    return reduce(deep_merge, [{}, devops, product])
+    return reduce(deep_merge, [{}, low, high])

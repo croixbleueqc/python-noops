@@ -33,7 +33,6 @@ package:
       one-cluster: null
       standby: null
     values: {BASE}/noops_workdir/helm/chart/noops
-  lib: {}
 pipeline:
   deploy:
     default: {BASE}/noops_workdir/scripts/deploy.sh

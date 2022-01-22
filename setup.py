@@ -10,7 +10,7 @@ with open('README.md', encoding='UTF-8') as file:
 
 setup(
     name='noops',
-    version='1.2.2',
+    version='1.3.0',
     python_requires='>=3.8',
     packages=find_packages(exclude=['tests']),
     install_requires=[
@@ -25,7 +25,7 @@ setup(
         ]
     },
 
-    scripts=['noopsctl', 'noopsctl.bat'],
+    scripts=['noopsctl', 'noopsctl.bat', 'noopshpr', 'noopshpr.bat'],
 
     # Metadata
     author="Croix Bleue du Quebec",

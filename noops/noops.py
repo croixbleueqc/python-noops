@@ -101,10 +101,11 @@ class NoOps():
             "package.helm.chart",
             "package.helm.chart.destination",
             "package.helm.preprocessor",
+            "package.helm.kustomize",
             "local.build.posix",
             "local.build.nt",
             "local.run.posix",
-            "local.run.nt",
+            "local.run.nt"
         ]
 
         for selector in selectors:

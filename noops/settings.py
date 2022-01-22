@@ -27,6 +27,7 @@ DEFAULT_INDENT=2
 DEFAULT_NOOPS_FILE="noops.yaml"
 DEFAULT_WORKDIR="noops_workdir"
 GENERATED_NOOPS="noops-generated"
+DEFAULT_NOOPS_HPR="noopshpr.yaml"
 
 DEFAULT_FEATURES={
     "service-catalog": True,

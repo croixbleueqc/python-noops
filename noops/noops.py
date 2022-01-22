@@ -7,7 +7,7 @@ Core component
 - Caching
 """
 
-# Copyright 2021 Croix Bleue du Québec
+# Copyright 2021-2022 Croix Bleue du Québec
 
 # This file is part of python-noops.
 
@@ -90,9 +90,17 @@ class NoOps():
         noops_devops = io.read_yaml(self.workdir / settings.DEFAULT_NOOPS_FILE)
         logging.debug("DevOps config: %s", noops_devops)
 
-        # NoOps Merged configuration
-        self.noops_config = containers.merge(noops_devops, noops_product)
-        logging.debug("Merged config: %s", self.noops_config)
+        # Merge product and devops (product override devops)
+        noops_merged = containers.merge(noops_devops, noops_product)
+        logging.debug("Merged config: %s", noops_merged)
+
+        # NoOps Profile Merged configuration (profile orverride)
+        profile = noops_merged.get("profile")
+        if profile:
+            self.noops_config = containers.merge(noops_merged, noops_merged["profiles"][profile])
+        else:
+            self.noops_config = noops_merged
+        logging.debug("%s profile merged config: %s", profile, self.noops_config)
 
         # Check and set files path to used
         selectors=[
@@ -108,20 +116,31 @@ class NoOps():
             "local.run.nt"
         ]
 
+        if profile:
+            noops_product_profile = noops_product.get("profiles", {}).get(profile, {})
+            noops_devops_profile = noops_devops.get("profiles", {}).get(profile, {})
+        else:
+            noops_product_profile = {}
+            noops_devops_profile = {}
+
         for selector in selectors:
-            self._file_selector(product_path, selector, noops_product, noops_devops)
+            self._file_selector(product_path, selector,
+                                noops_product, noops_devops,
+                                noops_product_profile, noops_devops_profile)
 
         # pipeline.<target>.{ci,cd,pr,default,*}
         for target, cfg in self.noops_config["pipeline"].items():
             for key in cfg.keys():
                 self._file_selector(product_path, f"pipeline.{target}.{key}",
-                    noops_product, noops_devops)
+                    noops_product, noops_devops,
+                    noops_product_profile, noops_devops_profile)
 
         # package.docker.<target>.{dockerfile}
         for target, cfg in self.noops_config["package"]["docker"].items():
             if isinstance(cfg, dict) and "dockerfile" in cfg.keys():
                 self._file_selector(product_path, f"package.docker.{target}.dockerfile",
-                    noops_product, noops_devops)
+                    noops_product, noops_devops,
+                    noops_product_profile, noops_devops_profile)
 
         chart = self.noops_config["package"]["helm"]["chart"]
 
@@ -269,16 +288,19 @@ class NoOps():
         raise ValueError()
 
     def _file_selector(self, product_path: Path, selector: str,
-        noops_product: dict, noops_devops: dict):
+        product: dict, devops: dict,
+        product_profile: dict, devops_profile: dict):
         """
         Determines the file to use between product and devops directories
 
-        Product (noops_product) has the highest priority over devops (noops_devops).
+        Product has the highest priority over DevOps.
+        Product profile has the highest priority over DevOps profile.
+        Profile has the highest priority over all.
 
         Product can refer to a file located in product or devops directory.
         Devops can ONLY refer to a file located in devops directory.
 
-        File exists in both directories (same path for each directory):
+        If a file exists in Product and DevOps (same relative path for each):
         - if product refer it, the file in product directory will be used.
         - if devops is the ONLY one to refer it, the devops file will be used.
 
@@ -296,23 +318,41 @@ class NoOps():
 
         keys = selector.split(".")
 
-        product_iter = noops_product
-        devops_iter = noops_devops
+        product_iter = product
+        devops_iter = devops
+        product_profile_iter = product_profile
+        devops_profile_iter = devops_profile
         config_iter = self.noops_config
 
         for key in keys[:-1]:
             product_iter = product_iter.get(key, {})
             devops_iter = devops_iter.get(key, {})
+            product_profile_iter = product_profile_iter.get(key, {})
+            devops_profile_iter = devops_profile_iter.get(key, {})
 
             # create config entry if missing
             # product and devops can set different subset of keys
             if config_iter.get(key) is None:
                 config_iter[key]={}
             config_iter = config_iter[key]
+            # config_iter = config_iter.get(key, {})
 
-        # value in product and devops config
+        # Determine the product and/or devops file to use
         product_file = product_iter.get(keys[-1]) if isinstance(product_iter, dict) else None
         devops_file = devops_iter.get(keys[-1]) if isinstance(devops_iter, dict) else None
+        product_profile_file = product_profile_iter.get(keys[-1]) \
+            if isinstance(product_profile_iter, dict) else None
+        devops_profile_file = devops_profile_iter.get(keys[-1]) \
+            if isinstance(devops_profile_iter, dict) else None
+
+        if devops_profile_file is not None:
+            # DevOps profile has a higher priority over product_file/devops_file
+            product_file = None
+            devops_file = devops_profile_file
+
+        if product_profile_file is not None:
+            # Product profile has the highest priority
+            product_file = product_profile_file
 
         # Order is important.
         # Product definition has highest priority over devops definition
@@ -322,7 +362,7 @@ class NoOps():
             if (product_path / product_file).exists():
                 # product directory
                 product_file_path = product_path / product_file
-            elif (self.workdir /product_file).exists():
+            elif (self.workdir / product_file).exists():
                 # devops (workdir) directory
                 product_file_path = self.workdir / product_file
             else:

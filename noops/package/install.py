@@ -33,12 +33,12 @@ from ..typing.charts import ChartKind
 from ..typing.projects import ProjectKind, InstallSpec, ProjectReconciliationPlan
 from ..typing.versions import OneSpec, MultiSpec
 from ..utils.external import execute, get_stdout
-from ..utils.io import read_yaml
+from ..utils.io import read_yaml, write_yaml
 from ..utils.transformation import label_rfc1035
 from ..targets import Targets
 from ..profiles import Profiles
 from ..package.helm import Helm
-from ..errors import ChartNotFound
+from ..errors import ChartNotFound, KustomizeStructure
 from .. import settings
 
 class HelmRepoUpdate(IntEnum):
@@ -180,6 +180,9 @@ class HelmInstall():
             values_args += Profiles.helm_profiles_args(
                 chartkind.spec.package.supported.profile_classes, profiles, dst)
 
+            # kustomize
+            kustomize_args = self._helm_kustomize(dst, env)
+
             # let's go !
             _ = execute(
                 "helm",
@@ -190,7 +193,7 @@ class HelmInstall():
                     "--install",
                     "--create-namespace",
                     "--namespace", namespace
-                ] + values_args + cargs,
+                ] + values_args + kustomize_args + cargs,
                 dry_run=self.dry_run,
                 capture_output=True
             )
@@ -471,3 +474,33 @@ class HelmInstall():
             namespace,
             label_rfc1035(release)
         )
+
+    @classmethod
+    def _helm_kustomize(cls, dst: Path, env: str) -> List:
+        kustomize = dst / "kustomize"
+        kustomize_base = kustomize / "base"
+        kustomize_env = kustomize / env
+
+        if not kustomize_env.exists():
+            kustomize_env = None
+        if not kustomize_base.exists():
+            kustomize_base = None
+
+        if not kustomize_env and not kustomize_base:
+            return []
+        if kustomize_env and not kustomize_base:
+            raise KustomizeStructure()
+
+        # Helm post-renderer can't use arguments so we need to store kustomize path prior
+        # This file will be read by noopshpr to run kustomize in it
+        hpr = Path(settings.DEFAULT_WORKDIR) / settings.DEFAULT_NOOPS_HPR
+        hpr_content = {
+            "base": kustomize_base,
+            "kustomize": kustomize_env or kustomize_base
+        }
+        write_yaml(hpr, hpr_content)
+
+        return [
+            "--post-renderer",
+            "noopshpr"
+        ]

@@ -70,3 +70,8 @@ class ChartNotFound(NoopsException):
     """Chart not found during a search"""
     def __init__(self, chart: str):
         NoopsException.__init__(self, f"chart not found with keyword {chart} !")
+
+class KustomizeStructure(NoopsException):
+    """Bad Kustomize structure"""
+    def __init__(self):
+        NoopsException.__init__(self, "Kustomize structure is not compliant !")

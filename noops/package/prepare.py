@@ -20,6 +20,8 @@ Prepare for packaging, ci, cd and deploy
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+import shutil
+from pathlib import Path
 from ..noops import NoOps
 from .helm import Helm
 from .svcat import ServiceCatalog
@@ -43,3 +45,35 @@ def prepare(core: NoOps, helm: Helm = None, chart_name: str = None):
 
     # Helm values-*.yaml
     helm.create_values()
+
+    # Embedded kustomize (required for package)
+    embedded_kustomize(core)
+
+def embedded_kustomize(core: NoOps):
+    """
+    Copy kustomize under the helm chart if available and necessary
+    """
+    kustomize: Path = core.noops_config["package"].get("helm", {}).get("kustomize")
+
+    if kustomize is None:
+        # kustomize is not used
+        logging.info("kustomize is not used")
+        return
+
+    values: Path = core.noops_config["package"]["helm"]["values"]
+
+    if kustomize.parent == values.parent:
+        # kustomize is already located under the helm chart (built-in)
+        logging.info("Using built-in kustomize")
+        return
+
+    # Copy
+    logging.info("Embedding kustomize")
+    dst = values.parent / "kustomize"
+    if dst.exists():
+        shutil.rmtree(dst)
+
+    shutil.copytree(
+        kustomize,
+        dst
+    )

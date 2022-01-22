@@ -34,6 +34,7 @@ from ..utils.external import execute, get_stdout
 from ..utils import containers
 from ..utils import io
 from ..noops import NoOps
+from ..typing.charts import ChartKind
 
 class Helm():
     """
@@ -231,10 +232,8 @@ class Helm():
             io.write_yaml(chart_values_file, chart_values, dry_run=self.core.is_dry_run())
 
         # noops.yaml chart
-        noops_chart_config = {
-            "apiVersion": "noops.local/v1alpha1",
-            "kind": "Chart",
-            "spec": {
+        kchart = ChartKind(
+            spec={
                 "package": {
                     "supported": self.core.noops_config["package"].get("supported"),
                     "helm": {
@@ -243,9 +242,9 @@ class Helm():
                     }
                 }
             }
-        }
+        )
         noops_file = self.config["chart"] / settings.DEFAULT_NOOPS_FILE
-        io.write_yaml(noops_file, noops_chart_config, dry_run=self.core.is_dry_run())
+        io.write_yaml(noops_file, kchart.dict(by_alias=True), dry_run=self.core.is_dry_run())
 
         execute(
             "helm",

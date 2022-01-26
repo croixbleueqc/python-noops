@@ -66,10 +66,7 @@ class Projects():
             elif target_plan.target_class == TargetClassesEnum.MULTI_CLUSTER:
                 spec.package.install.target = TargetsEnum.MULTI_CLUSTER
             else:
-                if scope == "services-only":
-                    spec.package.install.target = None
-                else:
-                    spec.package.install.target = TargetsEnum(scope)
+                spec.package.install.target = TargetsEnum(scope)
 
             spec.package.install.services_only = (scope == "services-only")
 

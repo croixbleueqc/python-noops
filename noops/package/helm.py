@@ -117,7 +117,7 @@ class Helm():
 
         # "regular" values
         self._create_values(
-            self.config["parameters"],
+            self.config.get("parameters", {}),
             "values"
         )
 

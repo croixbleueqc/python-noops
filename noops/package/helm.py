@@ -275,7 +275,7 @@ class Helm():
 
         execute(
             "helm",
-            [ "repo", "index", directory, "--url", url ]
+            [ "repo", "index", os.fspath(directory), "--url", url ]
         )
 
     @classmethod

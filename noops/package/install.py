@@ -42,6 +42,7 @@ from ..errors import ChartNotFound, KustomizeStructure
 from .. import settings
 
 class HelmRepoUpdate(IntEnum):
+    """Helm repositories updated or not"""
     NOT_UPDATED=0
     UPDATED=1
 
@@ -216,7 +217,7 @@ class HelmInstall():
         )
 
     @classmethod
-    def _chart_kind(cls, dst: Path) -> ChartKind:
+    def _chart_kind(cls, dst: Path) -> ChartKind: # pragma: no cover
         """
         Read the noops.yaml from chart
         """
@@ -317,6 +318,20 @@ class HelmInstall():
         return args if len(args) > 0 else None
 
     @classmethod
+    def _reorder(cls, values: List, ordered: List) -> List:
+        """
+        Reorder a list of values based on an ordered list
+
+        list of values was previously a set that can change order.
+        We need to reorder those values that are an unorderd subset of ordered list
+
+        IMPORTANT: values is altered by sort
+        """
+        # TODO: Improve algorithm (not efficient)
+        values.sort(key=lambda value: ordered.index(value)) # pylint: disable=unnecessary-lambda
+        return values
+
+    @classmethod
     def _reconciliation_plan(cls,
         current: ProjectKind, previous: ProjectKind) -> ProjectReconciliationPlan:
         """
@@ -364,27 +379,40 @@ class HelmInstall():
                 previous_multi_keys = set(previous_multi_dict)
                 current_multi_keys = set(current_multi_dict)
 
+                # Create list of keys only (ordered)
+                previous_multi_keys_ordered = list(previous_multi_dict)
+                current_multi_keys_ordered = list(current_multi_dict)
+
                 removed = list(
                     map(
                         lambda x: previous_multi_dict[x],
-                        list(previous_multi_keys - current_multi_keys)
+                        # list(previous_multi_keys - current_multi_keys)
+                        cls._reorder(
+                            list(previous_multi_keys - current_multi_keys),
+                            previous_multi_keys_ordered)
                     )
                 )
                 added = list(
                     map(
                         lambda x: current_multi_dict[x],
-                        list(current_multi_keys - previous_multi_keys)
+                        # list(current_multi_keys - previous_multi_keys)
+                        cls._reorder(
+                            list(current_multi_keys - previous_multi_keys),
+                            current_multi_keys_ordered)
                     )
                 )
 
                 changed = []
-                for key in list(current_multi_keys & previous_multi_keys):
+                for key in cls._reorder(
+                    list(current_multi_keys & previous_multi_keys),
+                    current_multi_keys_ordered):
+
                     if forced_change or current_multi_dict[key] != previous_multi_dict[key]:
                         changed.append(current_multi_dict[key])
 
-                plan.removed = removed
-                plan.added = added
-                plan.changed = changed
+                plan.removed.extend(removed)
+                plan.added.extend(added)
+                plan.changed.extend(changed)
         elif current.spec.versions.multi is not None and forced_change:
             # forced change due to package definition
             for version in current.spec.versions.multi:

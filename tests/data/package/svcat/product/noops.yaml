@@ -1,0 +1,21 @@
+metadata:
+  version: 1
+
+devops:
+  local:
+    path: devops
+
+service-catalog:
+- name: svc1
+  class: broker_class
+  plan: broker_plan
+  instance:
+    parameters:
+      key: instance
+  binding:
+    parameters:
+      key: binding
+- name: svc2
+  class: operator
+  plan: plan
+  key: value

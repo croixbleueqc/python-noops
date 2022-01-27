@@ -1,0 +1,6 @@
+apiVersion: noops.local/v1alpha1
+kind: Version
+spec:
+    one:
+        app_version: '1.0.0'
+    multi: null

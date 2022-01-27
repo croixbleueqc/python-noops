@@ -1,106 +1,151 @@
 """
-Tests relative to noops
+Tests noops.noops
 """
 
 import tempfile
 import os
 from pathlib import Path
+from unittest.mock import patch
 import shutil
 import subprocess
 import json
 from contextlib import contextmanager
-import yaml
 from noops.noops import NoOps
 from noops.settings import DEFAULT_WORKDIR
-from noops.utils.io import PathEncoder
+from noops.utils.io import yaml, read_yaml, write_yaml
 from . import TestCaseNoOps
 
-DEMO="tests/data/demo"
+MINIMAL=Path("tests/data/noops/product/minimal").resolve()
+MINIMAL_GIT=Path("tests/data/noops/product/minimal_git").resolve()
+MINIMAL_PROFILE=Path("tests/data/noops/product/minimal_profile").resolve()
+SELECTOR=Path("tests/data/noops/product/selector").resolve()
 
 @contextmanager
-def product_copy():
+def product_copy(product: Path):
     """
     Temporary Directory with product copy on it
     """
     with tempfile.TemporaryDirectory(prefix="noops-") as tmp:
         product_path = Path(tmp) / "demo"
         shutil.copytree(
-            DEMO,
+            product,
             product_path
         )
 
         yield product_path
 
-class TestNoOps(TestCaseNoOps):
+def read_and_replace_base(file: Path, product_path: Path) -> str:
+    """Read a file and replace BASE with product path"""
+    return file.read_text(encoding='UTF-8') \
+                .replace("{BASE}", os.fspath(product_path))
+
+def read_yaml_base(file_path: Path, product_path: Path) -> dict:
     """
-    Tests relative to NoOps
+    Read a yaml file and replace BASE
+    """
+    content = yaml.load(
+        read_and_replace_base(file_path, product_path),
+        Loader=yaml.SafeLoader)
+
+    return content
+
+def read_json_base(file: Path, product_path: Path) -> dict:
+    """Read a json file and replace BASE"""
+    return json.loads(
+        read_and_replace_base(file, product_path)
+    )
+
+def read_json(file: Path) -> dict:
+    """Read a json file"""
+    return json.loads(
+        file.read_text(encoding="UTF-8")
+    )
+
+class Test(TestCaseNoOps):
+    """
+    Tests noops.noops
     """
 
-    def test_noops_local(self):
-        """
-        Instantiate Noops (local)
-        """
+    def test_minimal(self):
+        """Minimal and simple Noops product [local]"""
 
-        expected_noops_generated_file = Path(
-            f"{DEMO}/expected_noops_generated.yaml"
-        ).resolve()
+        with product_copy(MINIMAL) as product_path:
+            noops = NoOps(product_path, dry_run=True, rm_cache=True)
 
-        with product_copy() as product_path:
+            expected = read_yaml_base(MINIMAL / "tests" / "noops-generated.yaml", product_path)
 
-            # Simulate that a cache folder exist
-            (product_path / DEFAULT_WORKDIR / "witness").mkdir(parents=True)
-
-            noops = NoOps(product_path, dry_run=True, rm_cache=False)
-
-            # cache purged
-            self.assertFalse(
-                (product_path / DEFAULT_WORKDIR / "witness").exists()
-            )
-
-            # test generated config
-            # load expected result
-            content = expected_noops_generated_file.read_text(encoding='UTF-8') \
-                                                   .replace("{BASE}", os.fspath(product_path))
-            expected_config = yaml.load(content, Loader=yaml.SafeLoader)
-
-            # test in memory config
+            # memory test
             self.assertEqual(
-                json.loads(json.dumps(noops.noops_config, cls=PathEncoder)), # to remove Path()
-                expected_config
+                noops.noops_config,
+                expected
             )
 
-            # test yaml file from the cache
-            with noops._get_generated_noops_yaml().open(encoding='UTF-8') as file: # pylint: disable=protected-access
-                from_cache = yaml.load(file, Loader=yaml.SafeLoader)
+            # cache - yaml
             self.assertEqual(
-                json.loads(json.dumps(from_cache, cls=PathEncoder)), # to remove Path()
-                expected_config)
-
-            # test json file from the cache
-            with noops._get_generated_noops_json().open(encoding='UTF-8') as file: # pylint: disable=protected-access
-                from_cache = json.load(file)
-            self.assertEqual(from_cache, expected_config)
-
-            # noops environments
-            expected_noops_envs = {
-                "NOOPS_GENERATED_JSON": noops._get_generated_noops_json(), # pylint: disable=protected-access
-                "NOOPS_GENERATED_YAML": noops._get_generated_noops_yaml()  # pylint: disable=protected-access
-            }
-            self.assertEqual(noops.noops_envs(), expected_noops_envs)
-
-    def test_noops_git(self):
-        """
-        Instantiate Noops (git)
-        """
-        with product_copy() as product_path:
-
-            # Use noops with git
-            shutil.copyfile(
-                f"{DEMO}/noops_git.yaml",
-                product_path / "noops.yaml"
+                read_yaml(noops._get_generated_noops_yaml()), # pylint: disable=protected-access
+                expected
             )
 
-            # prepare git devops folder
+            # cache - json
+            self.assertEqual(
+                read_json(noops._get_generated_noops_json()), # pylint: disable=protected-access
+                read_json_base(MINIMAL / "tests" / "noops-generated.json", product_path)
+            )
+
+            # Noops Environments
+            self.assertEqual(
+                noops.noops_envs(),
+                {
+                    "NOOPS_GENERATED_JSON": product_path / DEFAULT_WORKDIR / "noops-generated.json",
+                    "NOOPS_GENERATED_YAML": product_path / DEFAULT_WORKDIR / "noops-generated.yaml"
+                }
+            )
+
+            # Workdir is accurate
+            self.assertTrue(
+                (product_path / DEFAULT_WORKDIR / "noops.yaml").exists()
+            )
+            self.assertTrue(
+                (product_path / DEFAULT_WORKDIR / "docker/Dockerfile").exists()
+            )
+            self.assertTrue(
+                (product_path / DEFAULT_WORKDIR / "helm/chart").is_dir()
+            )
+            self.assertTrue(
+                (product_path / DEFAULT_WORKDIR / "scripts/deploy.sh").exists()
+            )
+
+    def test_minimal_caching(self):
+        """Caching workdir"""
+
+        with product_copy(MINIMAL) as product_path:
+            _ = NoOps(product_path, dry_run=True, rm_cache=True)
+
+            witness = product_path / DEFAULT_WORKDIR / "witness"
+            witness.touch()
+
+            _ = NoOps(product_path, dry_run=True, rm_cache=False)
+
+            self.assertTrue(witness.exists())
+
+            _ = NoOps(product_path, dry_run=True, rm_cache=True)
+
+            self.assertFalse(witness.exists())
+
+            # files missing. forced to generate the cache despite rm_cache=False
+            witness.touch()
+            noops_generated = product_path / DEFAULT_WORKDIR / "noops-generated.yaml"
+            noops_generated.unlink()
+            _ = NoOps(product_path, dry_run=True, rm_cache=False)
+
+            self.assertFalse(witness.exists())
+            self.assertTrue(noops_generated.exists())
+
+    def test_minimal_git(self):
+        """Minimal and simple Noops product [git]"""
+
+        with product_copy(MINIMAL_GIT) as product_path:
+            # add devops folder in a local git repo
             devops_path = product_path / "devops"
             subprocess.run("git init .", cwd=devops_path, check=True, shell=True)
             subprocess.run("git add .", cwd=devops_path, check=True, shell=True)
@@ -108,50 +153,75 @@ class TestNoOps(TestCaseNoOps):
                 cwd=devops_path, check=True, shell=True)
             subprocess.run("git commit -m 'devops part'", cwd=devops_path, check=True, shell=True)
 
+            self.assertTrue((devops_path / ".git").is_dir())
+
             noops = NoOps(product_path, dry_run=True, rm_cache=False)
 
-            self.assertFalse(
-                (noops.workdir / ".git").exists()
+            self.assertFalse((noops.workdir / ".git").exists())
+
+    def test_minimal_profile(self):
+        """Minimal and simple Noops product with profile"""
+
+        with product_copy(MINIMAL_PROFILE) as product_path:
+            noops = NoOps(product_path, dry_run=True, rm_cache=True)
+
+            expected = read_yaml_base(
+                MINIMAL_PROFILE / "tests" / "noops-generated.yaml", product_path)
+
+            # memory test
+            self.assertEqual(
+                noops.noops_config,
+                expected
             )
 
-    def test_product_missing_file(self):
-        """
-        Test a missing file in product
-        """
-        with product_copy() as product_path:
-
-            shutil.copyfile(
-                f"{DEMO}/noops_missing_file.yaml",
-                product_path / "noops.yaml"
+            # cache - yaml
+            self.assertEqual(
+                read_yaml(noops._get_generated_noops_yaml()), # pylint: disable=protected-access
+                expected
             )
+
+            # cache - json
+            self.assertEqual(
+                read_json(noops._get_generated_noops_json()), # pylint: disable=protected-access
+                read_json_base(MINIMAL_PROFILE / "tests" / "noops-generated.json", product_path)
+            )
+
+    def test_minimal_no_local_git(self):
+        """NoOps without devops.local and devops.git set"""
+        with product_copy(MINIMAL) as product_path:
+
+            # remove devops.local key from noops.yaml
+            content = read_yaml(product_path / "noops.yaml")
+            _ = content["devops"].pop("local")
+            write_yaml(product_path / "noops.yaml", content)
 
             self.assertRaises(
-                FileNotFoundError,
+                ValueError,
                 lambda: NoOps(product_path, dry_run=True, rm_cache=False)
             )
 
-    def test_devops_missing_file(self):
-        """
-        Test a missing file in devops that doesn't exist on product
-        """
-        with product_copy() as product_path:
+    @patch('builtins.print')
+    def test_output(self, mock_print): # pylint: disable=no-self-use
+        """Output noops.yaml"""
+        with product_copy(MINIMAL) as product_path:
+            noops = NoOps(product_path, dry_run=True, rm_cache=False)
 
-            shutil.copyfile(
-                f"{DEMO}/devops/noops_missing_file.yaml",
-                product_path / "devops" / "noops.yaml"
+            noops.output()
+            mock_print.assert_called_with(
+                "devops:\n  local:\n    path: devops\nmetadata:\n  version: 1\npackage:\n  docker:\n    app:\n      dockerfile: !path '{BASE}/docker/Dockerfile'\n  helm:\n    chart: !path '{BASE}/helm/chart'\n    values: !path '{BASE}/helm/chart/noops'\npipeline:\n  deploy:\n    default: !path '{BASE}/scripts/deploy.sh'\n" \
+                    .format(BASE=os.fspath(noops.workdir)) # pylint: disable=line-too-long
             )
 
-            self.assertRaises(
-                FileNotFoundError,
-                lambda: NoOps(product_path, dry_run=True, rm_cache=False)
+            noops.output(asjson=True)
+            mock_print.assert_called_with(
+                '{\n  "metadata": {\n    "version": 1\n  },\n  "package": {\n    "docker": {\n      "app": {\n        "dockerfile": "{BASE}/docker/Dockerfile"\n      }\n    },\n    "helm": {\n      "chart": "{BASE}/helm/chart",\n      "values": "{BASE}/helm/chart/noops"\n    }\n  },\n  "pipeline": {\n    "deploy": {\n      "default": "{BASE}/scripts/deploy.sh"\n    }\n  },\n  "devops": {\n    "local": {\n      "path": "devops"\n    }\n  }\n}' \
+                    .replace("{BASE}", os.fspath(noops.workdir)) # pylint: disable=line-too-long
             )
 
     def test_dry_run(self):
-        """
-        Test dry_run
-        """
-        with product_copy() as product_path:
+        """dry_run"""
 
+        with product_copy(MINIMAL) as product_path:
             noops = NoOps(product_path, dry_run=True, rm_cache=False)
             self.assertTrue(noops.is_dry_run())
 
@@ -159,12 +229,76 @@ class TestNoOps(TestCaseNoOps):
             self.assertFalse(noops.is_dry_run())
 
     def test_features(self):
-        """
-        Test features
-        """
-        with product_copy() as product_path:
+        """Features"""
+
+        with product_copy(MINIMAL) as product_path:
 
             noops = NoOps(product_path, dry_run=True, rm_cache=False)
 
             self.assertTrue(noops.is_feature_enabled("service-catalog"))
             self.assertFalse(noops.is_feature_enabled("white-label"))
+
+    def test_missing_devops(self):
+        """Missing DevOps file refered by devops noops.yaml"""
+
+        with product_copy(SELECTOR) as product_path:
+
+            # remove devops file
+            (product_path / "devops/docker/Dockerfile").unlink()
+
+            self.assertRaises(
+                FileNotFoundError,
+                lambda: NoOps(product_path, dry_run=True, rm_cache=False)
+            )
+
+    def test_missing_product(self):
+        """Missing Product file refered by product noops.yaml"""
+
+        with product_copy(SELECTOR) as product_path:
+
+            # remove devops file
+            (product_path / "deploy.sh").unlink()
+
+            self.assertRaises(
+                FileNotFoundError,
+                lambda: NoOps(product_path, dry_run=True, rm_cache=False)
+            )
+
+    def test_product_in_devops(self):
+        """Alternative DevOps file set in product (does not exist in product)"""
+
+        with product_copy(SELECTOR) as product_path:
+
+            content = read_yaml(product_path / "noops.yaml")
+            content["package"] = {
+                "docker": {
+                    "app": {
+                        "dockerfile": "docker/Dockerfile.distroless"
+                    }
+                }
+            }
+            write_yaml(product_path / "noops.yaml", content)
+
+            noops = NoOps(product_path, dry_run=True, rm_cache=False)
+
+            self.assertEqual(
+                noops.noops_config["package"]["docker"]["app"]["dockerfile"],
+                noops.workdir / "docker/Dockerfile.distroless"
+            )
+
+    def test_product_profile(self):
+        """Use a product file set in product profiles"""
+
+        with product_copy(SELECTOR) as product_path:
+
+            # use local profile
+            content = read_yaml(product_path / "noops.yaml")
+            content["profile"] = "local"
+            write_yaml(product_path / "noops.yaml", content)
+
+            noops = NoOps(product_path, dry_run=True, rm_cache=False)
+
+            self.assertEqual(
+                noops.noops_config["pipeline"]["deploy"]["default"],
+                product_path / "deploy.sh"
+            )

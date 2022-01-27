@@ -1,0 +1,2 @@
+base: !path kustomize/base
+kustomize: !path kustomize/test

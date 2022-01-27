@@ -1,0 +1,7 @@
+kind: Service
+metadata:
+  name: svc
+---
+kind: Pod
+metadata:
+  name: pod

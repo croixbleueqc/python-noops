@@ -2,6 +2,7 @@
 Tests relative to Targets Kind actions (mostly targets.py)
 """
 
+from pathlib import Path
 from noops.targets import Targets
 from noops.typing.targets import (
     TargetPlan, TargetClassesEnum, TargetsEnum, TargetKind,
@@ -19,7 +20,7 @@ class TestTargets(TestCaseNoOps):
     """
     def test_verify_one_cluster(self):
         """
-        Helm flags [one cluster]
+        Verify [one cluster]
         """
         plan = TargetPlan()
         plan.target_class = TargetClassesEnum.ONE_CLUSTER
@@ -28,8 +29,8 @@ class TestTargets(TestCaseNoOps):
         supported: TargetClasses = TargetClasses.parse_obj(
             {
                 "one-cluster":True,
-                "multi-cluster":False,
-                "active-standby":False
+                "multi-cluster":True,
+                "active-standby":True
             }
         )
 
@@ -40,7 +41,7 @@ class TestTargets(TestCaseNoOps):
 
     def test_verify_multi_cluster(self):
         """
-        Helm flags [multi-cluster]
+        Verify [multi-cluster]
         """
         plan = TargetPlan()
         plan.target_class = TargetClassesEnum.MULTI_CLUSTER
@@ -48,9 +49,9 @@ class TestTargets(TestCaseNoOps):
 
         supported: TargetClasses = TargetClasses.parse_obj(
             {
-                "one-cluster":False,
+                "one-cluster":True,
                 "multi-cluster":True,
-                "active-standby":False
+                "active-standby":True
             }
         )
 
@@ -61,7 +62,7 @@ class TestTargets(TestCaseNoOps):
 
     def test_verify_active_standby(self):
         """
-        Helm flags [active-standby]
+        Verify [active-standby]
         """
         plan = TargetPlan()
         plan.target_class = TargetClassesEnum.ACTIVE_STANDBY
@@ -69,8 +70,8 @@ class TestTargets(TestCaseNoOps):
 
         supported: TargetClasses = TargetClasses.parse_obj(
             {
-                "one-cluster":False,
-                "multi-cluster":False,
+                "one-cluster":True,
+                "multi-cluster":True,
                 "active-standby":True
             }
         )
@@ -80,24 +81,81 @@ class TestTargets(TestCaseNoOps):
         self.assertRaises(
             TargetNotSupported, targets.verify, plan, TargetsEnum.MULTI_CLUSTER, supported)
 
+    def test_verify_invalid_target(self):
+        """
+        Verify Invalid Target
+        """
+        plan = TargetPlan()
+        targets = Targets({})
+        supported: TargetClasses = TargetClasses()
+
+        self.assertRaises(
+            TargetNotSupported, targets.verify, plan, "SOMETHINGELSE", supported)
+
+    def test_helm_args(self):
+        """Helm Arguments for a target"""
+
+        supported: TargetClasses = TargetClasses.parse_obj(
+            {
+                "one-cluster":True,
+                "multi-cluster":True,
+                "active-standby":True
+            }
+        )
+        env = "test"
+        path = Path("tests/data/targets")
+
+        # target is unset
+        self.assertEqual(Targets.helm_targets_args(supported, None, env, path), [])
+
+        # target not compatible
+        self.assertRaises(
+            TargetNotSupported, Targets.helm_targets_args, supported, "SOMETHINGELSE", env, path)
+
+        # args
+        self.assertEqual(
+            Targets.helm_targets_args(supported, TargetsEnum.ONE_CLUSTER, env, path),
+            [
+                '-f',
+                'tests/data/targets/noops/target-one-cluster-default.yaml',
+                '-f',
+                'tests/data/targets/noops/target-one-cluster-test.yaml',
+                '-f',
+                'tests/data/targets/noops/target-one-cluster.yaml'
+            ]
+        )
+
+        self.assertEqual(
+            Targets.helm_targets_args(supported, TargetsEnum.ONE_CLUSTER, "fake_env", path),
+            [
+                '-f',
+                'tests/data/targets/noops/target-one-cluster-default.yaml',
+                '-f',
+                'tests/data/targets/noops/target-one-cluster.yaml'
+            ]
+        )
+
     def test_init(self):
         """
         Initialize clusters settings
         """
-        clusters = read_yaml("tests/data/clusters.yaml")
+        clusters = read_yaml("tests/data/targets/clusters.yaml")
         targets = Targets(clusters)
         self.assertIsInstance(targets.get_clusters(), list)
         self.assertIsInstance(targets.get_clusters_name(), list)
         self.assertEqual(len(clusters), len(targets.get_clusters()))
         self.assertEqual(len(clusters), len(targets.get_clusters_name()))
 
+        targets = Targets([ Cluster.parse_obj(i) for i in clusters ])
+        self.assertEqual(len(clusters), len(targets.get_clusters()))
+
     def test_plan(self):
         """
         Plan creation
         """
-        clusters = read_yaml("tests/data/clusters.yaml")
+        clusters = read_yaml("tests/data/targets/clusters.yaml")
         targets = Targets(clusters)
-        k: TargetKind = TargetKind.parse_obj(read_yaml("tests/data/targets.yaml"))
+        k: TargetKind = TargetKind.parse_obj(read_yaml("tests/data/targets/targets.yaml"))
 
         # No active
         self.assertRaises(TargetPlanUnknown, targets.plan, k)
@@ -156,7 +214,7 @@ class TestTargets(TestCaseNoOps):
             }
         })
 
-        data = read_yaml("tests/data/match_expressions.yaml")
+        data = read_yaml("tests/data/targets/match_expressions.yaml")
         me0: MatchExpressionsSpec = MatchExpressionsSpec.parse_obj(data[0])
         me1: MatchExpressionsSpec = MatchExpressionsSpec.parse_obj(data[1])
         me2: MatchExpressionsSpec = MatchExpressionsSpec.parse_obj(data[2])

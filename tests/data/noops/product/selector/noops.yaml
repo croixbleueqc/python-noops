@@ -1,0 +1,16 @@
+metadata:
+  version: 1
+
+devops:
+  local:
+    path: devops
+
+pipeline:
+  deploy:
+    default: deploy.sh
+
+profiles:
+  local:
+    pipeline:
+      deploy:
+        default: deploy.sh

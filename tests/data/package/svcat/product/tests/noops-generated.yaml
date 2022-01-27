@@ -1,0 +1,29 @@
+devops:
+  local:
+    path: devops
+metadata:
+  version: 1
+package:
+  docker:
+    app:
+      dockerfile: !path '{BASE}/noops_workdir/docker/Dockerfile'
+  helm:
+    chart: !path '{BASE}/noops_workdir/helm/chart'
+    values: !path '{BASE}/noops_workdir/helm/chart/noops'
+pipeline:
+  deploy:
+    default: !path '{BASE}/noops_workdir/scripts/deploy.sh'
+service-catalog:
+- name: svc1
+  class: broker_class
+  plan: broker_plan
+  instance:
+    parameters:
+      key: instance
+  binding:
+    parameters:
+      key: binding
+- name: svc2
+  class: operator
+  plan: plan
+  key: value

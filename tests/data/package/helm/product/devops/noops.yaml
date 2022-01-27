@@ -1,0 +1,30 @@
+metadata:
+  version: 1
+
+package:
+  docker:
+    app:
+      dockerfile: docker/Dockerfile
+
+  helm:
+    chart: helm/chart
+
+    parameters:
+      default: null
+      prod:
+        replicaCount: 2
+
+    targets-parameters:
+      one-cluster: null
+      multi-cluster:
+        default:
+          message: multicluster
+        prod:
+          replicaCount: 1
+
+    pre-processing:
+    - values.sh
+
+pipeline:
+  deploy:
+    default: scripts/deploy.sh

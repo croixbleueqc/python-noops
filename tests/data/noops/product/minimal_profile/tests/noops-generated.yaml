@@ -1,0 +1,22 @@
+devops:
+  local:
+    path: devops
+metadata:
+  version: 1
+package:
+  docker:
+    app:
+      dockerfile: !path '{BASE}/noops_workdir/docker/Dockerfile.distroless'
+  helm:
+    chart: !path '{BASE}/noops_workdir/helm/chart'
+    values: !path '{BASE}/noops_workdir/helm/chart/noops'
+pipeline:
+  deploy:
+    default: !path '{BASE}/noops_workdir/scripts/deploy.sh'
+profile: distroless
+profiles:
+  distroless:
+    package:
+      docker:
+        app:
+          dockerfile: docker/Dockerfile.distroless

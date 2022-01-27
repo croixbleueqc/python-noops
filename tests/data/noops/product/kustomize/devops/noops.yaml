@@ -1,0 +1,19 @@
+metadata:
+  version: 1
+
+features:
+  service-catalog: False
+
+package:
+  docker:
+    app:
+      dockerfile: docker/Dockerfile
+
+  helm:
+    chart: helm/chart
+
+    kustomize: helm/kustomize
+
+pipeline:
+  deploy:
+    default: scripts/deploy.sh

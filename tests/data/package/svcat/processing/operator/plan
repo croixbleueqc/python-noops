@@ -1,0 +1,47 @@
+#! /usr/bin/env python3
+
+from typing import List
+from pathlib import Path
+import yaml
+import click
+
+def convert(service_request: dict) -> List[dict]:
+    """Convert a service requests to an object list"""
+    objs = [
+        {
+            "apiVersion": "unittest.local/v1",
+            "kind": "Test",
+            "spec": {
+                "key": service_request.get("key")
+            }
+        }
+    ]
+    return objs
+
+def store(objs: dict, output: Path, indent=2):
+    """Store Operator Objects to the requested file"""
+    with output.open(mode='w', encoding='UTF-8') as file:
+        yaml.dump(objs, stream=file, indent=indent)
+
+@click.group(
+    context_settings=dict(help_option_names=["-h", "--help"]),
+    invoke_without_command=True
+)
+@click.option('-n', '--name', help='metadata.name used', required=True)
+@click.option('-r', '--request',
+    help='service request (yaml)', type=click.Path(exists=True), required=True)
+@click.option('-o', '--objects',
+    help='service catalog objects (yaml)', type=click.Path(), required=True)
+def cli(name, request, objects):
+    """Create objects for plan/class'"""
+
+    service_request = yaml.safe_load(
+        Path(request).read_text(encoding='UTF-8')
+    )
+
+    objs = convert(service_request)
+    store(objs, Path(objects))
+
+    # click.echo("created operator objects for plan/class")
+
+cli()

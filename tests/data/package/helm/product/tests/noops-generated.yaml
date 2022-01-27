@@ -1,0 +1,28 @@
+devops:
+  local:
+    path: devops
+metadata:
+  version: 1
+package:
+  docker:
+    app:
+      dockerfile: !path '{BASE}/noops_workdir/docker/Dockerfile'
+  helm:
+    chart: !path '{BASE}/noops_workdir/helm/chart'
+    values: !path '{BASE}/noops_workdir/helm/chart/noops'
+    parameters:
+      default: null
+      prod:
+        replicaCount: 2
+    targets-parameters:
+      one-cluster: null
+      multi-cluster:
+        default:
+          message: multicluster
+        prod:
+          replicaCount: 1
+    pre-processing:
+    - values.sh
+pipeline:
+  deploy:
+    default: !path '{BASE}/noops_workdir/scripts/deploy.sh'

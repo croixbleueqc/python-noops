@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "version": 1
+  },
+  "package": {
+    "docker": {
+      "app": {
+        "dockerfile": "{BASE}/noops_workdir/docker/Dockerfile"
+      }
+    },
+    "helm": {
+      "chart": "{BASE}/noops_workdir/helm/chart",
+      "values": "{BASE}/noops_workdir/helm/chart/noops"
+    }
+  },
+  "pipeline": {
+    "deploy": {
+      "default": "{BASE}/noops_workdir/scripts/deploy.sh"
+    }
+  },
+  "devops": {
+    "local": {
+      "path": "devops"
+    }
+  }
+}

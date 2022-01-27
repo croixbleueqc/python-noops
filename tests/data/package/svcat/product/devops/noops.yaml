@@ -1,0 +1,14 @@
+metadata:
+  version: 1
+
+package:
+  docker:
+    app:
+      dockerfile: docker/Dockerfile
+
+  helm:
+    chart: helm/chart
+
+pipeline:
+  deploy:
+    default: scripts/deploy.sh

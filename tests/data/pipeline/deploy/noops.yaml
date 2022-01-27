@@ -1,0 +1,15 @@
+metadata:
+  version: 1
+
+devops:
+  local:
+    path: devops
+
+features:
+  white-label: true
+
+white-label:
+- rebrand: test1
+  marketer: Test1 Inc
+- rebrand: test2
+  marketer: Test2 Inc

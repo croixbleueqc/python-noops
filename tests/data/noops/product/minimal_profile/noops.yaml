@@ -1,0 +1,8 @@
+metadata:
+  version: 1
+
+devops:
+  local:
+    path: devops
+
+profile: distroless

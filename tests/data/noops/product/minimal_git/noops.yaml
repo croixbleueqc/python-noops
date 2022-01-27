@@ -1,0 +1,7 @@
+metadata:
+  version: 1
+
+devops:
+  git:
+    clone: devops
+    branch: main

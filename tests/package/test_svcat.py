@@ -141,6 +141,9 @@ class Test(TestCaseNoOps):
             noops = NoOps(product_path, dry_run=False, rm_cache=True)
             helm = Helm(noops)
 
+            # cwd is changed by NoOps. At this point we need to revert it
+            # ONLY for unittest context !
+            self.resetCwd()
             ServiceCatalog(noops, helm).create_kinds_and_values()
 
             svcat_templates = noops.workdir / "helm/chart/templates/svcat.yaml"

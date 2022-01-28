@@ -16,3 +16,7 @@ class TestCaseNoOps(TestCase):
     def setUp(self):
         TestCase.setUp(self)
         os.chdir(CWD)
+
+    def resetCwd(self): # pylint: disable=invalid-name
+        """Change back to initial cwd"""
+        os.chdir(CWD)

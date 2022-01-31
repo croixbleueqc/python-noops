@@ -21,6 +21,8 @@ noopsctl package serve
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
+import errno
 from pathlib import Path
 import click
 from . import cli, create_noops_instance
@@ -89,7 +91,7 @@ def install():
 @click.pass_obj
 @click.option('-n', '--namespace', help='namespace scope')
 @click.option('-r', '--release', help='release name')
-@click.option('-c', '--chart', help='chart keyword')
+@click.option('-c', '--chart', help='chart keyword or local tgz package')
 @click.option('-e', '--env', help='Environment', default='dev', show_default=True)
 @click.option('-z', '--pre-processing-path',
     help='Pre-processing scripts/binaries path', type=click.Path(), required=True)
@@ -107,6 +109,17 @@ def install_helm(shared, namespace, release, chart, env, # pylint: disable=too-m
     """
 
     profiles = [ProfileEnum(i) for i in profile]
+
+    # Chart can be a string keyword or a Path to tgz file
+    _chart = Path(chart)
+    if _chart.suffix in (".tgz", ".gz"):
+        if not _chart.exists():
+            raise FileNotFoundError(
+                    errno.ENOENT,
+                    os.strerror(errno.ENOENT),
+                    _chart
+                )
+        chart = _chart
 
     helm = HelmInstall(shared["dry_run"])
     helm.upgrade(

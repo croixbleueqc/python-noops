@@ -23,6 +23,7 @@ import logging
 import json
 import os
 import threading
+import tarfile
 from enum import IntEnum
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -131,7 +132,19 @@ class HelmInstall():
 
         return dst / pkg_name
 
-    def upgrade(self, namespace: str, release: str, chart: str, env: str, # pylint: disable=too-many-arguments,too-many-locals
+    @classmethod
+    def untar(cls, pkg: Path, dst: Path) -> Path:
+        """
+        untar the local package
+        """
+        logging.debug("untar local package %s", os.fspath(pkg))
+
+        with tarfile.open(pkg, "r:gz") as tar:
+            tar.extractall(dst)
+
+        return list(dst.glob("*"))[0]
+
+    def upgrade(self, namespace: str, release: str, chart: Union[str,Path], env: str, # pylint: disable=too-many-arguments,too-many-locals
         pre_processing_path: Path, profiles: List[ProfileEnum], cargs: List[str],
         extra_envs: dict = None, target: TargetsEnum = None):
         """
@@ -146,16 +159,21 @@ class HelmInstall():
         """
 
         # Get the chart
-        pkg = self.search_latest(chart)
+        pkg = self.search_latest(chart) if isinstance(chart, str) else None
 
         logging.info(
-            "Installation of %s in namespace %s (chart: %s-%s)",
-            release, namespace, pkg["name"], pkg["version"]
+            "Installation of %s in namespace %s (chart: %s)",
+            release, namespace,
+            f'{pkg["name"]}-{pkg["version"]}' if pkg is not None else chart.name
         )
 
         with TemporaryDirectory(prefix=settings.TMP_PREFIX) as tmp:
-            # Pull it
-            dst = self.pull(pkg, Path(tmp))
+            if pkg is not None:
+                # Pull it
+                dst = self.pull(pkg, Path(tmp))
+            else:
+                # Untar local package
+                dst = self.untar(chart, Path(tmp))
 
             # noops.yaml (chart kind)
             chartkind = self._chart_kind(dst)

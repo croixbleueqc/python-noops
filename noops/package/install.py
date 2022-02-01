@@ -27,7 +27,7 @@ import tarfile
 from enum import IntEnum
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Tuple
 from ..typing.targets import TargetsEnum
 from ..typing.profiles import ProfileEnum
 from ..typing.charts import ChartKind
@@ -183,12 +183,15 @@ class HelmInstall():
             values_args += Targets.helm_targets_args(
                 chartkind.spec.package.supported.target_classes, target, env, dst)
 
+            # kustomize
+            kustomize_helm_args, kustomize_args = self._kustomize(dst, env)
+
             # pre-processing
             # args to pass: -e {env} -f values1.yaml -f valuesN.yaml
             for pre_processing in chartkind.spec.package.helm.preprocessing:
                 _ = execute(
                     os.fspath(pre_processing_path / pre_processing),
-                    [ "-e", env ] + values_args,
+                    [ "-e", env, "-c", os.fspath(dst) ] + values_args + kustomize_args,
                     extra_envs=extra_envs,
                     product_path=os.fspath(dst),
                     dry_run=self.dry_run,
@@ -198,9 +201,6 @@ class HelmInstall():
             # Profiles
             values_args += Profiles.helm_profiles_args(
                 chartkind.spec.package.supported.profile_classes, profiles, dst)
-
-            # kustomize
-            kustomize_args = self._helm_kustomize(dst, env)
 
             # let's go !
             _ = execute(
@@ -212,7 +212,7 @@ class HelmInstall():
                     "--install",
                     "--create-namespace",
                     "--namespace", namespace
-                ] + values_args + kustomize_args + cargs,
+                ] + values_args + kustomize_helm_args + cargs,
                 dry_run=self.dry_run,
                 capture_output=True
             )
@@ -522,7 +522,7 @@ class HelmInstall():
         )
 
     @classmethod
-    def _helm_kustomize(cls, dst: Path, env: str) -> List:
+    def _kustomize(cls, dst: Path, env: str) -> Tuple[List,List]:
         kustomize = dst / "kustomize"
         kustomize_base = kustomize / "base"
         kustomize_env = kustomize / env
@@ -533,7 +533,7 @@ class HelmInstall():
             kustomize_base = None
 
         if not kustomize_env and not kustomize_base:
-            return []
+            return [],[]
         if kustomize_env and not kustomize_base:
             raise KustomizeStructure()
 
@@ -546,7 +546,17 @@ class HelmInstall():
         }
         write_yaml(hpr, hpr_content)
 
-        return [
+        post_renderer = [
             "--post-renderer",
             "noopshpr"
+        ]
+
+        if kustomize_env is not None:
+            return post_renderer, [
+                "-k", os.fspath(kustomize_base),
+                "-k", os.fspath(kustomize_env)
+            ]
+
+        return post_renderer, [
+            "-k", os.fspath(kustomize_base)
         ]

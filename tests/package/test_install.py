@@ -660,15 +660,18 @@ class Test(TestCaseNoOps):
 
             # kustomize does not exist
             self.assertEqual(
-                HelmInstall._helm_kustomize(kustomize0, "unittest"), # pylint: disable=protected-access
-                []
+                HelmInstall._kustomize(kustomize0, "unittest"), # pylint: disable=protected-access
+                ([],[])
             )
             self.assertFalse(hpr.exists())
 
             # kustomize with base only
             self.assertEqual(
-                HelmInstall._helm_kustomize(kustomize1, "unittest"), # pylint: disable=protected-access
-                ['--post-renderer', 'noopshpr']
+                HelmInstall._kustomize(kustomize1, "unittest"), # pylint: disable=protected-access
+                (
+                    ['--post-renderer', 'noopshpr'],
+                    ['-k', os.fspath(kustomize1 / "kustomize/base")]
+                )
             )
             self.assertTrue(hpr.exists())
             self.assertEqual(
@@ -681,8 +684,14 @@ class Test(TestCaseNoOps):
 
             # kustomize with base AND env (unittest)
             self.assertEqual(
-                HelmInstall._helm_kustomize(kustomize2, "unittest"), # pylint: disable=protected-access
-                ['--post-renderer', 'noopshpr']
+                HelmInstall._kustomize(kustomize2, "unittest"), # pylint: disable=protected-access
+                (
+                    ['--post-renderer', 'noopshpr'],
+                    [
+                        '-k', os.fspath(kustomize2 / "kustomize/base"),
+                        '-k', os.fspath(kustomize2 / "kustomize/unittest")
+                    ]
+                )
             )
             self.assertTrue(hpr.exists())
             self.assertEqual(
@@ -696,7 +705,7 @@ class Test(TestCaseNoOps):
             # kustomize with env BUT not base
             self.assertRaises(
                 KustomizeStructure,
-                lambda: HelmInstall._helm_kustomize(kustomize3, "unittest") # pylint: disable=protected-access
+                lambda: HelmInstall._kustomize(kustomize3, "unittest") # pylint: disable=protected-access
             )
 
     @patch("noops.package.install.HelmInstall._reconciliation_uninstall")

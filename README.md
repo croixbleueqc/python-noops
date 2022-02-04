@@ -268,6 +268,9 @@ service-catalog:
 white-label:
 - rebrand: brand1
   marketer: Marketer 1 Inc
+  parameters:
+    prod:
+      replicaCount: 3
 
 bootstrap:
   scaffold:
@@ -428,6 +431,7 @@ def cli(name, request, objects):
 White-label can be used during `noopsctl pipeline deploy`.
 
 A deployment will be triggered **per brand** and so the deployment script will be called multiple times (**but** on time per brand).
+You can override the `package.helm.parameters` per label.
 
 Additional environment variables will be exported to the deployment script:
 
@@ -446,8 +450,20 @@ features:
 white-label:
 - rebrand: brand1
   marketer: Marketer 1 Inc
+  parameters:
+    default:
+      app:
+        extraEnvironmentVars:
+          SOME_ENV_VAR: "only for brand1, in all environments"
+    prod:
+      app:
+        extraEnvironmentVars:
+          SOME_ENV_VAR: "overwrite SOME_ENV_VAR for brand1 in prod"
+          SOME_OTHER_VAR: "only for brand1 and only in prod"
+    
 - rebrand: brand2
   marketer: Marketer 2 Inc
+  parameters: ~
 # ...
 ```
 

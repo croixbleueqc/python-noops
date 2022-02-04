@@ -99,7 +99,7 @@ class Helm(object):
                 label_name = label["rebrand"]
                 parameters: dict = label["parameters"]
                 for profile, config in parameters.items():
-                    values_name = f"values-{profile}-{label_name}.yaml"
+                    values_name = f"values-{label_name}-{profile}.yaml"
                     logging.info(f"Creating {values_name}")
 
                     if self.core.dryrun:

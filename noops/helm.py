@@ -92,3 +92,25 @@ class Helm(object):
                     config,
                     indent=helper.DEFAULT_INDENT
                 )
+        
+        labels = self.core.noops_config["white-label"]
+        for label in labels:
+            if label["parameters"]:
+                label_name = label["rebrand"]
+                parameters: dict = label["parameters"]
+                for profile, config in parameters.items():
+                    values_name = f"values-{profile}-{label_name}.yaml"
+                    logging.info(f"Creating {values_name}")
+
+                    if self.core.dryrun:
+                        print(yaml.dump(config, indent=helper.DEFAULT_INDENT))
+                    else:
+                        helper.write_yaml(
+                            os.path.join(
+                                self.core.noops_config["package"]["helm"]["values"],
+                                values_name
+                            ),
+                            config,
+                            indent=helper.DEFAULT_INDENT
+                        )
+        

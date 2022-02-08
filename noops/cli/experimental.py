@@ -26,7 +26,8 @@ from ..projects import Projects
 from ..typing.targets import TargetKind, Cluster
 from ..typing.versions import VersionKind
 from ..typing.projects import ProjectKind
-from ..utils.io import read_yaml, json2yaml
+from ..typing.projectplans import ProjectPlanKind
+from ..utils.io import read_yaml, json2yaml, write_raw
 from ..errors import VerifyFailure
 from . import cli
 
@@ -36,25 +37,29 @@ def exp():
 
 @exp.group()
 def targets():
-    """targets Api"""
+    """targets APIs"""
 
 @targets.command(name="plan")
 @click.option('-c', '--clusters', help='clusters configuration', required=True, metavar='YAML')
-@click.option('-k', '--kind', help='target kind configuration', required=True, metavar='YAML')
-def target_plan(clusters, kind):
-    """Generate and show an execution plan"""
+@click.option('-t', '--target', help='target kind configuration', required=True, metavar='YAML')
+@click.option('-o', '--output', help='store output', type=click.Path())
+def target_plan(clusters, target, output):
+    """Create a target plan"""
 
     clusters_obj = read_yaml(clusters)
-    kind_obj = TargetKind.parse_obj(read_yaml(kind))
+    ktarget = TargetKind.parse_obj(read_yaml(target))
 
     targets_core = Targets(clusters_obj)
-    click.echo(
-        json2yaml(targets_core.plan(kind_obj).json())
-    )
+    target_yaml = json2yaml(targets_core.plan(ktarget).json())
+
+    if output is None:
+        click.echo(target_yaml)
+    else:
+        write_raw(output, target_yaml)
 
 @exp.group()
 def versions():
-    """versions Api"""
+    """versions APIs"""
 
 @versions.command()
 @click.option('-k', '--kind',
@@ -76,15 +81,20 @@ def verify(kind):
 
 @exp.group()
 def projects():
-    """projects Api"""
+    """projects APIs"""
 
 @projects.command(name="plan")
-@click.option('-c', '--clusters', help='clusters configuration', required=True, type=click.Path())
-@click.option('-t', '--targets', help='target kind configuration', required=True, type=click.Path())
-@click.option('-v', '--versions', help='version kind file', required=True, type=click.Path())
-@click.option('-p', '--projects', help='project kind file', required=True, type=click.Path())
-def project_plan(clusters, targets, versions, projects): # pylint: disable=redefined-outer-name
-    """Generate and show an execution plan"""
+@click.option('-c', '--clusters',
+    help='clusters configuration', required=True, type=click.Path(), metavar='YAML')
+@click.option('-t', '--targets',
+    help='target kind configuration', required=True, type=click.Path(), metavar='YAML')
+@click.option('-v', '--versions',
+    help='version kind file', required=True, type=click.Path(), metavar='YAML')
+@click.option('-p', '--projects',
+    help='project kind file', required=True, type=click.Path(), metavar='YAML')
+@click.option('-o', '--output', help='store output', type=click.Path())
+def project_plan(clusters, targets, versions, projects, output): # pylint: disable=redefined-outer-name
+    """Create an execution plan"""
 
     clusters_obj = [ Cluster.parse_obj(i) for i in read_yaml(clusters) ]
     targets_obj = TargetKind.parse_obj(read_yaml(targets))
@@ -97,9 +107,12 @@ def project_plan(clusters, targets, versions, projects): # pylint: disable=redef
         versions_obj,
         projects_obj)
 
-    click.echo(
-        json2yaml(plan.json(by_alias=True, exclude_none=True))
-    )
+    plan_yaml = json2yaml(plan.json(by_alias=True, exclude_none=True))
+
+    if output is None:
+        click.echo(plan_yaml)
+    else:
+        write_raw(output, plan_yaml)
 
 @projects.command(name="create")
 @click.option('-n', '--namespace', help='namespace scope', required=True)
@@ -108,8 +121,9 @@ def project_plan(clusters, targets, versions, projects): # pylint: disable=redef
 @click.option('-e', '--env', help='Environment', default='dev', show_default=True, required=True)
 @click.option('-p', '--envs',
     help='extra environment variables (KEY=VALUE)', multiple=True)
-@click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
-def project_create(namespace, release, chart, env, envs, cargs): # pylint: disable=too-many-function-args
+@click.option('-o', '--output', help='store output', type=click.Path())
+@click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [CARGS]]")
+def project_create(namespace, release, chart, env, envs, output, cargs): # pylint: disable=too-many-function-args
     """
     Create a new project
 
@@ -126,7 +140,7 @@ def project_create(namespace, release, chart, env, envs, cargs): # pylint: disab
         value = extra_env[index+1:]
         extra_envs[key]=value
 
-    Projects.create(
+    kproject = Projects.create(
         namespace,
         release,
         chart,
@@ -135,30 +149,58 @@ def project_create(namespace, release, chart, env, envs, cargs): # pylint: disab
         extra_envs if len(envs) > 0 else None
     )
 
+    kproject_yaml = json2yaml(kproject.json(by_alias=True, exclude_none=True))
+
+    if output is None:
+        click.echo(kproject_yaml)
+    else:
+        write_raw(output, kproject_yaml)
+
 @projects.command(name="apply")
 @click.pass_obj
-@click.option('-c', '--clusters', help='clusters configuration', required=True, type=click.Path())
-@click.option('-t', '--targets', help='target kind configuration', required=True, type=click.Path())
-@click.option('-v', '--versions', help='version kind file', required=True, type=click.Path())
-@click.option('-p', '--projects', help='project kind file', required=True, type=click.Path())
+@click.option('-p', '--plan', help='project plan', required=True, type=click.Path(), metavar='YAML')
 @click.option('-z', '--pre-processing-path',
     help='Pre-processing scripts/binaries path', type=click.Path(), required=True)
-def project_apply(shared, clusters, targets, versions, projects, pre_processing_path): # pylint: disable=redefined-outer-name,too-many-arguments
-    """execute plan"""
+def project_apply(shared, plan, pre_processing_path):
+    """execute a project plan"""
 
-    clusters_obj = [ Cluster.parse_obj(i) for i in read_yaml(clusters) ]
-    targets_obj = TargetKind.parse_obj(read_yaml(targets))
-    versions_obj = VersionKind.parse_obj(read_yaml(versions))
-    projects_obj = ProjectKind.parse_obj(read_yaml(projects))
-
-    plan = Projects.plan(
-        clusters_obj,
-        targets_obj,
-        versions_obj,
-        projects_obj)
+    kprojectplan = ProjectPlanKind.parse_obj(read_yaml(plan))
 
     Projects().apply(
-        plan,
+        kprojectplan,
         Path(pre_processing_path).resolve(),
         dry_run=shared["dry_run"]
     )
+
+@projects.command(name="cluster-apply")
+@click.pass_obj
+@click.option('-p', '--project',
+    help='project kind', required=True, type=click.Path(), metavar='YAML')
+@click.option('-c', '--previous-project',
+    help='previously deployed project kind', type=click.Path(), metavar='YAML')
+@click.option('-z', '--pre-processing-path',
+    help='Pre-processing scripts/binaries path', type=click.Path(), required=True)
+def project_inapply(shared, project, previous_project, pre_processing_path):
+    """Reconciliation in selected cluster"""
+
+    kproject = ProjectKind.parse_obj(read_yaml(project))
+    kprevious = ProjectKind.parse_obj(read_yaml(previous_project)) \
+                if previous_project is not None else None
+
+    Projects().apply_incluster(
+        kproject,
+        Path(pre_processing_path).resolve(),
+        shared["dry_run"],
+        kprevious=kprevious
+    )
+
+@projects.command(name="cluster-delete")
+@click.pass_obj
+@click.option('-p', '--project',
+    help='project kind', required=True, type=click.Path(), metavar='YAML')
+def project_indelete(shared, project):
+    """Delete everything controlled by this project in selected cluster"""
+
+    kproject = ProjectKind.parse_obj(read_yaml(project))
+
+    Projects().delete_incluster(kproject, shared["dry_run"])

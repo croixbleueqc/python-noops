@@ -15,10 +15,9 @@ class Test(TestCaseNoOps):
     Tests noops.projects
     """
 
-    @patch('builtins.print')
-    def test_create_projects(self, mock_print): # pylint: disable=no-self-use
+    def test_create_projects(self):
         """Create a project"""
-        Projects.create(
+        kproject = Projects.create(
             "ns",
             "release",
             "mychart",
@@ -27,7 +26,9 @@ class Test(TestCaseNoOps):
             extra_envs={
                 "USER": "Me"
             })
-        mock_print.assert_called_with(
+
+        self.assertEqual(
+            kproject.dict(by_alias=True),
             {
                 'apiVersion': 'noops.local/v1alpha1',
                 'kind': 'Project',

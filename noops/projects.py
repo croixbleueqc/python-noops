@@ -37,7 +37,7 @@ class Projects():
 
     @classmethod
     def plan(cls, clusters: List[Cluster],
-        ktarget: TargetKind, kversion: VersionKind, kproject: ProjectKind):
+        ktarget: TargetKind, kversion: VersionKind, kproject: ProjectKind) -> ProjectPlanKind:
         """
         Plan
         """
@@ -92,7 +92,7 @@ class Projects():
 
     @classmethod
     def create(cls, namespace: str, release: str, chart: str, env: str,
-        cargs: List[str] = None, extra_envs: dict = None):
+        cargs: List[str] = None, extra_envs: dict = None) -> ProjectKind:
         """
         Create a new project
         """
@@ -113,7 +113,7 @@ class Projects():
             }
         )
 
-        print(project.dict(by_alias=True))
+        return project
 
     @classmethod
     def create_skeleton_from(cls, kproject: ProjectKind) -> ProjectKind:

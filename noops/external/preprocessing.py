@@ -28,7 +28,8 @@ class PreProcessing:
     """
     Pre-Processing Abstract Class
     """
-    def apply(self, env: str, chart: Path, values: List[Path], kustomize: List[Path]):
+    def apply(self, env: str, chart: Path, values: List[Path],
+        templates: List[Path], kustomize: List[Path]):
         """
         Apply pre-processing actions to Helm files
         """
@@ -45,16 +46,19 @@ class PreProcessing:
         @click.option('-c', '--chart',
             help='chart path', required=True, type=click.Path(exists=True))
         @click.option('-f', '--values',
-            help='values.yaml files', type=click.Path(exists=True), required=True, multiple=True)
+            help='values.yaml file', type=click.Path(exists=True), required=True, multiple=True)
+        @click.option('-t', '--template',
+            help='template file', type=click.Path(exists=True), multiple=True, default=[])
         @click.option('-k', '--kustomize',
             help='kustomize path', type=click.Path(), multiple=True, default=[])
-        def cli(env, chart, values, kustomize):
+        def cli(env, chart, values, template, kustomize):
             """Pre-processing Helm files before templating"""
 
             self.apply(
                 env,
                 Path(chart),
                 [Path(i) for i in values],
+                [Path(i) for i in template],
                 [Path(i) for i in kustomize]
             )
 

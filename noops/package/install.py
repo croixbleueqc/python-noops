@@ -39,6 +39,7 @@ from ..utils.transformation import label_rfc1035
 from ..targets import Targets
 from ..profiles import Profiles
 from ..package.helm import Helm
+from ..package.svcat import ServiceCatalog
 from ..errors import ChartNotFound, KustomizeStructure
 from .. import settings
 
@@ -148,14 +149,7 @@ class HelmInstall():
         pre_processing_path: Path, profiles: List[ProfileEnum], cargs: List[str],
         extra_envs: dict = None, target: TargetsEnum = None):
         """
-        helm upgrade {release}
-            {chart}
-            --install
-            --namespace {namespace}
-            --values values-default.yaml
-            --values values-{env}.yaml
-            --values values-svcat.yaml
-            {cargs...}
+        helm upgrade {release} {chart} ...
         """
 
         # Get the chart
@@ -184,14 +178,19 @@ class HelmInstall():
                 chartkind.spec.package.supported.target_classes, target, env, dst)
 
             # kustomize
-            kustomize_helm_args, kustomize_args = self._kustomize(dst, env)
+            kustomize_helm_args, pp_kustomize_args = self._kustomize(dst, env)
+
+            # Service Catalog - template file
+            _svcat_template = ServiceCatalog.get_svcat_template_path(dst)
+            pp_svcat_args = ["-t", os.fspath(_svcat_template)] if _svcat_template.exists() else []
 
             # pre-processing
-            # args to pass: -e {env} -f values1.yaml -f valuesN.yaml
+            # args to pass: -e env -c chart_dir -f values1.yaml -f valuesN.yaml -t tpl1.yaml ...
             for pre_processing in chartkind.spec.package.helm.preprocessing:
                 _ = execute(
                     os.fspath(pre_processing_path / pre_processing),
-                    [ "-e", env, "-c", os.fspath(dst) ] + values_args + kustomize_args,
+                    [ "-e", env, "-c", os.fspath(dst) ] + \
+                        values_args + pp_svcat_args + pp_kustomize_args,
                     extra_envs=extra_envs,
                     product_path=os.fspath(dst),
                     dry_run=self.dry_run,

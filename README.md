@@ -88,5 +88,4 @@ $ pylint noops/ tests/
 - better exception handling for the cli to display more Human readable errors
 - support Helm repositories v1 !? *(Nexus helm repositories)*
 - implement `noopsctl x projects apply` (with kubernetes context switcher)
-- check if `svcat.yaml` is copied at the right place ! *(possible bug for Experimental NoOps Helm Package)*
 - environment support for `service-catalog` and `white-label` with an `environments` array

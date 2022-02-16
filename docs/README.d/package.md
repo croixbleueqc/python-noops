@@ -126,10 +126,13 @@ package:
 #### Create a pre-processing script
 
 ```python
+"""
+Example to replace a value with a Vault secret
+"""
 from noops.external.preprocessing import PreProcessing
 
 class ReplaceVaultValues(PreProcessing):
-    def apply(self, env, chart, values, kustomize):
+    def apply(self, env, chart, values, templates, kustomize):
         # replace some values with vault secrets
         pass
 
@@ -148,6 +151,7 @@ Options:
   -e, --env TEXT        environment  [required]
   -c, --chart PATH      chart path  [required]
   -f, --values PATH     values.yaml files  [required]
+  -t, --template PATH   template file
   -k, --kustomize PATH  kustomize path
   -h, --help            Show this message and exit.
 ```

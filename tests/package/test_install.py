@@ -25,9 +25,14 @@ class Test(TestCaseNoOps):
         """Init HelmInstall"""
         helm = HelmInstall(True)
         self.assertTrue(helm.dry_run)
+        self.assertEqual(helm.global_flags(), [])
 
         helm = HelmInstall(False)
         self.assertFalse(helm.dry_run)
+        self.assertEqual(helm.global_flags(), [])
+
+        helm = HelmInstall(False, "unittest")
+        self.assertEqual(helm.global_flags(), ['--kube-context', 'unittest'])
 
     @patch("noops.package.install.execute")
     def test_update(self, mock_execute):
@@ -75,6 +80,19 @@ class Test(TestCaseNoOps):
             mock_execute.call_args_list[0],
             call(
                 'helm', ['uninstall', 'demo', '--namespace', 'ns'],
+                dry_run=False, capture_output=True)
+        )
+
+    @patch("noops.package.install.execute")
+    def test_uninstall_context(self, mock_execute):
+        """Uninstall helm releases for a kube context"""
+
+        HelmInstall(False, "unittest").uninstall("ns", "demo")
+
+        self.assertEqual(
+            mock_execute.call_args_list[0],
+            call(
+                'helm', ['uninstall', 'demo', '--namespace', 'ns', '--kube-context', 'unittest'],
                 dry_run=False, capture_output=True)
         )
 

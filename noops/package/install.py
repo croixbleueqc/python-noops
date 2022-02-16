@@ -54,13 +54,28 @@ class HelmInstall():
     """
     LOCK = threading.Lock()
 
-    def __init__(self, dry_run: bool):
+    def __init__(self, dry_run: bool, kube_context: str = None):
         self._dry_run = dry_run
+        self._kube_context = kube_context
 
     @property
     def dry_run(self) -> bool:
         """Are we in dry-run mode ?"""
         return self._dry_run
+
+    def global_flags(self) -> List[str]:
+        """
+        Global flags for Helm
+
+        --kube-context
+        """
+        if self._kube_context is None:
+            return []
+
+        return [
+            "--kube-context",
+            self._kube_context
+        ]
 
     @classmethod
     def update(cls):
@@ -211,7 +226,7 @@ class HelmInstall():
                     "--install",
                     "--create-namespace",
                     "--namespace", namespace
-                ] + values_args + kustomize_helm_args + cargs,
+                ] + self.global_flags() + values_args + kustomize_helm_args + cargs,
                 dry_run=self.dry_run,
                 capture_output=True
             )
@@ -228,7 +243,7 @@ class HelmInstall():
                 "uninstall",
                 release,
                 "--namespace", namespace
-            ],
+            ] + self.global_flags(),
             dry_run=self.dry_run,
             capture_output=True
         )

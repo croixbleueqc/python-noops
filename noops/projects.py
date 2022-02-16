@@ -21,6 +21,7 @@ To handle package.noops.local/v1alpha1
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging
 from typing import List
 from pathlib import Path
 from .typing.targets import Cluster, TargetKind, TargetClassesEnum, TargetsEnum
@@ -130,15 +131,25 @@ class Projects():
         )
 
     @classmethod
-    def apply(cls, kplan: ProjectPlanKind, pre_processing_path: Path, dry_run: bool):
+    def apply(cls, kplan: ProjectPlanKind, pre_processing_path: Path, dry_run: bool,
+        kpreviousplan: ProjectPlanKind = None):
         """
         Apply the plan
-
-        Connect to each cluster and install the project (install.py)
         """
-        # for plan in kplan.spec.plan:
-        #     kproject = ProjectKind(spec=plan.template.spec, metadata=kplan.metadata)
-        #     HelmInstall(dry_run).reconciliation(kproject, pre_processing_path)
+
+        # TODO: Implement diff between 2 ProjectPlanKind and run the reconciliation.
+        #       Can use apply_incluster and delete_incluster with HelmInstall(dry_run, cluster) ?
+
+        for plan in kplan.spec.plan:
+            kproject = ProjectKind(spec=plan.template.spec, metadata=kplan.metadata)
+            for cluster in plan.clusters:
+                logging.info(
+                    "apply project %s.%s in cluster %s.",
+                    kplan.metadata.name,
+                    kplan.metadata.namespace,
+                    cluster
+                )
+
         raise NotImplementedError()
 
     @classmethod

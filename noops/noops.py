@@ -135,12 +135,9 @@ class NoOps(object):
         local_config = devops_config.get("local")
         git_config = devops_config.get("git")
 
-        if local_config:
-            shutil.copytree(
-                local_config["path"],
-                self.workdir
-            )
-            return
+        if not local_config and not git_config:
+            logging.error("devops/local or devops/git not found !")
+            raise ValueError()
 
         if git_config:
             with tempfile.TemporaryDirectory(prefix="noops-") as tmpdirname:
@@ -175,10 +172,13 @@ class NoOps(object):
                     self.workdir
                 )
 
-                return
+        if local_config:
+            shutil.copytree(
+                local_config["path"],
+                self.workdir,
+                dirs_exist_ok=True
+            )
 
-        logging.error("devops/local or devops/git not found !")
-        raise ValueError()
 
     def _file_selector(self, selector: str, noops_product: dict, noops_devops: dict):
         """

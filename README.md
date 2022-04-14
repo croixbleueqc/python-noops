@@ -194,6 +194,24 @@ The workflow described previously is still the same but instead of doing a `git 
 
 The content of the DevOps folder is **exactly** the same locally than in a dedicated DevOps repository.
 
+### DevOps: enrich DevOps structure with Product structure
+
+In some cases, you want to enrich the DevOps structure with some config files or scripts specifics to the product. It is possible by using the both `git` and `local` configuration in porduct `noops.yaml` files.\
+Keep in mind that the product structure will be copied in the DevOps structure, and so if the same path-file exist in both structure the local one will overwrite the DevOps one.
+
+```yaml
+metadata:
+  version: 1
+
+devops:
+  git:
+    clone: git@bitbucket.org:scaffold-devops.git
+    branch: main
+  local:
+    path: noops
+```
+
+
 ### noops.yaml
 
 #### Reserved keys

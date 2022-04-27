@@ -1,0 +1,35 @@
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python package
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Tests with pylint
+        run: |
+          pylint --fail-under=9.5 noops/ tests/
+      - name: Unit Tests
+        run: |
+          git config --global user.email "unittests@noops.local"
+          git config --global user.name "Unit Tests"
+          git config --global init.defaultBranch "main"
+          coverage run -m unittest
+          coverage report -m --fail-under=85

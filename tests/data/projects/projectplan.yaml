@@ -1,0 +1,20 @@
+apiVersion: noops.local/v1alpha1
+kind: ProjectPlan
+metadata:
+  name: test
+  namespace: ns
+spec:
+  plan:
+  - clusters:
+    - c1
+    template:
+      spec:
+        package:
+          install:
+            chart: a_chart
+            env: test
+            target: one-cluster
+        versions:
+          one:
+            app_version: 1.0.0
+  target-class: one-cluster

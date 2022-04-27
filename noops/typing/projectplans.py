@@ -19,11 +19,25 @@ Projects Plan Typing
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Literal, List
+from typing import Literal, List, Optional
 from pydantic import BaseModel, Field # pylint: disable=no-name-in-module
-from .projects import Spec as ProjectsSpec
+from .projects import Spec as ProjectsSpec, ProjectKind
 from .targets import TargetClassesEnum
 from .metadata import MetadataSpec
+
+class ProjectPlanReconciliation(BaseModel):
+    """Reconciliation per cluster"""
+    cluster: str
+    kproject: Optional[ProjectKind] = None
+    kprevious: Optional[ProjectKind] = None
+
+    def is_apply(self) -> bool:
+        """Do we have to install or upgrade the project ?"""
+        return self.kproject is not None
+
+    def is_delete(self) -> bool:
+        """Do we have to remove the project ?"""
+        return self.kproject is None and self.kprevious is not None
 
 class TemplateSpec(BaseModel): # pylint: disable=too-few-public-methods
     """Template spec model"""

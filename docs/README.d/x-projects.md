@@ -67,7 +67,7 @@ $ noopsctl x projects cluster-apply -h
 # Delete everything controlled by this project in selected cluster
 $ noopsctl x projects cluster-delete -h
 
-# execute a project plan (NOT YET IMPLEMENTED)
+# execute a project plan
 $ noopsctl x projects apply -h
 ```
 

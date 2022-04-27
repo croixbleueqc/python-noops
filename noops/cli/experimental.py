@@ -159,17 +159,22 @@ def project_create(namespace, release, chart, env, envs, output, cargs): # pylin
 @projects.command(name="apply")
 @click.pass_obj
 @click.option('-p', '--plan', help='project plan', required=True, type=click.Path(), metavar='YAML')
+@click.option('-c', '--previous-plan',
+    help='previously deployed project plan', type=click.Path(), metavar='YAML')
 @click.option('-z', '--pre-processing-path',
     help='Pre-processing scripts/binaries path', type=click.Path(), required=True)
-def project_apply(shared, plan, pre_processing_path):
+def project_apply(shared, plan, previous_plan, pre_processing_path):
     """execute a project plan"""
 
     kprojectplan = ProjectPlanKind.parse_obj(read_yaml(plan))
+    kprevious = ProjectPlanKind.parse_obj(read_yaml(previous_plan)) \
+                if previous_plan is not None else None
 
     Projects().apply(
         kprojectplan,
         Path(pre_processing_path).resolve(),
-        dry_run=shared["dry_run"]
+        dry_run=shared["dry_run"],
+        kpreviousplan=kprevious
     )
 
 @projects.command(name="cluster-apply")

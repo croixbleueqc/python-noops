@@ -10,8 +10,8 @@ with open('README.md', encoding='UTF-8') as file:
 
 setup(
     name='noops',
-    version='1.3.0',
-    python_requires='>=3.8',
+    version='1.9.0',
+    python_requires='>=3.9',
     packages=find_packages(exclude=['tests']),
     install_requires=[
         'pyyaml',

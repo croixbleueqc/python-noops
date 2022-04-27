@@ -27,7 +27,11 @@ from pathlib import Path
 from .typing.targets import Cluster, TargetKind, TargetClassesEnum, TargetsEnum
 from .typing.versions import VersionKind
 from .typing.projects import ProjectKind, Spec as ProjectKindSpec
-from .typing.projectplans import ProjectPlanKind, ProjectPlanSpec
+from .typing.projectplans import (
+    ProjectPlanKind,
+    ProjectPlanSpec,
+    ProjectPlanReconciliation
+)
 from .targets import Targets
 from .package.install import HelmInstall
 
@@ -131,45 +135,115 @@ class Projects():
         )
 
     @classmethod
+    def _reconciliation_project_plan(cls,
+        current: ProjectPlanKind, previous: ProjectPlanKind) -> List[ProjectPlanReconciliation]:
+        """
+        Determine what need to be changed from previous to current project plan definition
+        """
+
+        plans = []
+
+        def populate_per_cluster(projectplan: ProjectPlanKind, per_cluster: dict):
+            """Populate a dict with cluster/ProjectKind"""
+            for _plan in projectplan.spec.plan:
+                for cluster in _plan.clusters:
+                    per_cluster[cluster] = \
+                        ProjectKind(spec=_plan.template.spec, metadata=projectplan.metadata)
+
+        current_per_cluster = {}
+        populate_per_cluster(current, current_per_cluster)
+        previous_per_cluster = {}
+        populate_per_cluster(previous, previous_per_cluster)
+
+        # install/upgrade
+        for cluster, kproject in current_per_cluster.items():
+            try:
+                kprevious = previous_per_cluster.pop(cluster)
+            except KeyError:
+                kprevious = None
+
+            plans.append(
+                ProjectPlanReconciliation(
+                    cluster=cluster,
+                    kproject=kproject,
+                    kprevious=kprevious
+                )
+            )
+
+        # uninstall
+        for cluster, kprevious in previous_per_cluster.items():
+            plans.append(
+                ProjectPlanReconciliation(
+                    cluster=cluster,
+                    kprevious=kprevious
+                )
+            )
+
+        return plans
+
+    @classmethod
     def apply(cls, kplan: ProjectPlanKind, pre_processing_path: Path, dry_run: bool,
         kpreviousplan: ProjectPlanKind = None):
         """
         Apply the plan
         """
 
-        # TODO: Implement diff between 2 ProjectPlanKind and run the reconciliation.
-        #       Can use apply_incluster and delete_incluster with HelmInstall(dry_run, cluster) ?
+        if kpreviousplan is None:
+            kpreviousplan = ProjectPlanKind(
+                metadata=kplan.metadata,
+                spec={
+                    "target-class": kplan.spec.target_class
+                }
+            )
 
-        for plan in kplan.spec.plan:
-            kproject = ProjectKind(spec=plan.template.spec, metadata=kplan.metadata)
-            for cluster in plan.clusters:
-                logging.info(
-                    "apply project %s.%s in cluster %s.",
-                    kplan.metadata.name,
-                    kplan.metadata.namespace,
-                    cluster
+        plans = cls._reconciliation_project_plan(kplan, kpreviousplan)
+
+        for plan in plans:
+            if plan.is_delete():
+                cls.delete_incluster(plan.kprevious, dry_run, cluster=plan.cluster)
+            elif plan.is_apply():
+                cls.apply_incluster(
+                    plan.kproject,
+                    pre_processing_path,
+                    dry_run,
+                    kprevious=plan.kprevious,
+                    cluster=plan.cluster
                 )
-
-        raise NotImplementedError()
 
     @classmethod
     def apply_incluster(cls, kproject: ProjectKind, pre_processing_path: Path, dry_run: bool,
-        kprevious: ProjectKind = None):
+        kprevious: ProjectKind = None, cluster: str = None):
         """
         Install the project in cluster
         """
+        logging.info(
+            "applying project %s.%s in cluster %s.",
+            kproject.metadata.name,
+            kproject.metadata.namespace,
+            cluster or ""
+        )
+
         if kprevious is None:
             # We need an empty from for reconciliation
             kprevious = cls.create_skeleton_from(kproject)
 
-        HelmInstall(dry_run).reconciliation(kproject, kprevious, pre_processing_path)
+        HelmInstall(dry_run, kube_context=cluster) \
+            .reconciliation(kproject, kprevious, pre_processing_path)
 
     @classmethod
-    def delete_incluster(cls, kproject: ProjectKind, dry_run: bool):
+    def delete_incluster(cls, kproject: ProjectKind, dry_run: bool, cluster: str = None):
         """
         Delete everything controlled by this project
         """
+        logging.info(
+            "deleting project %s.%s in cluster %s.",
+            kproject.metadata.name,
+            kproject.metadata.namespace,
+            cluster or ""
+        )
+
         kempty = cls.create_skeleton_from(kproject)
 
         # kempty is the target as we want to remove all versions previously installed.
-        HelmInstall(dry_run).reconciliation(kempty, kproject)
+        HelmInstall(dry_run, kube_context=cluster) \
+            .reconciliation(kempty, kproject)

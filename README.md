@@ -87,5 +87,5 @@ $ pylint noops/ tests/
 - do not generate profile/target not compatible with the package (`package.supported`)
 - better exception handling for the cli to display more Human readable errors
 - support Helm repositories v1 !? *(Nexus helm repositories)*
-- implement `noopsctl x projects apply` (with kubernetes context switcher)
 - environment support for `service-catalog` and `white-label` with an `environments` array
+- json schema validation and ui extension for json form

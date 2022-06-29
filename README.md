@@ -41,20 +41,20 @@ All those practices and tools together permit to achieve the **NoOps target**.
 
 ## Documentation
 
-| Link                                                         | Short purpose description                                 |
-| ------------------------------------------------------------ | --------------------------------------------------------- |
-| [workflow](docs/README.d/workflow.md)                        | How NoOps is working                                      |
-| [reserved keys](docs/README.d/reserved.md)                   | Reserved noops.yaml keys                                  |
-| [package](docs/README.d/package.md)                          | Package definition (helm, kustomize, ...)                 |
-| [service-catalog](docs/README.d/service-catalog.md)          | Service Catalog support                                   |
-| [white-label](docs/README.d/white-label.md)                  | White-label support                                       |
-| [pipeline and local](docs/README.d/pipeline-local.md)        | Pipeline and local support (build, ci, cd, ...)           |
-| [profile](docs/README.d/profile.md)                          | Profiles support                                          |
-| [cli](docs/README.d/cli.md)                                  | Command line references for noopsctl                      |
-| [NoOps Helm Package (Experimental)](docs/README.d/x-noops-helm-package.md) | Helm package                                              |
-| [Versions (Experimental)](docs/README.d/x-versions.md)       | Product versions to use                                   |
-| [Targets (Experimental)](docs/README.d/x-targets.md)         | Product cluster targets                                   |
-| [Projects (Experimental)](docs/README.d/x-projects.md)       | Product deployment (Versions, White-label, settings, ...) |
+| Link                                                      | Short purpose description                                 |
+| --------------------------------------------------------- | --------------------------------------------------------- |
+| [workflow](docs/README.d/workflow.md)                     | How NoOps is working                                      |
+| [reserved keys](docs/README.d/reserved.md)                | Reserved noops.yaml keys                                  |
+| [package](docs/README.d/package.md)                       | Package definition (helm, kustomize, ...)                 |
+| [service-catalog](docs/README.d/service-catalog.md)       | Service Catalog support                                   |
+| [white-label](docs/README.d/white-label.md)               | White-label support                                       |
+| [pipeline and local](docs/README.d/pipeline-local.md)     | Pipeline and local support (build, ci, cd, ...)           |
+| [profile](docs/README.d/profile.md)                       | Profiles support                                          |
+| [cli](docs/README.d/cli.md)                               | Command line references for noopsctl                      |
+| [NoOps Helm Package](docs/README.d/noops-helm-package.md) | Helm package                                              |
+| [Versions (Experimental)](docs/README.d/x-versions.md)    | Product versions to use                                   |
+| [Targets (Experimental)](docs/README.d/x-targets.md)      | Product cluster targets                                   |
+| [Projects (Experimental)](docs/README.d/x-projects.md)    | Product deployment (Versions, White-label, settings, ...) |
 
 ## Development
 

@@ -19,6 +19,8 @@ Those deployments can use different strategies:
 
 ## Kind
 
+### Version
+
 ```yaml
 apiVersion: noops.local/v1alpha1
 kind: Version
@@ -42,13 +44,59 @@ spec:
     # build: 30        # optional
 ```
 
-**Restrictions**
+#### Restrictions
 
 - one and multi can be used together **ONLY** if Canary is not used. The purpose is to avoid collision on endpoints.
 - sum(weight) **has to** equal 100
 - AppVersion (`app_version`) is a mandatory field. It is **not** possible to deploy <u>two identical AppVersion</u>.
 
+#### Spec
+
+##### one
+
+`one` key is used to declare a standalone version deployment that can support **recreate** or **rolling update** strategy.
+
+`one` structure is set with:
+
+```yaml
+one:
+  # app_version is following helm chart appVersion purpose except that it is not optional !
+  app_version:
+  # version is following SemVer 2 helm chart version purpose except that it is optional ! 
+  version:
+  # build is an integer unique build for your product. This is more like a package revision. It is optional
+  build:
+  # Custom arguments that can be used to deploy the product (override settings or add new ones)
+  args: []
+```
+
+##### multi
+
+`multi` key is used for **canary** and **parallel versions** strategy. Each version of a product that can be part of those strategies can be independantly updated with a **recreate** or **rolling update** strategy !
+
+`multi` structure is set with:
+
+```yaml
+multi:
+# list of one spec with additional keys
+- app_version:
+  version:
+  build:
+  args:
+  # weight is optional. If set, this version of the product will be part of a canary or blue green deployment.
+  weight:
+  # dedicated-endpoints is optional. It is set to true by default if weight is unset. This key permit to require the creation of dedicated endpoints (like ingress) to have a direct access to this version of the product.
+  dedicated-endpoints:
+
+```
+
+
+
 ## Cli
+
+### Verify
+
+Load a file that need to be compliant with the kind `Version` and all restrictions defined previously.
 
 ```bash
 $ noopsctl x versions verify -k docs/examples/versions.yaml

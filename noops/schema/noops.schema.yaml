@@ -1,0 +1,293 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: noops.yaml
+description: NoOps product and devops configuration
+type: object
+properties:
+  devops:
+    $ref: '#/$defs/devops'
+  profile:
+    $ref: '#/$defs/profile'
+  features:
+    $ref: '#/$defs/features'
+  white-label:
+    $ref: '#/$defs/white-label'
+  service-catalog:
+    $ref: '#/$defs/service-catalog'
+  local:
+    $ref: '#/$defs/local'
+  pipeline:
+    $ref: '#/$defs/pipeline'
+  package:
+    $ref: '#/$defs/package'
+  profiles:
+    $ref: '#/$defs/profiles'
+required:
+- devops
+
+$defs:
+  # noops.devops
+  devops:
+    oneOf:
+    - type: object # .local
+      properties:
+        local:
+          type: object
+          properties:
+            path:
+              type: string
+          required: ['path']
+      required: ['local']
+
+    - type: object # .git
+      properties:
+        git:
+          type: object
+          properties:
+            clone:
+              type: string
+            branch:
+              type: string
+          required: ['clone', 'branch']
+      required: ['git']
+
+  # noops.profile
+  profile:
+    type: string
+
+  # noops.features
+  features:
+    type: object
+    properties:
+      service-catalog:
+        type: boolean
+      white-label:
+        type: boolean
+
+  # noops.white-label
+  white-label:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      properties:
+        rebrand:
+          type: string
+        marketer:
+          type: string
+      required: ['rebrand', 'marketer']
+
+  # noops.service-catalog
+  service-catalog:
+    type: array
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+        class:
+          type: string
+        plan:
+          type: string
+      required: ['name', 'class', 'plan']
+
+  # noops.local
+  local:
+    type: object
+    properties:
+      build:
+        $ref: '#/$defs/local-runner'
+      run:
+        $ref: '#/$defs/local-runner'
+
+  # local-runner
+  local-runner:
+    type: object
+    properties:
+      posix:
+        type: string
+      nt:
+        type: string
+
+  # noops.pipeline
+  pipeline:
+    type: object
+    properties: # .deploy.{something}
+      deploy:
+        type: object
+        additionalProperties:
+          type: string
+    additionalProperties: # .{something}
+      type: object
+      properties:
+        ci:
+          type: string
+        pr:
+          type: string
+        cd:
+          type: string
+      additionalProperties: false
+
+  # noops.package
+  package:
+    type: object
+    properties:
+      docker:
+        $ref: '#/$defs/package-docker'
+      lib:
+        $ref: '#/$defs/package-lib'
+      helm:
+        $ref: '#/$defs/package-helm'
+      supported:
+        $ref: '#/$defs/package-supported'
+
+  # noops.package.docker
+  package-docker:
+    type: object
+    properties:
+      dockerfile: # [DEPRECATED]
+        type: string
+        deprecated: true
+    additionalProperties: # .{something}
+      type: object
+      properties:
+        dockerfile:
+          type: string
+
+  # noops.package.lib
+  package-lib:
+    type: object
+    properties:
+      dockerfile: # [DEPRECATED]
+        type: string
+        deprecated: true
+
+  # noops.package.helm
+  package-helm:
+    type: object
+    properties:
+      chart:
+        oneOf:
+        - type: string
+        - type: object
+          properties:
+            name:
+              type: string
+            version:
+              type: string
+            url:
+              type: string
+            destination:
+              type: string
+      preprocessor: # [DEPRECATED]
+        type: string
+        deprecated: true
+      pre-processing:
+        type: array
+        items:
+          type: string
+      kustomize:
+        type: string
+      parameters:
+        $ref: '#/$defs/package-helm-parameters'
+      targets-parameters:
+        $ref: '#/$defs/package-helm-targetsParameters'
+      definitions:
+        $ref: '#/$defs/package-helm-definitions'
+
+  # noops.package.helm.parameters
+  package-helm-parameters:
+    type: object
+
+  # noops.package.helm.targets-parameters
+  package-helm-targetsParameters:
+    type: object
+    properties:
+      one-cluster:
+        type: object
+      multi-cluster:
+        type: object
+      active:
+        type: object
+      standby:
+        type: object
+    additionalProperties: false
+
+  # noops.package.helm.definitions
+  package-helm-definitions:
+    type: object
+    properties:
+      targets:
+        type: object
+        properties:
+          one-cluster:
+            type: object
+          multi-cluster:
+            type: object
+          active:
+            type: object
+          standby:
+            type: object
+        additionalProperties: false
+      
+      profiles:
+        type: object
+        properties:
+          default:
+            type: object
+          canary:
+            type: object
+          canary-dedicated-endpoints:
+            type: object
+          canary-endpoints-only:
+            type: object
+          services-only:
+            type: object
+        additionalProperties: false
+      
+      keys:
+        type: object
+        properties:
+          canary:
+            type: string
+          white-label:
+            type: string
+  
+  # noops.package.supported
+  package-supported:
+    type: object
+    properties:
+      target-classes:
+        type: object
+        properties:
+          one-cluster:
+            type: boolean
+          multi-cluster:
+            type: boolean
+          active-standby:
+            type: boolean
+      profile-classes:
+        type: object
+        properties:
+          canary:
+            type: boolean
+          services-only:
+            type: boolean
+
+  # noops.profiles
+  profiles:
+    type: object
+    additionalProperties:
+      type: object
+      properties:
+        features:
+          $ref: '#/$defs/features'
+        white-label:
+          $ref: '#/$defs/white-label'
+        service-catalog:
+          $ref: '#/$defs/service-catalog'
+        local:
+          $ref: '#/$defs/local'
+        pipeline:
+          $ref: '#/$defs/pipeline'
+        package:
+          $ref: '#/$defs/package'

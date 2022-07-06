@@ -3,3 +3,4 @@ pydantic
 click
 pylint
 coverage
+jsonschema

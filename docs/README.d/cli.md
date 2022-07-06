@@ -173,6 +173,25 @@ Options:
   -h, --help                 Show this message and exit.
 ```
 
+## Assist
+
+Provide assistance/helper to manage some components
+
+### jsonschema
+
+Display or copy a built-in reference JSON schema to validate a `noops.yaml`.
+
+```bash
+$ noopsctl assist jsonschema -h
+Usage: noopsctl assist jsonschema [OPTIONS]
+
+  reference JSON Schema for noops.yaml
+
+Options:
+  -o, --output PATH  write the schema to a file
+  -h, --help         Show this message and exit.
+```
+
 ## Experimental
 
 This subcommand expose experimental features. Please refer to cli help.

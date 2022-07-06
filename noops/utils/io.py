@@ -7,7 +7,7 @@ Supported format:
 - Text (raw)
 """
 
-# Copyright 2021 Croix Bleue du Québec
+# Copyright 2021-2022 Croix Bleue du Québec
 
 # This file is part of python-noops.
 
@@ -86,6 +86,15 @@ def json2yaml(content: str, indent=DEFAULT_INDENT) -> str: # pragma: no cover
     Return as a yaml
     """
     return yaml.dump(json.loads(content), indent=indent)
+
+def read_json(file_path: Union[str, Path]) -> dict: # pragma: no cover
+    """
+    Read a json file
+    """
+    with open(file_path, "r", encoding="UTF-8") as file:
+        content = json.load(file)
+
+    return content
 
 def write_json(file_path: Union[str, Path], content: dict, indent=DEFAULT_INDENT,
     dry_run: bool = False):

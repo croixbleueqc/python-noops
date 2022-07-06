@@ -28,6 +28,7 @@ DEFAULT_NOOPS_FILE="noops.yaml"
 DEFAULT_WORKDIR="noops_workdir"
 GENERATED_NOOPS="noops-generated"
 DEFAULT_NOOPS_HPR="noopshpr.yaml"
+SCHEMA_FILE="noops.schema.yaml"
 
 DEFAULT_FEATURES={
     "service-catalog": True,

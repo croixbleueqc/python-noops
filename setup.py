@@ -13,10 +13,14 @@ setup(
     version='1.9.0',
     python_requires='>=3.9',
     packages=find_packages(exclude=['tests']),
+    package_data={
+        'noops.schema': ['*.yaml']
+    },
     install_requires=[
         'pyyaml',
         'pydantic',
-        'click'
+        'click',
+        'jsonschema'
     ],
     extra_require={
         'dev': [

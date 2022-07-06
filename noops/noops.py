@@ -34,10 +34,10 @@ import shutil
 import stat
 from typing import Union
 import yaml
+import jsonschema
 from . import settings
 from .utils.external import execute
-from .utils import containers
-from .utils import io
+from .utils import containers, io, resources
 
 class NoOps():
     """
@@ -60,6 +60,7 @@ class NoOps():
 
         if rm_cache or not self._iscache():
             self._create_cache(product_path)
+            self._jsonschema_validate(product_path)
         else:
             self._load_cache()
 
@@ -168,6 +169,30 @@ class NoOps():
             self._get_generated_noops_yaml(),
             self.noops_config
         )
+
+    def _jsonschema_validate(self, product_path: Path):
+        logging.info("validating generated configuration")
+
+        # Order is important (first one available is used)
+        schema_paths = [
+            product_path / settings.SCHEMA_FILE, # product schema
+            self.workdir / settings.SCHEMA_FILE  # devops schema
+        ]
+
+        instance = io.read_json(self._get_generated_noops_json())
+
+        def _validate(schema_path: Path):
+            schema_defs = io.read_yaml(schema_path)
+            jsonschema.validate(instance=instance, schema=schema_defs)
+
+        for schema_path in schema_paths:
+            if schema_path.exists():
+                _validate(schema_path)
+                return
+
+        # built-in fallback
+        with resources.schema_path_ctx() as schema_path:
+            _validate(schema_path)
 
     def _deprecated_noops(self):
         warn_path=[

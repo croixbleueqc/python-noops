@@ -15,7 +15,6 @@ package:
       prod:
         replicaCount: 2
     targets-parameters:
-      one-cluster: null
       multi-cluster:
         default:
           message: multicluster

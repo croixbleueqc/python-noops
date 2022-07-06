@@ -51,6 +51,7 @@ All those practices and tools together permit to achieve the **NoOps target**.
 | [pipeline and local](docs/README.d/pipeline-local.md)     | Pipeline and local support (build, ci, cd, ...)           |
 | [profile](docs/README.d/profile.md)                       | Profiles support                                          |
 | [cli](docs/README.d/cli.md)                               | Command line references for noopsctl                      |
+| [validation](docs/README.d/jsonschema.md)                    | Validate configuration with JSON Schema                   |
 | [NoOps Helm Package](docs/README.d/noops-helm-package.md) | Helm package                                              |
 | [Versions (Experimental)](docs/README.d/x-versions.md)    | Product versions to use                                   |
 | [Targets (Experimental)](docs/README.d/x-targets.md)      | Product cluster targets                                   |
@@ -88,4 +89,3 @@ $ pylint noops/ tests/
 - better exception handling for the cli to display more Human readable errors
 - support Helm repositories v1 !? *(Nexus helm repositories)*
 - environment support for `service-catalog` and `white-label` with an `environments` array
-- json schema validation and ui extension for json form

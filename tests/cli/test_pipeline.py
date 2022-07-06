@@ -164,7 +164,7 @@ class Test(TestCaseNoOps):
 
             values_prod = (product_path / "noops_workdir/helm/chart/noops/values-prod.yaml")
             self.assertTrue(values_prod.exists())
-            self.assertEqual(values_prod.read_text(encoding='UTF-8'), 'replicasCount: 2\n')
+            self.assertEqual(values_prod.read_text(encoding='UTF-8'), 'replicaCount: 2\n')
 
             values_svcat = (product_path / "noops_workdir/helm/chart/noops/values-svcat.yaml")
             self.assertTrue(values_svcat.exists())
@@ -178,9 +178,9 @@ class Test(TestCaseNoOps):
             )
 
             target_mc_default = \
-                (product_path / "noops_workdir/helm/chart/noops/target-multi-clusters-default.yaml")
+                (product_path / "noops_workdir/helm/chart/noops/target-multi-cluster-default.yaml")
             self.assertTrue(target_mc_default.exists())
-            self.assertEqual(target_mc_default.read_text(encoding='UTF-8'), 'replicasCount: 1\n')
+            self.assertEqual(target_mc_default.read_text(encoding='UTF-8'), 'replicaCount: 1\n')
 
             # Deploy - Parameters conflict
             result = runner.invoke(

@@ -149,7 +149,7 @@ class NoOps():
         if isinstance(chart, dict):
             self.noops_config["package"]["helm"]["values"] = \
                 chart["destination"] / "noops"
-        else:
+        elif chart is not None:
             self.noops_config["package"]["helm"]["values"] = \
                 chart / "noops"
 

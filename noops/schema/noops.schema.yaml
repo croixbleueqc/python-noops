@@ -151,7 +151,9 @@ $defs:
       type: object
       properties:
         dockerfile:
-          type: string
+          oneOf:
+            - type: "null"
+            - type: string
 
   # noops.package.lib
   package-lib:
@@ -167,6 +169,7 @@ $defs:
     properties:
       chart:
         oneOf:
+        - type: "null"
         - type: string
         - type: object
           properties:
@@ -228,7 +231,7 @@ $defs:
           standby:
             type: object
         additionalProperties: false
-      
+
       profiles:
         type: object
         properties:
@@ -243,7 +246,7 @@ $defs:
           services-only:
             type: object
         additionalProperties: false
-      
+
       keys:
         type: object
         properties:
@@ -251,7 +254,7 @@ $defs:
             type: string
           white-label:
             type: string
-  
+
   # noops.package.supported
   package-supported:
     type: object

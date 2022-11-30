@@ -31,10 +31,13 @@ def pipeline_deploy(core: NoOps, scope: str, cargs: List[str]):
 
     scope: default
     """
-    if core.is_feature_enabled("white-label"):
+    if not core.is_feature_enabled("helm-deployment"):
+        _helmless_deployment(core, scope, cargs)
+    elif core.is_feature_enabled("white-label"):
         _white_label_deployment(core, scope, cargs)
     else:
         _regular_deployment(core, scope, cargs)
+
 
 def _white_label_deployment(core: NoOps, scope: str, cargs: List[str]):
     """
@@ -69,6 +72,19 @@ def _regular_deployment(core: NoOps, scope: str, cargs: List[str]):
     logging.info("Regular deployment requested")
 
     prepare(core)
+    execute(
+        core.noops_config["pipeline"]["deploy"][scope],
+        cargs,
+        core.noops_envs(),
+        dry_run=core.is_dry_run()
+    )
+
+def _helmless_deployment(core: NoOps, scope: str, cargs: List[str]):
+    """
+    Continuous Deployment (helm-less)
+    """
+    logging.info("Helm-less deployment requested")
+
     execute(
         core.noops_config["pipeline"]["deploy"][scope],
         cargs,

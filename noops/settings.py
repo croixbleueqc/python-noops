@@ -31,6 +31,7 @@ DEFAULT_NOOPS_HPR="noopshpr.yaml"
 SCHEMA_FILE="noops.schema.yaml"
 
 DEFAULT_FEATURES={
+    "helm-deployment": True,
     "service-catalog": True,
     "white-label": False
 }

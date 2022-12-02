@@ -92,6 +92,10 @@ class NoOps():
         logging.debug("DevOps config: %s", noops_devops)
 
         # Merge product and devops (product override devops)
+        print("DEBUG product override devops 1 ('noops_devops' dict):")
+        print(noops_devops)
+        print("DEBUG product override devops 2 ('noops_product' dict):")
+        print(noops_product)
         noops_merged = containers.merge(noops_devops, noops_product)
         logging.debug("Merged config: %s", noops_merged)
 
@@ -147,11 +151,17 @@ class NoOps():
 
         # Set computed package.helm.values
         if isinstance(chart, dict):
+            print(f"DEBUG dict chart: {chart}")
             self.noops_config["package"]["helm"]["values"] = \
                 chart["destination"] / "noops"
-        elif chart is not None:
+        if isinstance(chart, str):
+            print(f"DEBUG str chart: {chart}")
             self.noops_config["package"]["helm"]["values"] = \
-                chart / "noops"
+                chart + "/noops"
+        elif chart is not None:
+            print(f"DEBUG (other type??) chart: {chart}")
+            self.noops_config["package"]["helm"]["values"] = \
+                chart + "/noops"
 
         # Pull helm/chart (if necessary)
         if isinstance(chart, dict):
@@ -337,6 +347,7 @@ class NoOps():
             From Product:
               package.docker.Dockerfile can be set to devops/Dockerfile{.distroless}
 
+        # Todo: change this:
         If a requested file does NOT exist, a FileNotFoundError exception will be raised.
         """
         logging.debug("file selector for '%s'", selector)
@@ -369,46 +380,59 @@ class NoOps():
             if isinstance(devops_profile_iter, dict) else None
 
         if devops_profile_file is not None:
-            # DevOps profile has a higher priority over product_file/devops_file
-            product_file = None
+            # WE SHOULD CHANGE THIS: DevOps profile has a higher priority over product_file/devops_file
+            #product_file = None # THIS IS/WAS PROBABLY THE CAUSE OF THE BUG I'M HAVING
             devops_file = devops_profile_file
 
         if product_profile_file is not None:
             # Product profile has the highest priority
             product_file = product_profile_file
 
+        print(f"DEBUG:\n\tdevops_file: {devops_file}\n\tdevops_profile_file: {devops_profile_file}\n\tproduct_file: {product_file}\n\tproduct_profile_file: {product_profile_file}")
+
         # Order is important.
         # Product definition has highest priority over devops definition
         if isinstance(product_file, str):
             # check if the file is in product or devops
             # priority to product directory
+            print(f"DEBUG product_file: {product_file}")
+            
             if (product_path / product_file).exists():
                 # product directory
                 product_file_path = product_path / product_file
+                config_iter[keys[-1]] = product_file_path
+                return
             elif (self.workdir / product_file).exists():
                 # devops (workdir) directory
                 product_file_path = self.workdir / product_file
+                config_iter[keys[-1]] = product_file_path
+                return
             else:
-                raise FileNotFoundError(
-                    errno.ENOENT,
-                    os.strerror(errno.ENOENT),
-                    product_file
-                )
-
-            config_iter[keys[-1]] = product_file_path
-            return
+                # Todo:
+                logging.warn("File not found")
+                #raise FileNotFoundError(
+                #    errno.ENOENT,
+                #    os.strerror(errno.ENOENT),
+                #    product_file
+                #)
+            
+            #return
 
         if isinstance(devops_file, str):
             devops_file_path = self.workdir / devops_file
             if devops_file_path.exists():
                 config_iter[keys[-1]] = devops_file_path
+                return
             else:
-                raise FileNotFoundError(
-                    errno.ENOENT,
-                    os.strerror(errno.ENOENT),
-                    devops_file
-                )
-            return
+                # Todo:
+                logging.warn("File not found")
+                #raise FileNotFoundError(
+                #    errno.ENOENT,
+                #    os.strerror(errno.ENOENT),
+                #    devops_file
+                #)
+            
+            #return
 
         logging.debug("key '%s' is not set ! [skip]", selector)
 

@@ -30,12 +30,22 @@ def deep_merge(dict_base: dict, dict_custom: dict) -> dict:
     """
     result = deepcopy(dict_base)
     for key, value in dict_custom.items():
-        if isinstance(value, dict):
+
+        if key is None:
+            print(f"NoneType key found. This is not normal!\nDEBUG dict_base:\n{dict_base}\nDEBUG dict_custom:\n{dict_custom}\nDEBUG Current value:\n{value}")
+        elif result is None: 
+            print(f"NoneType result found. This is not normal!\nDEBUG dict_base:\n{dict_base}\nDEBUG dict_custom:{dict_custom}\nDEBUG Current key: {key}\nDEBUG Current value: {value}")
+        elif value is None:
+            print(f"DEBUG value in deepcopy is None\nDEBUG: key: {key}, value: {value}")
+        elif isinstance(value, dict):
             node = result.setdefault(key, {})
             merged_node = deep_merge(node, value)
             result[key] = merged_node
         else:
-            result[key] = value
+            try:
+              result[key] = value
+            except:
+                print("DEBUG Exception on result[key] = value\nDEBUG: key: {key}, value: {value}")
 
     return result
 

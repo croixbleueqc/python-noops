@@ -158,6 +158,10 @@ class NoOps():
             print(f"DEBUG str chart: {chart}")
             self.noops_config["package"]["helm"]["values"] = \
                 chart + "/noops"
+        if isinstance(chart, Path):
+            print(f"DEBUG Path chart: {chart}")
+            self.noops_config["package"]["helm"]["values"] = \
+                str(chart) + "noops"
         elif chart is not None:
             print(f"DEBUG (other type??) chart: {chart}")
             self.noops_config["package"]["helm"]["values"] = \

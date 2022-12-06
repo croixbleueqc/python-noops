@@ -53,14 +53,16 @@ def embedded_kustomize(core: NoOps):
     """
     Copy kustomize under the helm chart if available and necessary
     """
-    kustomize: Path = core.noops_config["package"].get("helm", {}).get("kustomize")
+    kustomize = Path(core.noops_config["package"].get("helm", {}).get("kustomize"))
 
     if kustomize is None:
         # kustomize is not used
         logging.info("kustomize is not used")
         return
 
-    values: Path = core.noops_config["package"]["helm"]["values"]
+    values = Path(core.noops_config["package"]["helm"]["values"])
+    print(f"DEBUG values path: {values}")
+    print(f"DEBUG core nooops config package.helm {core.noops_config['package']['helm']}")
 
     if kustomize.parent == values.parent:
         # kustomize is already located under the helm chart (built-in)

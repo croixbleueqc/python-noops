@@ -47,6 +47,7 @@ class Helm():
         self._config = core.noops_config["package"]["helm"]
 
         # Chart name
+        # Todo: change this to use external chart name if set
         if chart_name is None:
             # Compute chart name
             self._chart_name = os.path.split(os.getcwd())[1]
@@ -101,6 +102,7 @@ class Helm():
         if self.core.is_dry_run():
             return
 
+        print(f"DEBUG get_values_path() {self.get_values_path()}")
         self.get_values_path().mkdir(parents=True, exist_ok=True)
 
     def create_values(self):
@@ -163,9 +165,9 @@ class Helm():
         Directory where to store values.yaml files
         """
         if values_filename is None:
-            return self.config["values"]
+            return Path(self.config["values"])
 
-        return self.config["values"] / values_filename
+        return  Path(self.config["values"]) / values_filename
 
     def create_package(self, app_version: str, build: str, # pylint: disable=too-many-arguments
         description: str, values: Optional[Path]):

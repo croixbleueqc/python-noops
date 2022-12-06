@@ -118,7 +118,7 @@ def __ci_pr_cd(shared, target):
 
 @pipeline.command(name='ci')
 @click.pass_obj
-@click.argument('target', nargs=1, required=True)
+@click.argument('target', nargs=1, required=True, default="default")
 @click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
 def continuous_integration(shared, target, cargs):
     """continuous integration
@@ -139,7 +139,7 @@ def continuous_integration(shared, target, cargs):
 
 @pipeline.command(name='pr')
 @click.pass_obj
-@click.argument('target', nargs=1, required=True)
+@click.argument('target', nargs=1, required=True, default="default")
 @click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
 def pull_request(shared, target, cargs):
     """pull request
@@ -160,7 +160,7 @@ def pull_request(shared, target, cargs):
 
 @pipeline.command(name='cd')
 @click.pass_obj
-@click.argument('target', nargs=1, required=True)
+@click.argument('target', nargs=1, required=True, default="default")
 @click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
 def continuous_delivery(shared, target, cargs):
     """continuous delivery

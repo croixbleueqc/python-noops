@@ -127,15 +127,13 @@ def continuous_integration(shared, target, cargs):
     """
     core = __ci_pr_cd(shared, target)
     # Add target to the envs dictionnary
-    t = core.noops_envs()
-    print(f"core.noops_envs(): {t}")
-    t['TARGET']=target
-    print(f"envs: {t}")
+    envvars = core.noops_envs()
+    envvars['TARGET']=target
 
     execute(
         core.noops_config["pipeline"][target]["ci"],
         list(cargs),
-        t,
+        envvars,
         dry_run=core.is_dry_run()
     )
 
@@ -150,12 +148,13 @@ def pull_request(shared, target, cargs):
     """
     core = __ci_pr_cd(shared, target)
     # Add target to the envs dictionnary
-    envs = core.noops_envs()['TARGET']=target
+    envvars = core.noops_envs()
+    envvars['TARGET']=target
 
     execute(
         core.noops_config["pipeline"][target]["pr"],
         list(cargs),
-        envs,
+        envvars,
         dry_run=core.is_dry_run()
     )
 
@@ -170,12 +169,13 @@ def continuous_delivery(shared, target, cargs):
     """
     core = __ci_pr_cd(shared, target)
     # Add target to the envs dictionnary
-    envs = core.noops_envs()['TARGET']=target
+    envvars = core.noops_envs()
+    envvars['TARGET']=target
 
     execute(
         core.noops_config["pipeline"][target]["cd"],
         list(cargs),
-        envs,
+        envvars,
         dry_run=core.is_dry_run()
     )
 

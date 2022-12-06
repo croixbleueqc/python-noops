@@ -92,9 +92,9 @@ class NoOps():
         logging.debug("DevOps config: %s", noops_devops)
 
         # Merge product and devops (product override devops)
-        print("DEBUG product override devops 1 ('noops_devops' dict):")
+        #print("DEBUG product override devops 1 ('noops_devops' dict):")
         print(noops_devops)
-        print("DEBUG product override devops 2 ('noops_product' dict):")
+        #print("DEBUG product override devops 2 ('noops_product' dict):")
         print(noops_product)
         noops_merged = containers.merge(noops_devops, noops_product)
         logging.debug("Merged config: %s", noops_merged)
@@ -151,19 +151,19 @@ class NoOps():
 
         # Set computed package.helm.values
         if isinstance(chart, dict):
-            print(f"DEBUG dict chart: {chart}")
+            #print(f"DEBUG dict chart: {chart}")
             self.noops_config["package"]["helm"]["values"] = \
                 chart["destination"] / "noops"
         if isinstance(chart, str):
-            print(f"DEBUG str chart: {chart}")
+            #print(f"DEBUG str chart: {chart}")
             self.noops_config["package"]["helm"]["values"] = \
                 chart + "/noops"
         if isinstance(chart, Path):
-            print(f"DEBUG Path chart: {chart}")
+            #print(f"DEBUG Path chart: {chart}")
             self.noops_config["package"]["helm"]["values"] = \
                 str(chart) + "noops"
         elif chart is not None:
-            print(f"DEBUG (other type??) chart: {chart}")
+            #print(f"DEBUG (other type??) chart: {chart}")
             self.noops_config["package"]["helm"]["values"] = \
                 chart + "/noops"
 
@@ -392,14 +392,14 @@ class NoOps():
             # Product profile has the highest priority
             product_file = product_profile_file
 
-        print(f"DEBUG:\n\tdevops_file: {devops_file}\n\tdevops_profile_file: {devops_profile_file}\n\tproduct_file: {product_file}\n\tproduct_profile_file: {product_profile_file}")
+        #print(f"DEBUG:\n\tdevops_file: {devops_file}\n\tdevops_profile_file: {devops_profile_file}\n\tproduct_file: {product_file}\n\tproduct_profile_file: {product_profile_file}")
 
         # Order is important.
         # Product definition has highest priority over devops definition
         if isinstance(product_file, str):
             # check if the file is in product or devops
             # priority to product directory
-            print(f"DEBUG product_file: {product_file}")
+            #print(f"DEBUG product_file: {product_file}")
             
             if (product_path / product_file).exists():
                 # product directory

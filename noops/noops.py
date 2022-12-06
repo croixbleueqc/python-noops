@@ -92,9 +92,9 @@ class NoOps():
         logging.debug("DevOps config: %s", noops_devops)
 
         # Merge product and devops (product override devops)
-        #print("DEBUG product override devops 1 ('noops_devops' dict):")
+        print("DEBUG product override devops 1 ('noops_devops' dict):")
         print(noops_devops)
-        #print("DEBUG product override devops 2 ('noops_product' dict):")
+        print("DEBUG product override devops 2 ('noops_product' dict):")
         print(noops_product)
         noops_merged = containers.merge(noops_devops, noops_product)
         logging.debug("Merged config: %s", noops_merged)

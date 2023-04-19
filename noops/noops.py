@@ -143,24 +143,12 @@ class NoOps():
                     noops_product_profile, noops_devops_profile)
 
         chart = self.noops_config["package"]["helm"]["chart"]
-        logging.info("DEBUG chart 'path':")
-        logging.info(chart)
 
         # Set computed package.helm.values
         if isinstance(chart, dict):
-            logging.info("chart is dict (remote ref)")
             self.noops_config["package"]["helm"]["values"] = \
                 chart["destination"] / "noops"
         else:
-            logging.info("chart is is not (normal)")
-            logging.info("chart is:")
-            logging.info(type(chart))
-            
-            logging.info("compare: ")
-            logging.info(chart / "noops")
-            logging.info("vs: ")
-            logging.info( os.path.join(chart, "noops"))
-
             self.noops_config["package"]["helm"]["values"] = \
                 chart / "noops"
 

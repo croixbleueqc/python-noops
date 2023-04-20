@@ -126,11 +126,13 @@ def continuous_integration(shared, target, cargs):
     TARGET refers to pipeline.<TARGET> (noops.yaml)
     """
     core = __ci_pr_cd(shared, target)
+    env = core.noops_envs()
+    env.update({"NOOPS_TARGET": target})
 
     execute(
         core.noops_config["pipeline"][target]["ci"],
         list(cargs),
-        core.noops_envs(),
+        env,
         dry_run=core.is_dry_run()
     )
 
@@ -144,11 +146,13 @@ def pull_request(shared, target, cargs):
     TARGET refers to pipeline.<TARGET> (noops.yaml)
     """
     core = __ci_pr_cd(shared, target)
+    env = core.noops_envs()
+    env.update({"NOOPS_TARGET": target})
 
     execute(
         core.noops_config["pipeline"][target]["pr"],
         list(cargs),
-        core.noops_envs(),
+        env,
         dry_run=core.is_dry_run()
     )
 
@@ -162,11 +166,13 @@ def continuous_delivery(shared, target, cargs):
     TARGET refers to pipeline.<TARGET> (noops.yaml)
     """
     core = __ci_pr_cd(shared, target)
+    env = core.noops_envs()
+    env.update({"NOOPS_TARGET": target})
 
     execute(
         core.noops_config["pipeline"][target]["cd"],
         list(cargs),
-        core.noops_envs(),
+        env,
         dry_run=core.is_dry_run()
     )
 

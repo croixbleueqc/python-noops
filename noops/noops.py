@@ -144,17 +144,19 @@ class NoOps():
 
         chart = self.noops_config["package"]["helm"]["chart"]
 
-        # Set computed package.helm.values
-        if isinstance(chart, dict):
-            self.noops_config["package"]["helm"]["values"] = \
-                chart["destination"] / "noops"
-        else:
-            self.noops_config["package"]["helm"]["values"] = \
-                chart / "noops"
+        # 
+        if chart:
+            # Set computed package.helm.values
+            if isinstance(chart, dict):
+                self.noops_config["package"]["helm"]["values"] = \
+                    chart["destination"] / "noops"
+            else:
+                self.noops_config["package"]["helm"]["values"] = \
+                    chart / "noops"
 
-        # Pull helm/chart (if necessary)
-        if isinstance(chart, dict):
-            self._pull_helm_chart(chart)
+            # Pull helm/chart (if necessary)
+            if isinstance(chart, dict):
+                self._pull_helm_chart(chart)
 
         # Deprecated
         self._deprecated_noops()

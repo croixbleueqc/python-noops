@@ -2,7 +2,7 @@
 Common structures for typing
 """
 
-# Copyright 2021 Croix Bleue du Québec
+# Copyright 2021-2023 Croix Bleue du Québec
 
 # This file is part of python-noops.
 
@@ -19,16 +19,30 @@ Common structures for typing
 # You should have received a copy of the GNU Lesser General Public License
 # along with python-noops.  If not, see <https://www.gnu.org/licenses/>.
 
-from enum import Enum
+import enum
+import sys
 
-class StrEnum(str, Enum):
-    """
-    Sub class Profile enumeration
-    """
+if sys.version_info >= (3,11,0):
+    class StrEnum(enum.StrEnum):
+        """
+        Sub class Profile enumeration
+        """
 
-    @classmethod
-    def list(cls):
+        @classmethod
+        def list(cls):
+            """
+            List sub class
+            """
+            return [sub.value for sub in cls]
+else:
+    class StrEnum(str, enum.Enum):
         """
-        List sub class
+        Sub class Profile enumeration
         """
-        return [sub.value for sub in cls]
+
+        @classmethod
+        def list(cls):
+            """
+            List sub class
+            """
+            return [sub.value for sub in cls]

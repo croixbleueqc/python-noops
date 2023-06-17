@@ -2,7 +2,7 @@
 Utils: Manages internal resources
 """
 
-# Copyright 2021-2022 Croix Bleue du Québec
+# Copyright 2021-2023 Croix Bleue du Québec
 
 # This file is part of python-noops.
 
@@ -28,5 +28,5 @@ from .. import schema
 @contextmanager
 def schema_path_ctx() -> Path:
     """Context to get schema file path"""
-    with pkg_resources.path(schema, SCHEMA_FILE) as schema_path:
+    with pkg_resources.as_file(pkg_resources.files(schema) / SCHEMA_FILE) as schema_path:
         yield schema_path

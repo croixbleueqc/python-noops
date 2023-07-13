@@ -150,7 +150,7 @@ class Test(TestCaseNoOps):
         )
 
         self.assertEqual(
-            cluster,
+            cluster.model_dump(),
             {
                 "name": "c1",
                 "labels": {

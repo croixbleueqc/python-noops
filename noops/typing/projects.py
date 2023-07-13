@@ -56,7 +56,7 @@ class PackageSpec(BaseModel): # pylint: disable=too-few-public-methods
 class Spec(BaseModel): # pylint: disable=too-few-public-methods
     """kind spec model"""
     package: PackageSpec
-    versions: VersionSpec = VersionSpec()
+    versions: VersionSpec = VersionSpec(one=None, multi=None)
 
 class ProjectKind(BaseModel): # pylint: disable=too-few-public-methods
     """Project Kind model"""

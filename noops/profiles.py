@@ -72,7 +72,7 @@ class Profiles():
             if not cls.is_compatible(profile, supported):
                 raise ProfileNotSupported(profile=profile)
 
-            values_file = dst / "noops" / f"profile-{profile}.yaml"
+            values_file = dst / "noops" / f"profile-{profile.lower()}.yaml"
             if not values_file.exists():
                 raise FileNotFoundError(
                     errno.ENOENT,

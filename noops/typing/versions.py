@@ -29,11 +29,11 @@ from .profiles import ProfileEnum
 class MultiSpec(BaseModel): # pylint: disable=too-few-public-methods
     """Multiple deployments model"""
     app_version: str
-    version: Optional[str]
-    build: Optional[str]
-    weight: Optional[int]
+    version: Optional[str] = None
+    build: Optional[str] = None
+    weight: Optional[int] = None
     dedicated_endpoints: Optional[bool] = Field(None, alias='dedicated-endpoints')
-    args: Optional[List[str]]
+    args: Optional[List[str]] = None
 
     @property
     def profiles(self) -> List[ProfileEnum]:
@@ -52,9 +52,9 @@ class MultiSpec(BaseModel): # pylint: disable=too-few-public-methods
 class OneSpec(BaseModel): # pylint: disable=too-few-public-methods
     """One deployment model"""
     app_version: str
-    version: Optional[str]
-    build: Optional[str]
-    args: Optional[List[str]]
+    version: Optional[str] = None
+    build: Optional[str] = None
+    args: Optional[List[str]] = None
 
     @property
     def profiles(self) -> List[ProfileEnum]:
@@ -63,8 +63,8 @@ class OneSpec(BaseModel): # pylint: disable=too-few-public-methods
 
 class Spec(BaseModel): # pylint: disable=too-few-public-methods
     """kind spec model"""
-    one: Optional[OneSpec]
-    multi: Optional[List[MultiSpec]]
+    one: Optional[OneSpec] = None
+    multi: Optional[List[MultiSpec]] = None
 
 class VersionKind(BaseModel): # pylint: disable=too-few-public-methods
     """Version Kind model"""

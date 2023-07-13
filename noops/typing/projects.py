@@ -31,7 +31,7 @@ class ProjectReconciliationPlan(BaseModel): # pylint: disable=too-few-public-met
     changed: List[Union[OneSpec, MultiSpec]] = []
     removed: List[Union[OneSpec, MultiSpec]] = []
 
-    canary_versions: Optional[List[Union[OneSpec, MultiSpec]]]
+    canary_versions: Optional[List[Union[OneSpec, MultiSpec]]] = None
     removed_canary: bool = False
 
 class WhiteLabelSpec(BaseModel): # pylint: disable=too-few-public-methods
@@ -43,10 +43,10 @@ class InstallSpec(BaseModel): # pylint: disable=too-few-public-methods
     """package install spec"""
     chart: str
     env: str
-    target: Optional[TargetsEnum]
+    target: Optional[TargetsEnum] = None
     services_only: bool = Field(False, alias='services-only')
-    args: Optional[List[str]]
-    envs: Optional[dict]
+    args: Optional[List[str]] = None
+    envs: Optional[dict] = None
     white_label: Optional[WhiteLabelSpec] = Field(None, alias='white-label')
 
 class PackageSpec(BaseModel): # pylint: disable=too-few-public-methods
@@ -56,7 +56,7 @@ class PackageSpec(BaseModel): # pylint: disable=too-few-public-methods
 class Spec(BaseModel): # pylint: disable=too-few-public-methods
     """kind spec model"""
     package: PackageSpec
-    versions: VersionSpec = VersionSpec(one=None, multi=None)
+    versions: VersionSpec = VersionSpec()
 
 class ProjectKind(BaseModel): # pylint: disable=too-few-public-methods
     """Project Kind model"""

@@ -16,7 +16,7 @@ class Test(TestCaseNoOps):
         """Default kind Version"""
         kversion = versions.VersionKind(spec={})
 
-        self.assertEqual(kversion.dict(), {
+        self.assertEqual(kversion.model_dump(), {
             "apiVersion": "noops.local/v1alpha1",
             "kind": "Version",
             "spec": {
@@ -106,7 +106,7 @@ class Test(TestCaseNoOps):
             app_version="1.0.0"
         )
 
-        self.assertEqual(one.dict(), {
+        self.assertEqual(one.model_dump(), {
             "app_version": "1.0.0",
             "args": None,
             "build": None,
@@ -121,7 +121,7 @@ class Test(TestCaseNoOps):
             app_version="1.0.0"
         )
 
-        self.assertEqual(multi.dict(), {
+        self.assertEqual(multi.model_dump(), {
             "app_version": "1.0.0",
             "version": None,
             "build": None,

@@ -40,7 +40,7 @@ class Targets():
         if len(clusters) == 0:
             self._clusters = []
         elif isinstance(clusters[0], dict):
-            self._clusters = [ Cluster.parse_obj(i) for i in clusters ]
+            self._clusters = [ Cluster.model_validate(i) for i in clusters ]
         else:
             self._clusters = clusters
         self._clusters_name = [ i.name for i in self._clusters ]

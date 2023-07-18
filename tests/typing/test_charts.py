@@ -21,7 +21,7 @@ class Test(TestCaseNoOps):
         )
 
         self.assertEqual(
-            kchart.dict(by_alias=True),
+            kchart.model_dump(by_alias=True),
             {
                 "apiVersion": "noops.local/v1alpha1",
                 "kind": "Chart",
@@ -46,13 +46,13 @@ class Test(TestCaseNoOps):
                 }
             }
         )
-        kchart.spec.package.supported = charts.SupportedSpec.parse_obj({
+        kchart.spec.package.supported = charts.SupportedSpec.model_validate({
             "profile-classes":{},
             "target-classes":{}
         })
 
         self.assertEqual(
-            kchart.dict(by_alias=True),
+            kchart.model_dump(by_alias=True),
             {
                 "apiVersion": "noops.local/v1alpha1",
                 "kind": "Chart",

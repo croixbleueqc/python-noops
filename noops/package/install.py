@@ -272,7 +272,7 @@ class HelmInstall():
         """
         Read the noops.yaml from chart
         """
-        return ChartKind.parse_obj(
+        return ChartKind.model_validate(
             read_yaml(dst / settings.DEFAULT_NOOPS_FILE)
         )
 

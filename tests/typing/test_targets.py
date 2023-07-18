@@ -20,7 +20,7 @@ class Test(TestCaseNoOps):
         )
 
         self.assertEqual(
-            ktarget.dict(by_alias=True),
+            ktarget.model_dump(by_alias=True),
             {
                 "apiVersion": "noops.local/v1alpha1",
                 "kind": "Target",
@@ -48,7 +48,7 @@ class Test(TestCaseNoOps):
         )
 
         self.assertEqual(
-            affinity.dict(),
+            affinity.model_dump(),
             {
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                     "clusterSelectorTerms": []
@@ -65,7 +65,7 @@ class Test(TestCaseNoOps):
         )
 
         self.assertEqual(
-            match.dict(),
+            match.model_dump(),
             {
                 "key": "name",
                 "operator": "Exists",
@@ -117,7 +117,7 @@ class Test(TestCaseNoOps):
         ktplan = targets.TargetPlan()
 
         self.assertEqual(
-            ktplan.dict(by_alias=True),
+            ktplan.model_dump(by_alias=True),
             {
                 "target-class": "one-cluster",
                 "active": [],
@@ -132,7 +132,7 @@ class Test(TestCaseNoOps):
         targetclasses = targets.TargetClasses()
 
         self.assertEqual(
-            targetclasses.dict(by_alias=True),
+            targetclasses.model_dump(by_alias=True),
             {
                 "one-cluster": False,
                 "multi-cluster": False,
@@ -150,7 +150,7 @@ class Test(TestCaseNoOps):
         )
 
         self.assertEqual(
-            cluster,
+            cluster.model_dump(by_alias=True),
             {
                 "name": "c1",
                 "labels": {

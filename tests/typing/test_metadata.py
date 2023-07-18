@@ -18,7 +18,7 @@ class Test(TestCaseNoOps):
         )
 
         self.assertEqual(
-            meta.dict(),
+            meta.model_dump(),
             {
                 "name": "name",
                 "namespace": "ns"

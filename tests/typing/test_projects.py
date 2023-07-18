@@ -28,7 +28,7 @@ class Test(TestCaseNoOps):
         )
 
         self.assertEqual(
-            kproject.dict(by_alias=True),
+            kproject.model_dump(by_alias=True),
             {
                 "apiVersion": "noops.local/v1alpha1",
                 "kind": "Project",
@@ -62,7 +62,7 @@ class Test(TestCaseNoOps):
         plan = projects.ProjectReconciliationPlan()
 
         self.assertEqual(
-            plan.dict(),
+            plan.model_dump(),
             {
                 "added": [],
                 "changed": [],

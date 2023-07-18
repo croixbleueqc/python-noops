@@ -47,7 +47,7 @@ def target_plan(clusters, target, output):
     """Create a target plan"""
 
     clusters_obj = read_yaml(clusters)
-    ktarget = TargetKind.parse_obj(read_yaml(target))
+    ktarget = TargetKind.model_validate(read_yaml(target))
 
     targets_core = Targets(clusters_obj)
     target_yaml = json2yaml(targets_core.plan(ktarget).json())
@@ -67,7 +67,7 @@ def versions():
 def verify(kind):
     """check version settings"""
 
-    version: VersionKind = VersionKind.parse_obj(
+    version: VersionKind = VersionKind.model_validate(
         read_yaml(kind)
     )
 
@@ -96,10 +96,10 @@ def projects():
 def project_plan(clusters, targets, versions, projects, output): # pylint: disable=redefined-outer-name
     """Create an execution plan"""
 
-    clusters_obj = [ Cluster.parse_obj(i) for i in read_yaml(clusters) ]
-    targets_obj = TargetKind.parse_obj(read_yaml(targets))
-    versions_obj = VersionKind.parse_obj(read_yaml(versions))
-    projects_obj = ProjectKind.parse_obj(read_yaml(projects))
+    clusters_obj = [ Cluster.model_validate(i) for i in read_yaml(clusters) ]
+    targets_obj = TargetKind.model_validate(read_yaml(targets))
+    versions_obj = VersionKind.model_validate(read_yaml(versions))
+    projects_obj = ProjectKind.model_validate(read_yaml(projects))
 
     plan = Projects.plan(
         clusters_obj,
@@ -166,8 +166,8 @@ def project_create(namespace, release, chart, env, envs, output, cargs): # pylin
 def project_apply(shared, plan, previous_plan, pre_processing_path):
     """execute a project plan"""
 
-    kprojectplan = ProjectPlanKind.parse_obj(read_yaml(plan))
-    kprevious = ProjectPlanKind.parse_obj(read_yaml(previous_plan)) \
+    kprojectplan = ProjectPlanKind.model_validate(read_yaml(plan))
+    kprevious = ProjectPlanKind.model_validate(read_yaml(previous_plan)) \
                 if previous_plan is not None else None
 
     Projects().apply(
@@ -188,8 +188,8 @@ def project_apply(shared, plan, previous_plan, pre_processing_path):
 def project_inapply(shared, project, previous_project, pre_processing_path):
     """Reconciliation in selected cluster"""
 
-    kproject = ProjectKind.parse_obj(read_yaml(project))
-    kprevious = ProjectKind.parse_obj(read_yaml(previous_project)) \
+    kproject = ProjectKind.model_validate(read_yaml(project))
+    kprevious = ProjectKind.model_validate(read_yaml(previous_project)) \
                 if previous_project is not None else None
 
     Projects().apply_incluster(
@@ -206,6 +206,6 @@ def project_inapply(shared, project, previous_project, pre_processing_path):
 def project_indelete(shared, project):
     """Delete everything controlled by this project in selected cluster"""
 
-    kproject = ProjectKind.parse_obj(read_yaml(project))
+    kproject = ProjectKind.model_validate(read_yaml(project))
 
     Projects().delete_incluster(kproject, shared["dry_run"])

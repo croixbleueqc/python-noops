@@ -26,7 +26,7 @@ class TestTargets(TestCaseNoOps):
         plan.target_class = TargetClassesEnum.ONE_CLUSTER
         targets = Targets({})
 
-        supported: TargetClasses = TargetClasses.parse_obj(
+        supported: TargetClasses = TargetClasses.model_validate(
             {
                 "one-cluster":True,
                 "multi-cluster":True,
@@ -47,7 +47,7 @@ class TestTargets(TestCaseNoOps):
         plan.target_class = TargetClassesEnum.MULTI_CLUSTER
         targets = Targets({})
 
-        supported: TargetClasses = TargetClasses.parse_obj(
+        supported: TargetClasses = TargetClasses.model_validate(
             {
                 "one-cluster":True,
                 "multi-cluster":True,
@@ -68,7 +68,7 @@ class TestTargets(TestCaseNoOps):
         plan.target_class = TargetClassesEnum.ACTIVE_STANDBY
         targets = Targets({})
 
-        supported: TargetClasses = TargetClasses.parse_obj(
+        supported: TargetClasses = TargetClasses.model_validate(
             {
                 "one-cluster":True,
                 "multi-cluster":True,
@@ -95,7 +95,7 @@ class TestTargets(TestCaseNoOps):
     def test_helm_args(self):
         """Helm Arguments for a target"""
 
-        supported: TargetClasses = TargetClasses.parse_obj(
+        supported: TargetClasses = TargetClasses.model_validate(
             {
                 "one-cluster":True,
                 "multi-cluster":True,
@@ -146,7 +146,7 @@ class TestTargets(TestCaseNoOps):
         self.assertEqual(len(clusters), len(targets.get_clusters()))
         self.assertEqual(len(clusters), len(targets.get_clusters_name()))
 
-        targets = Targets([ Cluster.parse_obj(i) for i in clusters ])
+        targets = Targets([ Cluster.model_validate(i) for i in clusters ])
         self.assertEqual(len(clusters), len(targets.get_clusters()))
 
     def test_plan(self):
@@ -155,7 +155,7 @@ class TestTargets(TestCaseNoOps):
         """
         clusters = read_yaml("tests/data/targets/clusters.yaml")
         targets = Targets(clusters)
-        k: TargetKind = TargetKind.parse_obj(read_yaml("tests/data/targets/targets.yaml"))
+        k: TargetKind = TargetKind.model_validate(read_yaml("tests/data/targets/targets.yaml"))
 
         # No active
         self.assertRaises(TargetPlanUnknown, targets.plan, k)
@@ -207,7 +207,7 @@ class TestTargets(TestCaseNoOps):
         """
         Cluster match expressions
         """
-        cluster: Cluster = Cluster.parse_obj({
+        cluster: Cluster = Cluster.model_validate({
             "name": "c1",
             "labels": {
                 "service/status": "active"
@@ -215,10 +215,10 @@ class TestTargets(TestCaseNoOps):
         })
 
         data = read_yaml("tests/data/targets/match_expressions.yaml")
-        me0: MatchExpressionsSpec = MatchExpressionsSpec.parse_obj(data[0])
-        me1: MatchExpressionsSpec = MatchExpressionsSpec.parse_obj(data[1])
-        me2: MatchExpressionsSpec = MatchExpressionsSpec.parse_obj(data[2])
-        me3: MatchExpressionsSpec = MatchExpressionsSpec.parse_obj(data[3])
+        me0: MatchExpressionsSpec = MatchExpressionsSpec.model_validate(data[0])
+        me1: MatchExpressionsSpec = MatchExpressionsSpec.model_validate(data[1])
+        me2: MatchExpressionsSpec = MatchExpressionsSpec.model_validate(data[2])
+        me3: MatchExpressionsSpec = MatchExpressionsSpec.model_validate(data[3])
 
         # In
         self.assertTrue(cluster.match(me0.matchExpressions))

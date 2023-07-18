@@ -36,7 +36,7 @@ class MatchExpressionSpec(BaseModel): # pylint: disable=too-few-public-methods
     """Filtering expression model"""
     key: str
     operator: OperatorSpec
-    values: Optional[List[str]]
+    values: Optional[List[str]] = None
 
 class MatchExpressionsSpec(BaseModel): # pylint: disable=too-few-public-methods
     """List of filtering expressions model"""
@@ -52,7 +52,7 @@ class ClusterAffinitySpec(BaseModel): # pylint: disable=too-few-public-methods
 
 class TargetSpec(BaseModel): # pylint: disable=too-few-public-methods
     """active, standby, service-only targets model"""
-    clusterAffinity: Optional[ClusterAffinitySpec]
+    clusterAffinity: Optional[ClusterAffinitySpec] = None
     clusterCount: Union[int, str] = 0
 
 class Spec(BaseModel): # pylint: disable=too-few-public-methods

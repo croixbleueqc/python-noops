@@ -42,7 +42,7 @@ class PackageSpec(BaseModel): # pylint: disable=too-few-public-methods
     Package model
     """
     helm: HelmSpec
-    supported: Optional[SupportedSpec]
+    supported: Optional[SupportedSpec] = None
 
 class Spec(BaseModel): # pylint: disable=too-few-public-methods
     """

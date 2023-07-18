@@ -23,7 +23,7 @@ class Test(TestCaseNoOps):
         )
 
         self.assertEqual(
-            kplan.dict(by_alias=True),
+            kplan.model_dump(by_alias=True),
             {
                 "apiVersion": "noops.local/v1alpha1",
                 "kind": "ProjectPlan",
@@ -55,7 +55,7 @@ class Test(TestCaseNoOps):
         )
 
         self.assertEqual(
-            planspec.dict(by_alias=True),
+            planspec.model_dump(by_alias=True),
             {
                 "clusters": [],
                 "template": {

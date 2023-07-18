@@ -63,8 +63,8 @@ class Projects():
             if len(target_clusters) == 0:
                 continue
 
-            spec: ProjectKindSpec = kproject.spec.copy(deep=True)
-            spec.versions = kversion.spec.copy(deep=True)
+            spec: ProjectKindSpec = kproject.spec.model_copy(deep=True)
+            spec.versions = kversion.spec.model_copy(deep=True)
 
             if target_plan.target_class == TargetClassesEnum.ONE_CLUSTER:
                 spec.package.install.target = TargetsEnum.ONE_CLUSTER
@@ -88,7 +88,7 @@ class Projects():
                 "target-class": target_plan.target_class,
                 "plan": plan
             },
-            metadata = kproject.metadata.copy(deep=True)
+            metadata = kproject.metadata.model_copy(deep=True)
         )
 
         # TODO: Verify NoOps Helm package compatibility involved with the plan

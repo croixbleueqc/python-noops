@@ -16,7 +16,7 @@ class Test(TestCaseNoOps):
 
         profileclasses = profiles.ProfileClasses()
 
-        self.assertEqual(profileclasses.dict(by_alias=True), {
+        self.assertEqual(profileclasses.model_dump(by_alias=True), {
             "canary": False,
             "services-only": False
         })

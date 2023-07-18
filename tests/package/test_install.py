@@ -179,7 +179,7 @@ class Test(TestCaseNoOps):
         }
 
         def copy_reference() -> ProjectKind:
-            return ProjectKind.parse_obj(reference)
+            return ProjectKind.model_validate(reference)
 
         current = copy_reference()
         previous = copy_reference()
@@ -187,7 +187,7 @@ class Test(TestCaseNoOps):
         # Identical current/previous
         plan = HelmInstall._reconciliation_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            plan.dict(),
+            plan.model_dump(),
             {
                 'added': [],
                 'canary_versions': None,
@@ -204,7 +204,7 @@ class Test(TestCaseNoOps):
 
         plan = HelmInstall._reconciliation_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            plan.dict(),
+            plan.model_dump(),
             {
                 'added': [],
                 'canary_versions': None,
@@ -245,7 +245,7 @@ class Test(TestCaseNoOps):
 
         plan = HelmInstall._reconciliation_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            plan.dict(),
+            plan.model_dump(),
             {
                 'added': [],
                 'canary_versions': None,
@@ -286,7 +286,7 @@ class Test(TestCaseNoOps):
 
         plan = HelmInstall._reconciliation_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            plan.dict(),
+            plan.model_dump(),
             {
                 'added': [
                     {
@@ -327,7 +327,7 @@ class Test(TestCaseNoOps):
 
         plan = HelmInstall._reconciliation_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            plan.dict(),
+            plan.model_dump(),
             {
                 'added': [],
                 'canary_versions': None,
@@ -361,7 +361,7 @@ class Test(TestCaseNoOps):
 
         plan = HelmInstall._reconciliation_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            plan.dict(),
+            plan.model_dump(),
             {
                 'added': [],
                 'canary_versions': [
@@ -424,7 +424,7 @@ class Test(TestCaseNoOps):
 
         plan = HelmInstall._reconciliation_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            plan.dict(),
+            plan.model_dump(),
             {
                 'added': [],
                 'canary_versions': [
@@ -479,7 +479,7 @@ class Test(TestCaseNoOps):
 
         plan = HelmInstall._reconciliation_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            plan.dict(),
+            plan.model_dump(),
             {
                 'added': [],
                 'canary_versions': None,
@@ -536,7 +536,7 @@ class Test(TestCaseNoOps):
 
         preprocessing = Path("/path/to/preprocessing")
         helm = HelmInstall(True)
-        kproject : ProjectKind = ProjectKind.parse_obj(reference)
+        kproject : ProjectKind = ProjectKind.model_validate(reference)
 
         # reference case
         helm._reconciliation_upgrade( # pylint: disable=protected-access
@@ -767,7 +767,7 @@ class Test(TestCaseNoOps):
         }
 
         def copy_reference() -> ProjectKind:
-            return ProjectKind.parse_obj(reference)
+            return ProjectKind.model_validate(reference)
 
         preprocessing = Path("/path/to/preprocessing")
         helm = HelmInstall(True)

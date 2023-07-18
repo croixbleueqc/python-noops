@@ -37,7 +37,7 @@ class Test(TestCaseNoOps):
 
     def test_profile_all_compatibilities(self):
         """Profiles support against full compatibilities"""
-        supported = ProfileClasses.parse_obj({
+        supported = ProfileClasses.model_validate({
             "canary": True,
             "services-only": True
         })
@@ -63,7 +63,7 @@ class Test(TestCaseNoOps):
 
     def test_helm_profiles_list(self):
         """Profiles list combinaison"""
-        supported = ProfileClasses.parse_obj({
+        supported = ProfileClasses.model_validate({
             "canary": True,
             "services-only": True
         })

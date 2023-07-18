@@ -32,7 +32,7 @@ class Test(TestCaseNoOps):
             })
 
         self.assertEqual(
-            kproject.dict(by_alias=True),
+            kproject.model_dump(by_alias=True),
             {
                 'apiVersion': 'noops.local/v1alpha1',
                 'kind': 'Project',
@@ -88,7 +88,7 @@ class Test(TestCaseNoOps):
         result = Projects.create_skeleton_from(kproject)
 
         self.assertEqual(
-            result.dict(by_alias=True),
+            result.model_dump(by_alias=True),
             {
                 "apiVersion": "noops.local/v1alpha1",
                 "kind": "Project",
@@ -119,11 +119,11 @@ class Test(TestCaseNoOps):
     def test_plan(self):
         """Plan"""
 
-        clusters = [ Cluster.parse_obj(i) for i in read_yaml(DATA / "clusters.yaml") ]
-        ktarget: TargetKind = TargetKind.parse_obj(
+        clusters = [ Cluster.model_validate(i) for i in read_yaml(DATA / "clusters.yaml") ]
+        ktarget: TargetKind = TargetKind.model_validate(
             read_yaml(DATA / "targets.yaml")
         )
-        kversion = VersionKind.parse_obj(
+        kversion = VersionKind.model_validate(
             read_yaml(DATA / "versions.yaml")
         )
         kproject = ProjectKind(
@@ -148,7 +148,7 @@ class Test(TestCaseNoOps):
 
         # one-cluster
         self.assertEqual(
-            result.dict(),
+            result.model_dump(),
             {
                 'apiVersion': 'noops.local/v1alpha1',
                 'kind': 'ProjectPlan',
@@ -192,7 +192,7 @@ class Test(TestCaseNoOps):
         ktarget.spec.active.clusterCount = 2
         result = Projects.plan(clusters, ktarget, kversion, kproject)
         self.assertEqual(
-            result.dict(),
+            result.model_dump(),
             {
                 'apiVersion': 'noops.local/v1alpha1',
                 'kind': 'ProjectPlan',
@@ -237,7 +237,7 @@ class Test(TestCaseNoOps):
         ktarget.spec.standby.clusterCount = 1
         result = Projects.plan(clusters, ktarget, kversion, kproject)
         self.assertEqual(
-            result.dict(),
+            result.model_dump(),
             {
                 'apiVersion': 'noops.local/v1alpha1',
                 'kind': 'ProjectPlan',
@@ -310,7 +310,7 @@ class Test(TestCaseNoOps):
         ktarget.spec.services_only.clusterCount = "Remaining"
         result = Projects.plan(clusters, ktarget, kversion, kproject)
         self.assertEqual(
-            result.dict(),
+            result.model_dump(),
             {
                 'apiVersion': 'noops.local/v1alpha1',
                 'kind': 'ProjectPlan',
@@ -383,7 +383,7 @@ class Test(TestCaseNoOps):
 
         pre_processing_path=Path("pre_processing_path")
 
-        kplan: ProjectPlanKind = ProjectPlanKind.parse_obj(
+        kplan: ProjectPlanKind = ProjectPlanKind.model_validate(
             read_yaml(DATA / "projectplan.yaml")
         )
         kproject = ProjectKind(spec=kplan.spec.plan[0].template.spec, metadata=kplan.metadata)
@@ -400,7 +400,7 @@ class Test(TestCaseNoOps):
     def test_delete_incluster(self, mock_reconciliation):
         """Delete the project in the current cluster"""
 
-        kplan: ProjectPlanKind = ProjectPlanKind.parse_obj(
+        kplan: ProjectPlanKind = ProjectPlanKind.model_validate(
             read_yaml(DATA / "projectplan.yaml")
         )
         kproject = ProjectKind(spec=kplan.spec.plan[0].template.spec, metadata=kplan.metadata)
@@ -421,13 +421,13 @@ class Test(TestCaseNoOps):
         reference = read_yaml(DATA / "projectplan.yaml")
 
         def copy_reference() -> ProjectPlanKind:
-            return ProjectPlanKind.parse_obj(reference)
+            return ProjectPlanKind.model_validate(reference)
 
         def project_dict(plan: ProjectPlanKind, index: int) -> dict:
             return ProjectKind(
                 spec=plan.spec.plan[index].template.spec,
                 metadata=plan.metadata
-            ).dict()
+            ).model_dump()
 
         current = copy_reference()
         previous = copy_reference()
@@ -435,7 +435,7 @@ class Test(TestCaseNoOps):
         # Identical current/previous
         plan = Projects._reconciliation_project_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            [i.dict() for i in plan],
+            [i.model_dump() for i in plan],
             [
                 {
                     'cluster': 'c1',
@@ -453,7 +453,7 @@ class Test(TestCaseNoOps):
 
         plan = Projects._reconciliation_project_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            [i.dict() for i in plan],
+            [i.model_dump() for i in plan],
             [
                 {
                     'cluster': 'c1',
@@ -471,7 +471,7 @@ class Test(TestCaseNoOps):
 
         plan = Projects._reconciliation_project_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            [i.dict() for i in plan],
+            [i.model_dump() for i in plan],
             [
                 {
                     'cluster': 'c1',
@@ -489,7 +489,7 @@ class Test(TestCaseNoOps):
 
         plan = Projects._reconciliation_project_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            [i.dict() for i in plan],
+            [i.model_dump() for i in plan],
             [
                 {
                     'cluster': 'c1',
@@ -517,7 +517,7 @@ class Test(TestCaseNoOps):
 
         plan = Projects._reconciliation_project_plan(current, previous) # pylint: disable=protected-access
         self.assertEqual(
-            [i.dict() for i in plan],
+            [i.model_dump() for i in plan],
             [
                 {
                     'cluster': 'c2',
@@ -541,7 +541,7 @@ class Test(TestCaseNoOps):
         pre_processing_path = Path("pre_processing_path")
 
         def copy_reference() -> ProjectPlanKind:
-            return ProjectPlanKind.parse_obj(reference)
+            return ProjectPlanKind.model_validate(reference)
 
         def get_project(plan: ProjectPlanKind, index: int) -> ProjectKind:
             return ProjectKind(

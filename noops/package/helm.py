@@ -244,7 +244,7 @@ class Helm():
             }
         )
         noops_file = self.config["chart"] / settings.DEFAULT_NOOPS_FILE
-        io.write_yaml(noops_file, kchart.dict(by_alias=True), dry_run=self.core.is_dry_run())
+        io.write_yaml(noops_file, kchart.model_dump(by_alias=True), dry_run=self.core.is_dry_run())
 
         execute(
             "helm",

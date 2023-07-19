@@ -162,10 +162,15 @@ class Helm():
         """
         Directory where to store values.yaml files
         """
+        try:
+            val_path = self.config["values"]
+        except KeyError:
+            val_path = Path("./tmp/")
+        
         if values_filename is None:
-            return self.config["values"]
+            return val_path
 
-        return self.config["values"] / values_filename
+        return val_path / values_filename
 
     def create_package(self, app_version: str, build: str, # pylint: disable=too-many-arguments
         description: str, values: Optional[Path]):

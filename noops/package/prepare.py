@@ -53,9 +53,10 @@ def embedded_kustomize(core: NoOps):
     """
     Copy kustomize under the helm chart if available and necessary
     """
-    kustomize: Path = core.noops_config["package"].get("helm", {}).get("kustomize")
+    kustomize_enabled: bool = core.noops_config["package"].get("helm", {}).get("kustomize", {}).get("enabled")
+    kustomize: Path = core.noops_config["package"].get("helm", {}).get("kustomize").get("path")
 
-    if kustomize is None:
+    if not kustomize_enabled:
         # kustomize is not used
         logging.info("kustomize is not used")
         return

@@ -25,7 +25,7 @@ class Test(TestCaseNoOps):
             _ = os.environ.pop("NOOPS_SVCAT_PROCESSING")
             noops = NoOps(product_path, dry_run=True, rm_cache=True)
 
-            expected = read_yaml_base(SVCAT / "tests/noops-generated.yaml", product_path)
+            expected = read_yaml_base(SVCAT / "tests/noops-generated.yaml", Path.resolve(product_path))
 
             # memory test
             self.assertEqual(

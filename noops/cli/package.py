@@ -24,6 +24,8 @@ noopsctl package serve
 import os
 import errno
 from pathlib import Path
+from urllib.request import HTTPBasicAuthHandler
+
 import click
 from . import cli, create_noops_instance
 from ..package.prepare import prepare
@@ -32,12 +34,15 @@ from ..package.helm import Helm
 from ..package.install import HelmInstall
 from ..typing.targets import TargetsEnum
 from ..typing.profiles import ProfileEnum
+from http.client import HTTPSConnection
+import requests
+from base64 import b64encode
 
 @cli.group()
 @click.pass_context
 def package(ctx):
     """manage packages"""
-    if ctx.invoked_subcommand not in ("serve", "install") and \
+    if ctx.invoked_subcommand not in ("serve", "install", "pushtonexus") and \
         ctx.obj['product'] is None:
         raise click.BadOptionUsage("product","Missing option '-p' / '--product'.", ctx=ctx.parent)
 
@@ -69,6 +74,30 @@ def push(shared, directory, url):
     directory_abs = Path(directory).resolve()
     core = create_noops_instance(shared)
     Helm(core).push(directory_abs, url)
+
+def getBasicAuth(username, password):
+    token = b64encode(f"{username}:{password}".encode('utf-8')).decode("ascii")
+    return f'Basic {token}'
+
+@package.command()
+@click.pass_obj
+@click.option('--helm-package', help='Helm package to install', type=click.Path(), required=True)
+@click.option('--helm-repository', help='Helm package repository endpoint', type=click.STRING, required=True)
+@click.option("--username", help="Username for the repository", type=click.STRING)
+@click.option("--password", help="Password for the repository", type=click.STRING)
+def pushToNexus(shared, helm_package, helm_repository, username, password):
+    """Push Helm package to a repository"""
+    helmPackagePath = Path(helm_package).resolve()
+    print(f"Pushing {helmPackagePath} to {helm_repository}")
+    with open(helmPackagePath, 'rb') as file:
+        files = {'file': file}
+        headers = { 'Authorization': getBasicAuth(username, password) }
+        response = requests.post(helm_repository, files=files, headers=headers)
+    if response.status_code >= 200 and response.status_code < 300:
+        print(f'Package {helmPackagePath} successfully pushed to {helm_repository}')
+    else:
+        print('Error:', response.status_code, response.text)
+
 
 @package.command()
 @click.option('-d', '--directory',

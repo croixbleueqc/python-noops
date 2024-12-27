@@ -50,7 +50,7 @@ class NoOps():
         logging.info("NoOps: Init...")
 
         # Use absolute path
-        product_path = Path(product_path).resolve()
+        product_path = Path(product_path.resolve())
 
         # change working directory to the product path
         os.chdir(product_path)

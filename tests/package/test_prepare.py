@@ -82,8 +82,8 @@ class Test(TestCaseNoOps):
 
         with product_copy(KUSTOMIZE) as product_path:
             shutil.move(
-                product_path / "devops/helm/kustomize",
-                product_path / "devops/helm/chart/kustomize"
+                Path.resolve(product_path) / "devops/helm/kustomize",
+                Path.resolve(product_path) / "devops/helm/chart/kustomize"
             )
 
             self.assertRaises(

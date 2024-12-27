@@ -3,4 +3,4 @@ pydantic
 click
 pylint
 coverage
-requests==2.32.2
+requests

@@ -7,3 +7,10 @@ __pycache__
 .coverage
 htmlcov/
 
+.idea/
+bin/
+build/
+lib/
+.DS_Store
+noops.**
+pyvenv.cfg

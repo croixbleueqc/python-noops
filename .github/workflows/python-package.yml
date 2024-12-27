@@ -1,12 +1,18 @@
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: Python package
-
-on: [push]
+on:
+  push:
+    branches:
+      - main
+      - master
+      - feature/**
+  pull_request:
+    branches:
+      - feature/**
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -15,7 +21,29 @@ jobs:
         ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.1.1
+        with:
+          versionSpec: '5.x'
+
+      - name: Determine Version
+        uses: gittools/actions/gitversion/execute@v3.1.1
+        id: gitversion
+
+      - name: Get VersionTag
+        id: v
+        run: echo "version=${{ steps.gitversion.outputs.majorMinorPatch }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
@@ -42,3 +70,9 @@ jobs:
         if: success() || failure()
         run: |
           coverage report -m --fail-under=85
+
+      - name: Create/Update tag
+        if: success() && github.ref == 'refs/heads/main'
+        run: |
+          git tag ${{ steps.v.outputs.version }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
+          git push --tags -f

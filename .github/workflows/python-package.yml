@@ -85,7 +85,6 @@ jobs:
           echo "versionMajor=${{ steps.gitversion.outputs.Major }}-${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT && \
           
       - name: Get VersionTag
-        id: v
         run: |
           echo ${{ steps.v.outputs.version }}
           echo ${{ steps.v.outputs.versionMajorMinor }}

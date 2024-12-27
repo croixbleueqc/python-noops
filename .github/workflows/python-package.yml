@@ -55,7 +55,7 @@ jobs:
 
   releaseGitTags:
     name: Release Git Tags
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     needs: build_and_tests
     steps:

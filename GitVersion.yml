@@ -12,6 +12,18 @@ branches:
     is-release-branch: true
     is-mainline: true
     pre-release-weight: 55000
+  feature-v2:
+    regex: ^feature/v2
+    mode: ContinuousDelivery
+    tag: ''
+    increment: Patch
+    prevent-increment-of-merged-branch-version: true
+    track-merge-target: false
+    source-branches: [ 'feature', 'release' ]
+    tracks-release-branches: false
+    is-release-branch: true
+    is-mainline: true
+    pre-release-weight: 55000
   feature:
     regex: ^feature?[/-]
     mode: ContinuousDeployment

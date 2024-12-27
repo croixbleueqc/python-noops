@@ -34,9 +34,8 @@ from ..package.helm import Helm
 from ..package.install import HelmInstall
 from ..typing.targets import TargetsEnum
 from ..typing.profiles import ProfileEnum
-import logging
-import requests
 from http.client import HTTPSConnection
+#import requests
 from base64 import b64encode
 
 @cli.group()

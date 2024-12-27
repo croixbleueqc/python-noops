@@ -184,7 +184,6 @@ def continuous_delivery(shared, target, cargs):
 @click.argument('cargs', nargs=-1, type=click.UNPROCESSED, metavar="[-- [-h] [CARGS]]")
 def deploy(shared, default, target, cargs): # pylint: disable=unused-argument
     """continuous deployment
-
     TARGET refers to pipeline.deploy.<TARGET> [default: default]
     """
     core = create_noops_instance(shared)
@@ -196,7 +195,6 @@ def deploy(shared, default, target, cargs): # pylint: disable=unused-argument
         )
 
     targets = list(core.noops_config["pipeline"]["deploy"].keys())
-
     if target not in targets:
         raise click.BadArgumentUsage(
             "target '{}' is invalid (accepted: {})".format( # pylint: disable=consider-using-f-string

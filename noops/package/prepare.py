@@ -53,8 +53,7 @@ def embedded_kustomize(core: NoOps):
     """
     Copy kustomize under the helm chart if available and necessary
     """
-
-    kustomize_enabled: bool = core.noops_config["package"].get("helm", {}).get("kustomize", {}) != None
+    kustomize_enabled: bool = core.noops_config["package"].get("helm", {}).get("kustomize") != None
     if not kustomize_enabled:
         # kustomize is not used
         logging.info("kustomize is not used")
@@ -64,22 +63,17 @@ def embedded_kustomize(core: NoOps):
     kustomize: Path = core.noops_config["package"].get("helm", {}).get("kustomize", {})
     values: Path = core.noops_config["package"]["helm"]["values"]
 
-    if kustomize_parent == values.parent:
-        # kustomize is already located under the helm chart (built-in)
-        logging.info("Using built-in kustomize")
-        return
+    # if kustomize_parent == values.parent:
+    #     # kustomize is already located under the helm chart (built-in)
+    #     logging.info("Using built-in kustomize")
+    #     return
 
     # Copy
     logging.info("Embedding kustomize")
     dst = values.parent / "kustomize"
     if dst.exists():
         shutil.rmtree(dst)
-    print("TestLouis")
-    print(f"helm: {core.noops_config["package"].get("helm", {})}")
-    print(f"kustomize_parent: {kustomize_parent}")
-    print(f"kustomize: {kustomize}")
-    print(f"dst: {dst}")
-    print("EndTestLouis")
+
     shutil.copytree(
         kustomize,
         dst

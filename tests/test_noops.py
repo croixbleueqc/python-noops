@@ -72,7 +72,7 @@ class Test(TestCaseNoOps):
         with product_copy(MINIMAL) as product_path:
             noops = NoOps(product_path, dry_run=True, rm_cache=True)
 
-            expected = read_yaml_base(MINIMAL / "tests" / "noops-generated.yaml", product_path)
+            expected = read_yaml_base(MINIMAL / "tests" / "noops-generated.yaml", Path.resolve(product_path))
 
             # memory test
             self.assertEqual(
@@ -89,15 +89,15 @@ class Test(TestCaseNoOps):
             # cache - json
             self.assertEqual(
                 read_json(noops._get_generated_noops_json()), # pylint: disable=protected-access
-                read_json_base(MINIMAL / "tests" / "noops-generated.json", product_path)
+                read_json_base(MINIMAL / "tests" / "noops-generated.json", Path.resolve(product_path))
             )
 
             # Noops Environments
             self.assertEqual(
                 noops.noops_envs(),
                 {
-                    "NOOPS_GENERATED_JSON": product_path / DEFAULT_WORKDIR / "noops-generated.json",
-                    "NOOPS_GENERATED_YAML": product_path / DEFAULT_WORKDIR / "noops-generated.yaml"
+                    "NOOPS_GENERATED_JSON": Path.resolve(product_path) / DEFAULT_WORKDIR / "noops-generated.json",
+                    "NOOPS_GENERATED_YAML": Path.resolve(product_path) / DEFAULT_WORKDIR / "noops-generated.yaml"
                 }
             )
 
@@ -166,7 +166,7 @@ class Test(TestCaseNoOps):
             noops = NoOps(product_path, dry_run=True, rm_cache=True)
 
             expected = read_yaml_base(
-                MINIMAL_PROFILE / "tests" / "noops-generated.yaml", product_path)
+                MINIMAL_PROFILE / "tests" / "noops-generated.yaml", Path.resolve(product_path))
 
             # memory test
             self.assertEqual(
@@ -183,7 +183,7 @@ class Test(TestCaseNoOps):
             # cache - json
             self.assertEqual(
                 read_json(noops._get_generated_noops_json()), # pylint: disable=protected-access
-                read_json_base(MINIMAL_PROFILE / "tests" / "noops-generated.json", product_path)
+                read_json_base(MINIMAL_PROFILE / "tests" / "noops-generated.json", Path.resolve(product_path))
             )
 
     def test_minimal_no_local_git(self):
@@ -300,5 +300,5 @@ class Test(TestCaseNoOps):
 
             self.assertEqual(
                 noops.noops_config["pipeline"]["deploy"]["default"],
-                product_path / "deploy.sh"
+                Path(product_path.resolve()) / "deploy.sh"
             )

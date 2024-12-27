@@ -35,4 +35,8 @@ jobs:
           git config --global user.name "Unit Tests"
           git config --global init.defaultBranch "main"
           coverage run -m unittest
+
+      - name: Unit Tests Report
+        if: success() || failure()
+        run: |
           coverage report -m --fail-under=85

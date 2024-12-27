@@ -10,7 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10","3.11", "3.12", "3.13"]
+        python-version: [
+          "3.8", "3.9", "3.10","3.11", "3.12", "3.13"
+        ]
 
     steps:
       - uses: actions/checkout@v3
@@ -36,7 +38,7 @@ jobs:
           git config --global init.defaultBranch "main"
           coverage run -m unittest
 
-      - name: Unit Tests Report
+      - name: Unit Tests Coverage Report
         if: success() || failure()
         run: |
           coverage report -m --fail-under=85

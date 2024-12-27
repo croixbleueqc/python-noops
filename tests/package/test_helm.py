@@ -24,7 +24,7 @@ class Test(TestCaseNoOps):
         with product_copy(PRODUCT) as product_path:
             noops = NoOps(product_path, dry_run=True, rm_cache=True)
 
-            expected = read_yaml_base(PRODUCT / "tests/noops-generated.yaml", product_path)
+            expected = read_yaml_base(PRODUCT / "tests/noops-generated.yaml", Path.resolve(product_path))
 
             # memory test
             self.assertEqual(
@@ -75,7 +75,7 @@ class Test(TestCaseNoOps):
 
             helm = Helm(noops)
 
-            values = product_path / "noops_workdir/helm/chart/noops"
+            values = Path.resolve(product_path) / "noops_workdir/helm/chart/noops"
 
             # get_values_path
             self.assertEqual(

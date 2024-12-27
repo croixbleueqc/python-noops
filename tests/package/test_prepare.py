@@ -22,7 +22,7 @@ class Test(TestCaseNoOps):
         with product_copy(KUSTOMIZE) as product_path:
             noops = NoOps(product_path, dry_run=True, rm_cache=True)
 
-            expected = read_yaml_base(KUSTOMIZE / "tests/noops-generated.yaml", product_path)
+            expected = read_yaml_base(KUSTOMIZE / "tests/noops-generated.yaml", Path.resolve(product_path))
 
             # memory test
             self.assertEqual(

@@ -55,7 +55,6 @@ jobs:
   releaseGitTags:
     runs-on: ubuntu-latest
     needs: build_and_tests
-    condition: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,8 +79,8 @@ jobs:
         id: v
         run: echo "version=${{ steps.gitversion.outputs.majorMinorPatch }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT
 
-      - name: Create/Update tag
-        if: success() && github.ref == 'refs/heads/main'
-        run: |
-          git tag ${{ steps.v.outputs.version }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
-          git push --tags -f
+#      - name: Create/Update tag
+#        if: success() && github.ref == 'refs/heads/main'
+#        run: |
+#          git tag ${{ steps.v.outputs.version }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
+#          git push --tags -f

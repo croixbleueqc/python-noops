@@ -187,13 +187,11 @@ def deploy(shared, default, target, cargs): # pylint: disable=unused-argument
     TARGET refers to pipeline.deploy.<TARGET> [default: default]
     """
     core = create_noops_instance(shared)
-
     if default and target != "default":
         raise click.BadArgumentUsage(
             "--default is deprecated. You can NOT use --default and a target with something " \
             f"else than default. Current target value is '{target}'"
         )
-
     targets = list(core.noops_config["pipeline"]["deploy"].keys())
     if target not in targets:
         raise click.BadArgumentUsage(

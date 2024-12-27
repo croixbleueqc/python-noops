@@ -55,6 +55,7 @@ jobs:
 
   releaseGitTags:
     name: Release Git Tags
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: build_and_tests
     steps:
@@ -90,9 +91,21 @@ jobs:
           echo ${{ steps.v.outputs.versionMajorMinor }}
           echo ${{ steps.v.outputs.versionMajor }}
 
-      - name: Create/Update tag
+      - name: Create/Update ${{ steps.v.outputs.fullVersion }} tag
         #if: success() && github.ref == 'refs/heads/main'
         run: |
           git tag ${{ steps.v.outputs.fullVersion }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
+          git push --tags -f
+          
+      - name: Create/Update ${{ steps.v.outputs.versionMajorMinor }} tag
+        #if: success() && github.ref == 'refs/heads/main'
+        run: |
+          git tag ${{ steps.v.outputs.versionMajorMinor }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
+          git push --tags -f
+      
+      - name: Create/Update ${{ steps.v.outputs.versionMajor }} tag
+        #if: success() && github.ref == 'refs/heads/main'
+        run: |
+          git tag ${{ steps.v.outputs.versionMajor }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
           git push --tags -f
 

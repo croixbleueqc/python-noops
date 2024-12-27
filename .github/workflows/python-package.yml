@@ -108,4 +108,3 @@ jobs:
         run: |
           git tag ${{ steps.v.outputs.versionMajor }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
           git push --tags -f
-

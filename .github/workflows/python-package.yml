@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - master
   pull_request:
     branches:
       - feature/**
@@ -91,19 +90,19 @@ jobs:
           echo ${{ steps.v.outputs.versionMajor }}
 
       - name: Create/Update ${{ steps.v.outputs.fullVersion }} tag
-        if: success() && github.ref == 'refs/heads/main'
+        #if: success() && github.ref == 'refs/heads/main'
         run: |
           git tag ${{ steps.v.outputs.fullVersion }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
           git push --tags -f
           
       - name: Create/Update ${{ steps.v.outputs.versionMajorMinor }} tag
-        if: success() && github.ref == 'refs/heads/main'
+        #if: success() && github.ref == 'refs/heads/main'
         run: |
           git tag ${{ steps.v.outputs.versionMajorMinor }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
           git push --tags -f
       
       - name: Create/Update ${{ steps.v.outputs.versionMajor }} tag
-        if: success() && github.ref == 'refs/heads/main'
+        #if: success() && github.ref == 'refs/heads/main'
         run: |
           git tag ${{ steps.v.outputs.versionMajor }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
           git push --tags -f

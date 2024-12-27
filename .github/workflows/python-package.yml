@@ -80,18 +80,18 @@ jobs:
       - name: Get VersionTag
         id: v
         run: |
-          echo "version=${{ steps.gitversion.outputs.majorMinorPatch }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT && \
+          echo "fullVersion=${{ steps.gitversion.outputs.majorMinorPatch }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT && \
           echo "versionMajorMinor=${{ steps.gitversion.outputs.Major }}.${{ steps.gitversion.outputs.Minor }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT && \
           echo "versionMajor=${{ steps.gitversion.outputs.Major }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT
           
-      - name: Get VersionTag
+      - name: Output Version Tags
         run: |
-          echo ${{ steps.v.outputs.version }}
+          echo ${{ steps.v.outputs.fullVersion }}
           echo ${{ steps.v.outputs.versionMajorMinor }}
           echo ${{ steps.v.outputs.versionMajor }}
 
-#      - name: Create/Update tag
-#        if: success() && github.ref == 'refs/heads/main'
-#        run: |
-#          git tag ${{ steps.v.outputs.version }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
-#          git push --tags -f
+      - name: Create/Update tag
+        #if: success() && github.ref == 'refs/heads/main'
+        run: |
+          git tag ${{ steps.v.outputs.fullVersion }} ${{ steps.gitversion.outpus.VersionSourceSha }} -f
+          git push --tags -f

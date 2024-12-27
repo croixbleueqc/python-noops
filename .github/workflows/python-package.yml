@@ -82,7 +82,7 @@ jobs:
         run: |
           echo "version=${{ steps.gitversion.outputs.majorMinorPatch }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT && \
           echo "versionMajorMinor=${{ steps.gitversion.outputs.Major }}.${{ steps.gitversion.outputs.Minor }}-${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT && \
-          echo "versionMajor=${{ steps.gitversion.outputs.Major }}-${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT && \
+          echo "versionMajor=${{ steps.gitversion.outputs.Major }}-${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}" >> $GITHUB_OUTPUT
           
       - name: Get VersionTag
         run: |
